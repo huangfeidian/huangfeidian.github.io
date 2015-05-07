@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lazy Evaluation in CPP - Spirits Away</title>
+    <link rel="shortcut icon" type="image/x-icon" href="\favicon.ico">
+    <link rel="stylesheet" href="/theme/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="/theme/font-awesome/css/font-awesome.min.css" type="text/css" />
+    <link rel="stylesheet" href="/theme/css/niu2.css" type="text/css" />
+
+    <link rel="canonical" href="/cpp/lazy-evaluation-in-cpp.html" />
+    
+    <script type="text/javascript">window.onload=function(){};</script>
+    <!--[if lt IE 9]>
+        <script src="/theme/js/html5shiv.js"></script>
+        <script src="/theme/js/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body> 
+    <div id="body-header">
+<div class="navbar navbar-inverse navbar-fixed-top">
+<div class="col-md-12">
+    <div class="navbar-header col-md-offset-2">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="">
+            <i class="fa fa-home"></i>Spirits Away
+        </a>
+    </div>
+    <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+        <ul class="nav navbar-nav">
+            <li><a href="/about.html" title="about">
+                <i class="fa fa-anchor"></i>关于</a>
+            </li>
+            <li><a href="/archives.html" title="archives">
+                <i class="fa fa-archive"></i>存档</a>
+            </li>
+            <li><a href="/tag/" title="tags">
+                <i class="fa fa-tag"></i>标签</a>
+            </li>
+        <!-- category dropdown list -->
+        <li class="dropdown">
+           <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                <i class="fa fa-folder-open"></i>分类<b class="caret"></b>
+           </a>
+           <ul class="dropdown-menu">
+               <li><a href="/ai/index.html">
+                   <i class="fa fa-folder-close"></i>AI
+                      (5)</a></li>
+               <li><a href="/cpp/index.html">
+                   <i class="fa fa-folder-close"></i>CPP
+                      (3)</a></li>
+               <li><a href="/math/index.html">
+                   <i class="fa fa-folder-close"></i>Math
+                      (2)</a></li>
+           </ul>
+        </li>
+        <!--  self defined dropdown list -->
+        </ul>
+        
+        <!-- right nav bar -->
+        <ul class="nav navbar-nav navbar-right">
+        <!-- google custom search -->
+       </ul>
+    </nav>
+</div>
+</div>    </div>
+    
+    <div id="body-content">
+<div class="col-md-8 col-md-offset-2">
+    <h1 id="content-heading">Lazy Evaluation in CPP</h1>
+</div>
+<div id="niu2-left-container" class="col-md-6 col-md-offset-2 with-right-border">
+    <div id="niu2-main-content">
+        <p>惰性求值的概念来自于<code>lambda calculus</code>，并在一些函数式编程语言中得到了实现，如<code>Miranda,Haskell</code>中惰性求值是默认的。惰性求值的主要思想就是尽可能的避免不必要的计算，如果这些计算的结果并没有被使用的话。惰性求值除可以得到性能的提升外，惰性计算的最重要的好处是它可以构造一个无限的数据类型（例如处理无穷列表，流式计算等）。而C++脱胎于面向过程和面向对象两种编程范式，本来与惰性求值是格格不入的。不过，短路操作符倒是挺符合惰性求值的特点的。例如<code>a||b</code>，如果<code>a</code>被求值为真的时候，<code>b</code>的值则不需要再去求了，直接返回<code>true</code>。但是如果我们在类的内部将短路操作符重载的话，则求值的短路性质将不再被满足。因为重载之后，原来的操作符退化成为了函数，操作数退化成为了参数。在函数应用时，参数必须已经求值。所以，任何企图重载短路操作符的举动都是在自寻死路。</p>
+<p>难道除了短路操作符我们就无法惰性求值了么？</p>
+<h1 id="463b04">惰性求值简单实现</h1>
+<div class="codehilite"><pre><span class="k">struct</span> <span class="n">Point</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">x</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">y</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>为了简化讨论，只实现加法版本的惰性求值。此时，我们引入一个辅助类<code>AddOp</code>，这个类的定义如下：</p>
+<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">Lhs</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Rhs</span><span class="o">&gt;</span>
+<span class="k">struct</span> <span class="n">AddOp</span> 
+<span class="p">{</span>
+    <span class="n">Lhs</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">lhs</span><span class="p">;</span>
+    <span class="n">Rhs</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">rhs</span><span class="p">;</span>
+
+    <span class="n">AddOp</span><span class="p">(</span><span class="n">Lhs</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">lhs</span><span class="p">,</span> <span class="n">Rhs</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">rhs</span><span class="p">)</span><span class="o">:</span><span class="n">lhs</span><span class="p">(</span><span class="n">lhs</span><span class="p">),</span> <span class="n">rhs</span><span class="p">(</span><span class="n">rhs</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="c1">// empty body</span>
+    <span class="p">}</span>
+
+    <span class="n">Lhs</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">get_lhs</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">lhs</span><span class="p">;</span> <span class="p">}</span>
+    <span class="n">Rhs</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">get_rhs</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">rhs</span><span class="p">;</span> <span class="p">}</span>
+<span class="p">};</span>
+</pre></div>
+
+
+<p>这是一个模板类，用来存储加法两边的操作符。现在，我们来修改加法，使得它能够处理这个新的类型。</p>
+<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">Lhs</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Rhs</span><span class="o">&gt;</span> 
+<span class="n">AddOp</span><span class="o">&lt;</span><span class="n">AddOp</span><span class="o">&lt;</span><span class="n">Lhs</span><span class="p">,</span> <span class="n">Rhs</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">Point</span><span class="o">&gt;</span> 
+<span class="k">operator</span><span class="o">+</span><span class="p">(</span><span class="n">AddOp</span><span class="o">&lt;</span><span class="n">Lhs</span><span class="p">,</span> <span class="n">Rhs</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">lhs</span><span class="p">,</span> <span class="n">Point</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">p</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">AddOp</span><span class="o">&lt;</span><span class="n">AddOp</span><span class="o">&lt;</span><span class="n">Lhs</span><span class="p">,</span> <span class="n">Rhs</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">Point</span><span class="o">&gt;</span><span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="n">p</span><span class="p">);</span>
+<span class="p">}</span> 
+<span class="c1">// add expression template with point at the left</span>
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">Lhs</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Rhs</span><span class="o">&gt;</span> 
+<span class="n">AddOp</span><span class="o">&lt;</span> <span class="n">Point</span><span class="p">,</span> <span class="n">AddOp</span><span class="o">&lt;</span><span class="n">Lhs</span><span class="p">,</span> <span class="n">Rhs</span><span class="o">&gt;</span> <span class="o">&gt;</span> 
+<span class="k">operator</span><span class="o">+</span><span class="p">(</span><span class="n">Point</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">p</span><span class="p">,</span> <span class="n">AddOp</span><span class="o">&lt;</span><span class="n">Lhs</span><span class="p">,</span> <span class="n">Rhs</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">rhs</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">AddOp</span><span class="o">&lt;</span> <span class="n">Point</span><span class="p">,</span> <span class="n">AddOp</span><span class="o">&lt;</span><span class="n">Lhs</span><span class="p">,</span> <span class="n">Rhs</span><span class="o">&gt;</span> <span class="o">&gt;</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">rhs</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="c1">// add two points, yield a expression template    </span>
+<span class="n">AddOp</span><span class="o">&lt;</span> <span class="n">Point</span><span class="p">,</span> <span class="n">Point</span> <span class="o">&gt;</span> 
+<span class="k">operator</span><span class="o">+</span><span class="p">(</span><span class="n">Point</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">lhs</span><span class="p">,</span> <span class="n">Point</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">rhs</span><span class="p">)</span> 
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">AddOp</span><span class="o">&lt;</span><span class="n">Point</span><span class="p">,</span> <span class="n">Point</span><span class="o">&gt;</span><span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="n">rhs</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>以下是测试代码，可以通过编译：</p>
+<div class="codehilite"><pre><span class="n">Point</span> <span class="n">p1</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span> <span class="p">},</span> <span class="n">p2</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span> <span class="p">},</span> <span class="n">p3</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span> <span class="p">};</span>
+<span class="n">p1</span> <span class="o">+</span> <span class="p">(</span><span class="n">p2</span> <span class="o">+</span> <span class="n">p3</span><span class="p">);</span> <span class="c1">// returns AddOp&lt; Point, AddOp&lt;Point, Point&gt; &gt;</span>
+</pre></div>
+
+
+<p>看上去很完美。但是，看看下面的这种情况</p>
+<div class="codehilite"><pre><span class="n">Point</span> <span class="n">p1</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span> <span class="p">},</span> <span class="n">p2</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span> <span class="p">},</span> <span class="n">p3</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span> <span class="p">},</span><span class="n">p4</span><span class="o">=</span><span class="p">{</span><span class="mi">7</span><span class="p">,</span><span class="mi">8</span><span class="p">};</span>
+<span class="p">(</span><span class="n">p1</span> <span class="o">+</span> <span class="n">p2</span><span class="err">）</span> <span class="o">+</span> <span class="err">（</span><span class="n">p3</span><span class="o">+</span><span class="n">p4</span><span class="p">);</span> <span class="c1">//error no operator + match AddOp&lt;Point,Point&gt; +AddOp&lt;Point,Point&gt;</span>
+</pre></div>
+
+
+<h1 id="5cc1d8">惰性求值完整版</h1>
+<p>为此，我们还需要做一个修改，为加法操作符增加一个左右操作数都是<code>AddOp</code>的重载，修改如下：</p>
+<div class="codehilite"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">LLhs</span><span class="p">,</span> <span class="k">typename</span> <span class="n">LRhs</span><span class="p">,</span> <span class="k">typename</span> <span class="n">RLhs</span><span class="p">,</span> <span class="k">typename</span> <span class="n">RRhs</span><span class="o">&gt;</span>
+<span class="n">AddOp</span><span class="o">&lt;</span><span class="n">AddOp</span><span class="o">&lt;</span><span class="n">LLhs</span><span class="p">,</span> <span class="n">LRhs</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">AddOp</span><span class="o">&lt;</span><span class="n">RLhs</span><span class="p">,</span> <span class="n">RRhs</span><span class="o">&gt;&gt;</span> <span class="k">operator</span><span class="o">+</span><span class="p">(</span><span class="k">const</span> <span class="n">AddOp</span><span class="o">&lt;</span><span class="n">LLhs</span><span class="p">,</span> <span class="n">LRhs</span><span class="o">&gt;</span> <span class="o">&amp;</span> <span class="n">leftOperandconst</span><span class="p">,</span> <span class="k">const</span> <span class="n">AddOp</span><span class="o">&lt;</span><span class="n">RLhs</span><span class="p">,</span> <span class="n">RRhs</span><span class="o">&gt;</span> <span class="o">&amp;</span> <span class="n">rightOperand</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span>  <span class="n">AddOp</span><span class="o">&lt;</span><span class="n">AddOp</span><span class="o">&lt;</span><span class="n">LLhs</span><span class="p">,</span> <span class="n">LRhs</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">AddOp</span><span class="o">&lt;</span><span class="n">RLhs</span><span class="p">,</span> <span class="n">RRhs</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">leftOperandconst</span><span class="p">,</span> <span class="n">rightOperand</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>至此，类型的错误都已经完全解决了。剩下的问题就是如何从<code>AddOp</code>中拿出结果。因此，我们需要给<code>Point</code>增加一个类型转换函数：</p>
+<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">Lhs</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Rhs</span><span class="o">&gt;</span>
+<span class="n">Point</span><span class="p">(</span><span class="n">AddOp</span><span class="o">&lt;</span><span class="n">Lhs</span><span class="p">,</span> <span class="n">Rhs</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">op</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">op</span><span class="p">.</span><span class="n">get_x</span><span class="p">();</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">op</span><span class="p">.</span><span class="n">get_y</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">Lhs</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Rhs</span><span class="o">&gt;</span>
+<span class="n">Point</span><span class="o">&amp;</span> <span class="k">operator</span><span class="o">=</span><span class="p">(</span><span class="n">AddOp</span><span class="o">&lt;</span><span class="n">Lhs</span><span class="p">,</span> <span class="n">Rhs</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">op</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">op</span><span class="p">.</span><span class="n">get_x</span><span class="p">();</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">op</span><span class="p">.</span><span class="n">get_y</span><span class="p">();</span>
+    <span class="k">return</span> <span class="o">*</span><span class="k">this</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>同时，我们需要把<code>get\_x,get\_y</code>都实现出来。因此，在上述的两个类中分别增加这两个函数的代码。在<code>Point</code>中，增加如下代码：</p>
+<div class="codehilite"><pre><span class="kt">int</span> <span class="n">get_x</span><span class="p">()</span> <span class="k">const</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="kt">int</span> <span class="n">get_y</span><span class="p">()</span> <span class="k">const</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">y</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>在<code>AddOp</code>中，增加如下代码：</p>
+<div class="codehilite"><pre><span class="kt">int</span> <span class="nf">get_x</span><span class="p">()</span> <span class="k">const</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">lhs</span><span class="p">.</span><span class="n">get_x</span><span class="p">()</span> <span class="o">+</span> <span class="n">rhs</span><span class="p">.</span><span class="n">get_x</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="kt">int</span> <span class="n">get_y</span><span class="p">()</span> <span class="k">const</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">lhs</span><span class="p">.</span><span class="n">get_y</span><span class="p">()</span> <span class="o">+</span> <span class="n">rhs</span><span class="p">.</span><span class="n">get_y</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>同时，我们用下面的代码进行测试：</p>
+<div class="codehilite"><pre><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">Point</span> <span class="n">p1</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span> <span class="p">},</span> <span class="n">p2</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span> <span class="p">},</span> <span class="n">p3</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span> <span class="p">},</span> <span class="n">p4</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span> <span class="p">};</span>
+    <span class="n">Point</span> <span class="n">a</span><span class="o">=</span><span class="p">(</span><span class="n">p1</span> <span class="o">+</span> <span class="n">p2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">p3</span><span class="o">+</span><span class="n">p4</span><span class="p">);</span> 
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">a</span><span class="p">.</span><span class="n">x</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>耶，大功告成。当前我们只做到了特定数据结构特定操作下的惰性求值，其实实现的不是很完整。真正的惰性求值还牵涉到一个对象的多次求值。在多次求值的情况下，当前的实现会导致每一次都重新求一遍，效率很低。完整的<code>AddOp</code>实现中会有一个<code>bool</code>值来记录当前对象是否已经求过值了，初始为<code>false</code>。同时用<code>xvalue,yvalue</code>来记录已经求过的值。在第一次求值之后，<code>bool</code>改为<code>true</code>，同时将所求得值写入<code>xvalue,yvalue</code>。之后再进行求值则直接访问这两个域。如果读者想了解更多的话，可以参考<code>Boost.phoenix</code>库（warning 前方高能，请做好防护措施，本人狗眼已瞎）。</p>
+<h1 id="ea6f3b">参考链接</h1>
+<ul>
+<li>
+<p>wikipedia上关于惰性求值的页面：<a href="http://en.wikipedia.org/wiki/Lazy_evaluation">http://en.wikipedia.org/wiki/Lazy_evaluation</a></p>
+</li>
+<li>
+<p>haskell 上关于惰性求值的页面：<a href="https://www.haskell.org/haskellwiki/Lazy_evaluation">https://www.haskell.org/haskellwiki/Lazy_evaluation</a></p>
+</li>
+<li>
+<p>一个关于haskell惰性求值的简单而又详细的例子：<a href="https://hackhands.com/lazy-evaluation-works-haskell/">https://hackhands.com/lazy-evaluation-works-haskell/ </a></p>
+</li>
+<li>
+<p>stackoverflow上对于用C++实现惰性求值的的讨论：<a href="http://stackoverflow.com/questions/414243/lazy-evaluation-in-c/27353655#27353655">http://stackoverflow.com/questions/414243/lazy-evaluation-in-c/27353655#27353655</a></p>
+</li>
+<li>
+<p>boost的phoenix库： <a href="http://www.boost.org/doc/libs/1_47_0/libs/phoenix/doc/html/index.html">http://www.boost.org/doc/libs/1_47_0/libs/phoenix/doc/html/index.html</a></p>
+</li>
+</ul>
+    </div>
+    <div id="content-comments">
+<div id="disqus_thread"></div>
+<script type="text/javascript">var disqus_shortname="SpiritsAway";(function(){var a=document.createElement("script");a.type="text/javascript";a.async=true;a.src="//"+disqus_shortname+".disqus.com/embed.js";(document.getElementsByTagName("head")[0]||document.getElementsByTagName("body")[0]).appendChild(a)})();</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+
+</div>
+<div class="niu2-right-container col-md-2">
+    <div id="niu2-sidebar-meta" class="niu2-sidebar">
+        <div class="niu2-sidebar-label"><i class="fa fa-calendar"></i>发布时间:</div>
+        <div class="niu2-sidebar-value">2015-04-28</div>
+        <div class="niu2-sidebar-label"><i class="fa fa-open-folder"></i>分类:</div>
+        <div class="niu2-sidebar-value"><a href="/cpp/index.html">CPP</a></div>
+        <div class="niu2-sidebar-label"><i class="fa fa-tag"></i>标签:</div>
+ 
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="/tag/cpp.html">CPP</a><sup>3</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="/tag/lazy-evaluation.html">Lazy Evaluation</a><sup>1</sup></div>
+    </div>
+
+    <div id="niu2-sidebar-toc" class="niu2-sidebar" data-status="closed">
+        <div class="niu2-sidebar-label">
+            <i id="niu2-sidebar-toc-ctrl" class="fa fa-plus"></i>目录
+        </div>
+        <a href="#content-heading">Lazy Evaluation in CPP</a>
+        <ol id="niu2-sidebar-toc-list">
+            <li><a href='#463b04'>惰性求值简单实现</a></li><li><a href='#5cc1d8'>惰性求值完整版</a></li><li><a href='#ea6f3b'>参考链接</a></li>
+            <li><a href="#content-comments">评论</a></li>
+        </ol>
+    </div>
+</div>
+    </div>
+
+    <div id="body-footer" class="col-md-6 col-md-offset-3">
+<div class="niu2-footer">
+    <hr/>
+	<p>
+		Powered by <a href="https://github.com/getpelican/pelican">Pelican</a>, 
+        theme built with <a href="http://getbootstrap.com">Bootstrap3</a> 
+		modified by <a href="https://github.com/FinalTheory/pelican-theme">FinalTheory</a>, 
+		icons by <a href="http://fortawesome.github.io/Font-Awesome">Font Awesome</a>.
+	</p>
+	<p>
+		COPYRIGHT ©
+				2015
+		<a class="niu2-footer-link" href="">Huiliang Huang</a>
+    </p>
+</div>    </div>
+    
+    <div id="niu2-pygments" data-theme="github"></div>
+
+    <script type="text/javascript" src="/theme/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="/theme/js/niu2.js"></script>
+    <script type="text/javascript" src="/theme/js/bootstrap.min.js"></script>
+    <script type="text/javascript">onContentLoaded();</script>
+  </body>
+</html>

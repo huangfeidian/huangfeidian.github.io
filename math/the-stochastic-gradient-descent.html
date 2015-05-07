@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Stochastic Gradient Descent - Spirits Away</title>
+    <link rel="shortcut icon" type="image/x-icon" href="\favicon.ico">
+    <link rel="stylesheet" href="/theme/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="/theme/font-awesome/css/font-awesome.min.css" type="text/css" />
+    <link rel="stylesheet" href="/theme/css/niu2.css" type="text/css" />
+
+    <link rel="canonical" href="/math/the-stochastic-gradient-descent.html" />
+    
+    <script type="text/javascript">window.onload=function(){};</script>
+    <!--[if lt IE 9]>
+        <script src="/theme/js/html5shiv.js"></script>
+        <script src="/theme/js/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body> 
+    <div id="body-header">
+<div class="navbar navbar-inverse navbar-fixed-top">
+<div class="col-md-12">
+    <div class="navbar-header col-md-offset-2">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="">
+            <i class="fa fa-home"></i>Spirits Away
+        </a>
+    </div>
+    <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+        <ul class="nav navbar-nav">
+            <li><a href="/about.html" title="about">
+                <i class="fa fa-anchor"></i>关于</a>
+            </li>
+            <li><a href="/archives.html" title="archives">
+                <i class="fa fa-archive"></i>存档</a>
+            </li>
+            <li><a href="/tag/" title="tags">
+                <i class="fa fa-tag"></i>标签</a>
+            </li>
+        <!-- category dropdown list -->
+        <li class="dropdown">
+           <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                <i class="fa fa-folder-open"></i>分类<b class="caret"></b>
+           </a>
+           <ul class="dropdown-menu">
+               <li><a href="/ai/index.html">
+                   <i class="fa fa-folder-close"></i>AI
+                      (5)</a></li>
+               <li><a href="/cpp/index.html">
+                   <i class="fa fa-folder-close"></i>CPP
+                      (3)</a></li>
+               <li><a href="/math/index.html">
+                   <i class="fa fa-folder-close"></i>Math
+                      (2)</a></li>
+           </ul>
+        </li>
+        <!--  self defined dropdown list -->
+        </ul>
+        
+        <!-- right nav bar -->
+        <ul class="nav navbar-nav navbar-right">
+        <!-- google custom search -->
+       </ul>
+    </nav>
+</div>
+</div>    </div>
+    
+    <div id="body-content">
+<div class="col-md-8 col-md-offset-2">
+    <h1 id="content-heading">The Stochastic Gradient Descent</h1>
+</div>
+<div id="niu2-left-container" class="col-md-6 col-md-offset-2 with-right-border">
+    <div id="niu2-main-content">
+        <p>随机梯度下降(Stochastic Gradient Descent)是在处理大规模优化问题的折衷手段。本来对于优化问题的普适解法是梯度下降(Gradient Descent)，通过每次对目标函数在负梯度上进行迭代下降从而渐进的得到最优解。简单而又直观的来说：假设目标函数为<span class="math">\(\boldsymbol{f(w)}\)</span>，且该函数是凸函数(convex function)，则梯度下降有如下形式</p>
+<div class="math">\begin{equation}{w}_{t+1} = {w}_t - \eta_t \nabla f({w}_t)\end{equation}</div>
+<p><br />
+即每次在<span class="math">\({w}\)</span>处，在负梯度<span class="math">\(-\nabla f({w}_t)\)</span>方向上行进<span class="math">\(\eta _t\)</span>个单位。在合理设置步长<span class="math">\(\eta _t\)</span>时，可以得到一个收敛的序列<span class="math">\(\{f({w}_1), \ldots, f({w}_t), \ldots \}\)</span>，以任意精度逼近最优解<span class="math">\(\boldsymbol{f({w}^*)}\)</span>。</p>
+<p>梯度下降最重要的部分就是计算梯度<span class="math">\(\nabla f({w}_t)\)</span>，但是该梯度的计算在大数据量的情况下是不可行的：计算梯度所依赖的内存太大，计算梯度的复杂度太高。例如下面的目标函数：</p>
+<div class="math">\begin{equation}f({w}) = \sum_{i=1}^n L({w}, \boldsymbol{x}_i)\end{equation}</div>
+<p><br />
+为了计算该函数的梯度，我们需要计算下面的式子：</p>
+<div class="math">\begin{equation}\nabla f({w}) = \sum_{i=1}^n\nabla L({w}, \boldsymbol{x}_i)\end{equation}</div>
+<p><br />
+当<span class="math">\(n\)</span>的数量级非常大时，就会造成内存无法存储所有数据的情况，同时一次完整的计算代价太大。因此，只能选取随机梯度下降的方法。</p>
+<p>所谓随机梯度，就是以随机采样到的单个数据来当作全体数据，进行梯度计算。即以下面的方式来迭代：</p>
+<div class="math">\begin{equation}{w}_{t+1} = {w}_t - \eta_t g({w}_t)\end{equation}</div>
+<p><br />
+其中<span class="math">\(g({w})\)</span>是单个数据点计算而来的随机梯度，该随机梯度是全局梯度的无偏估计：</p>
+<div class="math">\begin{equation}\mathbb{E} [ g({w}_t) \ | \ {w}_t] = \nabla f({w}_t)\end{equation}</div>
+<p><br />
+但是，在随机下降方法上所得到的搜索序列<span class="math">\(\{f({w}_1), \ldots, f({w}_t), \ldots \}\)</span>会跟梯度下降一样收敛到最优值<span class="math">\(f^*({w})\)</span>么？</p>
+<p>既然你诚心诚意的问了，那我就发发慈悲告诉你们吧。会，但是有一些前提条件：</p>
+<div class="math">\begin{equation}\eta_t \geq 0, \ \sum_{t=1}^\infty \eta_t^2 = ||\boldsymbol{\eta}||_2^2 &lt; \infty, \ \sum_{t=1}^\infty \eta_t = \infty\end{equation}</div>
+<p><br />
+同时，对于任意的<span class="math">\(t\)</span>，我们还要求存在常数<span class="math">\(G,R\)</span>，使得：</p>
+<div class="math">\begin{equation}\mathbb{E}[||{w}_1 - {w}^*||_2^2] \leq R^2 \quad \mathbb{E}[||g({w}_t)||_2^2] \leq G^2\end{equation}</div>
+<p><br />
+此时，我们可以证明序列<span class="math">\(f_{best}(t) = \min \{f({w}_1), \ldots, f({w}_t)\}\)</span>会依概率收敛到<span class="math">\(f({w}^*)\)</span>：</p>
+<div class="math">\begin{equation}P(f_{best}(t) - f({w}^*) \geq \epsilon) \rightarrow 0\end{equation}</div>
+<p>依照期望的性质，我们可以得到下面的等式：</p>
+<div class="math">\begin{equation}\begin{split}&amp;\mathbb{E}[{\Vert w_{t+1}-w^*\Vert}_2^2|w_t]\\=&amp;\mathbb{E}[{\Vert w_t-\eta_tg(w_t)-w^*\Vert}_2^2|w_t]\\=&amp;\mathbb{E}[{\Vert w_t-w^*\Vert}_2^2|w_t]-2\eta_t\mathbb{E}[g(w_t)^T(w_t-w^*)|w_t]+\eta_t^2\mathbb{E}[g(w_t)^2|w_t]\\=&amp;\Vert w_t -w^*\Vert_2^2-2\eta_t\mathbb{E}[g(w_t)^T|w_t](w_t-w^*)+\eta_t^2\mathbb{E}[g(w_t)^2|w_t]\\=&amp;\Vert w_t -w^*\Vert_2^2-2\eta_t\nabla f(w_t)(w_t-w^*)+\eta_t^2\mathbb{E}[g(w_t)^2|w_t]\\\end{split}\end{equation}</div>
+<p><br />
+此时，根据凸函数的性质，我们有：</p>
+<div class="math">\begin{equation}f(a)-f(b)\geq\nabla f(b)(a-b)\Rightarrow f(w^*)-f(w_t)\geq\nabla f(w_t)(w^*-w_t)\end{equation}</div>
+<p><br />
+所以</p>
+<div class="math">\begin{equation}\mathbb{E}[{\Vert w_{t+1}-w^*\Vert}_2^2|w_t]\leq \Vert w_t -w^*\Vert_2^2-2\eta_t (f(w_t)-f(w^*))+\eta_t^2\mathbb{E}[g(w_t)^2|w_t]\end{equation}</div>
+<p><br />
+上式的两边同时对<span class="math">\(w_t\)</span>取期望，可以得到：</p>
+<div class="math">\begin{equation}\mathbb{E}[{\Vert w_{t+1}-w^*\Vert}_2^2]\leq \mathbb{E}[{\Vert w_t-w^*\Vert}_2^2]-2\eta_t (f(w_t)-f(w^*))+\eta_t^2G^2\end{equation}</div>
+<p><br />
+可以看出，上面的公式有一个递归部分。我们对这个递归部分重复利用，可以得到：</p>
+<div class="math">\begin{equation}\mathbb{E}[{\Vert w_{t+1}-w^*\Vert}_2^2]\leq \mathbb{E}[{\Vert w_1-w^*\Vert}_2^2]-2\sum_{j=1}^t{\eta_j (f(w_j)-f(w^*))}+G^2\sum_{j=1}^t{\eta_j^2}\end{equation}</div>
+<p><br />
+此时，利用之前给的限定条件，可以得到：</p>
+<div class="math">\begin{equation}2\sum_{j=1}^t{\eta_j (f(w_j)-f(w^*))}\leq R^2+G^2\Vert \boldsymbol{\eta}\Vert_2^2\end{equation}</div>
+<p><br />
+又因为我们之前的定义<span class="math">\(\mathbb{E}[f_{best}(t)] \leq \mathbb{E}[f({w}_j)]\)</span>，所以：</p>
+<div class="math">\begin{equation}E[f_{best}(t)] - f(w^*) \leq \frac{R^2 + G^2 ||\boldsymbol{\eta}||_2^2}{2 \sum_{j=1}^t \eta_j}\end{equation}</div>
+<p><br />
+根据我们之前的前提假设<span class="math">\(\sum_{t=1}^\infty \eta_t = \infty\)</span>，可以得到：</p>
+<div class="math">\begin{equation}E[f_{best}(t)] \rightarrow f({w}^*)\end{equation}</div>
+<p><br />
+此时，我们可以利用Markov不等式：</p>
+<div class="math">\begin{equation}P(f_{best}(t) - f({w}^*) \geq \epsilon) \leq \frac{E[f_{best}(t) - f({w}^*)]}{\epsilon} \leq \frac{R^2 + G^2 ||{\eta}||_2^2}{2 \epsilon \sum_{j=1}^t \eta_j}\end{equation}</div>
+<p><br />
+所以，当<span class="math">\(t\rightarrow\infty\)</span>时：</p>
+<div class="math">\begin{equation}P(f_{best}(t) - f({w}^*) \geq \epsilon) \rightarrow 0\end{equation}</div>
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+    
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = '//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+    mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
+        "    showMathMenu: true," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); ";
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
+    </div>
+    <div id="content-comments">
+<div id="disqus_thread"></div>
+<script type="text/javascript">var disqus_shortname="SpiritsAway";(function(){var a=document.createElement("script");a.type="text/javascript";a.async=true;a.src="//"+disqus_shortname+".disqus.com/embed.js";(document.getElementsByTagName("head")[0]||document.getElementsByTagName("body")[0]).appendChild(a)})();</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+
+</div>
+<div class="niu2-right-container col-md-2">
+    <div id="niu2-sidebar-meta" class="niu2-sidebar">
+        <div class="niu2-sidebar-label"><i class="fa fa-calendar"></i>发布时间:</div>
+        <div class="niu2-sidebar-value">2015-04-28</div>
+        <div class="niu2-sidebar-label"><i class="fa fa-open-folder"></i>分类:</div>
+        <div class="niu2-sidebar-value"><a href="/math/index.html">Math</a></div>
+        <div class="niu2-sidebar-label"><i class="fa fa-tag"></i>标签:</div>
+ 
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="/tag/gradient.html">Gradient</a><sup>1</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="/tag/ai.html">AI</a><sup>6</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="/tag/converge.html">Converge</a><sup>6</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="/tag/math.html">Math</a><sup>4</sup></div>
+    </div>
+
+    <div id="niu2-sidebar-toc" class="niu2-sidebar" data-status="closed">
+        <div class="niu2-sidebar-label">
+            <i id="niu2-sidebar-toc-ctrl" class="fa fa-plus"></i>目录
+        </div>
+        <a href="#content-heading">The Stochastic Gradient Descent</a>
+        <ol id="niu2-sidebar-toc-list">
+            
+            <li><a href="#content-comments">评论</a></li>
+        </ol>
+    </div>
+</div>
+    </div>
+
+    <div id="body-footer" class="col-md-6 col-md-offset-3">
+<div class="niu2-footer">
+    <hr/>
+	<p>
+		Powered by <a href="https://github.com/getpelican/pelican">Pelican</a>, 
+        theme built with <a href="http://getbootstrap.com">Bootstrap3</a> 
+		modified by <a href="https://github.com/FinalTheory/pelican-theme">FinalTheory</a>, 
+		icons by <a href="http://fortawesome.github.io/Font-Awesome">Font Awesome</a>.
+	</p>
+	<p>
+		COPYRIGHT ©
+				2015
+		<a class="niu2-footer-link" href="">Huiliang Huang</a>
+    </p>
+</div>    </div>
+    
+    <div id="niu2-pygments" data-theme="github"></div>
+
+    <script type="text/javascript" src="/theme/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="/theme/js/niu2.js"></script>
+    <script type="text/javascript" src="/theme/js/bootstrap.min.js"></script>
+    <script type="text/javascript">onContentLoaded();</script>
+  </body>
+</html>
