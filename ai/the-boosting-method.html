@@ -50,13 +50,13 @@
            <ul class="dropdown-menu">
                <li><a href="http://spiritsaway.info/ai/index.html">
                    <i class="fa fa-folder-close"></i>AI
-                      (5)</a></li>
+                      (4)</a></li>
                <li><a href="http://spiritsaway.info/cpp/index.html">
                    <i class="fa fa-folder-close"></i>CPP
                       (3)</a></li>
                <li><a href="http://spiritsaway.info/math/index.html">
                    <i class="fa fa-folder-close"></i>Math
-                      (2)</a></li>
+                      (3)</a></li>
            </ul>
         </li>
         <!--  self defined dropdown list -->
@@ -78,15 +78,15 @@
     <div id="niu2-main-content">
         <h1 id="2c97b8">Boosting方法</h1>
 <p>Boosting方法是一种组合方法，处理的是分类问题（当前对于分类的讨论限制为二分类，下面则不再复述）。其中心思想相当的简单：每次利用一个弱分类器(weak learner)对数据进行分类，每次分类完成之后，将分错的数据权重提高一点，并迭代进行多次分类。最后通过综合多次分类的结果作为最终的分类器，这样最终得到的分类器在测试数据与训练数据上都可以得到比较好的成绩。</p>
-<h2 id="e98c41">boosting简单图解</h2>
-<p>boosting的大概流程如下图：</p>
-<p>![ImageNeed]{http://storage.live.com/items/d5e2a786a1488739%2110218}</p>
+<h1 id="e98c41">boosting简单图解</h1>
+<p>boosting的大概流程如下图：<br />
+![boosting概述]{{attach}image\BOOSTING\boosting_procdure.png}</p>
 <p>训练集中一共有n个点，我们可以为里面的每一个点赋上一个权重<span class="math">\(W_i(0 \le i &lt; n)\)</span>，表示这个点的重要程度，初始时都相等（都赋值为1就可以了）。通过依次训练模型的过程，我们对点的权重进行修正，如果分类正确了，权重不变或者降低；如果分类错了，则权重提高。程序越往后执行，训练出的模型就越会在意那些容易分错（权重高）的点。正因为boosting对于错误分类的过于强调，在数据有错误或误差时如果使用强分类器来做基础分类器的话会导致非常严重的overfitting。因此，boosting中推荐使用弱分类器（必须大于1/2）来进行组装。</p>
 <p>上图中绿色的线就是表示依次训练模型。当全部的程序执行完后，会得到M个模型，分别对应上图的<span class="math">\(y_1\cdots y_M(x)\)</span>，通过加权的方式组合成一个最终的模型<span class="math">\(Y_M(x)\)</span>。</p>
-<p>![ImageNeed]{http://storage.live.com/items/d5e2a786a1488739%2110218}</p>
+<p>![PRML boosting]{{attach}image\BOOSTING\prml_boosting_illustration.png}</p>
 <p>上图（图片来自prml p660）就是一个Boosting的分类过程，绿色的线表示目前取得的模型（模型是由前m次得到的模型合并得到的），虚线表示当前这次模型。每次分类的时候，会更关注分错的数据，上图中，红色和蓝色的点就是数据，点越大表示权重越高，看看右下角的图片，当m=150的时候，获取的模型已经几乎能够将红色和蓝色的点区分开了。</p>
 <p>当前只是一个浅显的介绍，并没有涉及那些具体细节：对于点的权重如何调整，对于生成的多个分类器如何组合，如何选择和使用弱分类器。此外，还有最重要的一点：该方法为何能得到非常好的效果。下面便以几种知名的boosting方法来解释其中的一些细节和原理。</p>
-<h2 id="085c16">极简boosting</h2>
+<h1 id="085c16">极简boosting</h1>
 <p>话说这种方式的boosting我还不知道它的正式学名。。。这种boosting包含了一下几个部分：</p>
 <ul>
 <li>
@@ -118,7 +118,7 @@
 <p><br />
 所以，错误分类数是指数衰减的。当<span class="math">\(T=(1+ln(n))/{\gamma\epsilon}\)</span>时，<span class="math">\(m\le \frac{1}{e}\)</span>，即不存在误分类。</p>
 <p>因此，分类次数只需要<span class="math">\(O(log(n))\)</span>就可以达到完美分类。</p>
-<h2 id="3437d4">adaboost</h2>
+<h1 id="3437d4">adaboost</h1>
 <p>adaboost相对于上面的极简boost方法，做了一些修改。数据采取的是二元组形式<span class="math">\(\{x_i,y_i\}\)</span>，其中<span class="math">\(y_i\)</span>为<span class="math">\(\{+1,-1\}\)</span>。设<span class="math">\(G_m\)</span>为第<span class="math">\(m\)</span>个分类器，<span class="math">\(e_m\)</span>为第<span class="math">\(m\)</span>次分类时的分类错误率，<span class="math">\(w_{m,i}\)</span>为第<span class="math">\(m\)</span>轮分类之前数据<span class="math">\(\{x_i,y_i\}\)</span>的权重，同时保存一个变量<span class="math">\(a_m\)</span>：</p>
 <div class="math">\begin{equation}a_m=\frac{1}{2}log(\frac{1-e_m}{e_m})\end{equation}</div>
 <ul>
@@ -162,7 +162,7 @@
 <p><br />
 所以，误差是指数衰减的，与之前的的极简boosting类似。</p>
 <p>本来还要深入一下讨论gradient boost的，考虑到篇幅，还是以后再写吧。</p>
-<h2 id="ea6f3b">参考链接</h2>
+<h1 id="ea6f3b">参考链接</h1>
 <ul>
 <li>
 <p>prml上关于boosting的部分：<a href="http://book.douban.com/subject/2061116/">http://book.douban.com/subject/2061116/</a></p>
@@ -229,7 +229,7 @@
         <div class="niu2-sidebar-value"><a href="http://spiritsaway.info/ai/index.html">AI</a></div>
         <div class="niu2-sidebar-label"><i class="fa fa-tag"></i>标签:</div>
  
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/boosting.html">Boosting</a><sup>3</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/boosting.html">Boosting</a><sup>2</sup></div>
             <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/ai.html">AI</a><sup>6</sup></div>
             <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/converge.html">Converge</a><sup>6</sup></div>
     </div>
@@ -240,7 +240,7 @@
         </div>
         <a href="#content-heading">The Boosting Method</a>
         <ol id="niu2-sidebar-toc-list">
-            <li><a href='#2c97b8'>Boosting方法</a><ol><li><a href='#e98c41'>boosting简单图解</a></li><li><a href='#085c16'>极简boosting</a></li><li><a href='#3437d4'>adaboost</a></li><li><a href='#ea6f3b'>参考链接</a></li></ol></li>
+            <li><a href='#2c97b8'>Boosting方法</a></li><li><a href='#e98c41'>boosting简单图解</a></li><li><a href='#085c16'>极简boosting</a></li><li><a href='#3437d4'>adaboost</a></li><li><a href='#ea6f3b'>参考链接</a></li>
             <li><a href="#content-comments">评论</a></li>
         </ol>
     </div>

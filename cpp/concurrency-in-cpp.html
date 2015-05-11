@@ -50,13 +50,13 @@
            <ul class="dropdown-menu">
                <li><a href="http://spiritsaway.info/ai/index.html">
                    <i class="fa fa-folder-close"></i>AI
-                      (5)</a></li>
+                      (4)</a></li>
                <li><a href="http://spiritsaway.info/cpp/index.html">
                    <i class="fa fa-folder-close"></i>CPP
                       (3)</a></li>
                <li><a href="http://spiritsaway.info/math/index.html">
                    <i class="fa fa-folder-close"></i>Math
-                      (2)</a></li>
+                      (3)</a></li>
            </ul>
         </li>
         <!--  self defined dropdown list -->
@@ -237,7 +237,7 @@
 
 <p>该代码在单线程下是完美无缺的，但是在多线程下却有可能出现问题。因为在判断<code>empty</code>之后，可能有其他线程进行了<code>pop</code>操作导致栈空。此时如果再去<code>top</code>则会抛出异常。</p>
 <p>%插入图片<br />
-![ImageNeed]{http://storage.live.com/items/d5e2a786a1488739%2110218}</p>
+![多线程栈竞争]{{attach}image\CPP\stack_race.png}</p>
 <p>我们可以看出，虽然保证了接口是线程安全的，但是这样的一个简单操作却仍然无法保证正确性。这种错误根源在于接口设计的不合理性，我们需要把判断后访问栈顶元素的操作合并为一个操作。</p>
 <p>但是，在决定动手之前，我们还需要考虑更多的细节。例如，在<code>stack&lt;vector&lt;int&gt;&gt;</code>中，栈中的元素是一个<code>vector&lt;int&gt;</code>。如果我们通过拷贝构造的方式来返回<code>vector&lt;int&gt;</code>的话，需要临时构造一个相同大小的对象。新对象的构造需要牵涉到内存管理，从而潜在的包含了<code>bad\_alloc</code>异常。在该情况出现时，<code>pop</code>会造成栈已经被修改而无法返回正确的值的情形，从而造成值丢失。因此，我们不能使用直接返回值的方式来进行<code>pop</code>。下面是几种备选方案：</p>
 <ul>

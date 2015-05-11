@@ -5,21 +5,21 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
 <url>
 <loc>http://spiritsaway.info/</loc>
-<lastmod>2015-05-08T11:53:48-00:00</lastmod>
+<lastmod>2015-05-11T15:47:27-00:00</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
 
 <url>
 <loc>http://spiritsaway.info/archives.html</loc>
-<lastmod>2015-05-08T11:53:48-00:00</lastmod>
+<lastmod>2015-05-11T15:47:27-00:00</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
 
 <url>
 <loc>http://spiritsaway.info/categories.html</loc>
-<lastmod>2015-05-08T11:53:48-00:00</lastmod>
+<lastmod>2015-05-11T15:47:27-00:00</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
@@ -81,7 +81,7 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 </url>
 
 <url>
-<loc>http://spiritsaway.info/ai/the-chernoff-bound.html</loc>
+<loc>http://spiritsaway.info/math/the-chernoff-bound.html</loc>
 <lastmod>2015-04-17T21:33:00+08:00</lastmod>
 <changefreq>weekly</changefreq>
 <priority>0.5</priority>
@@ -179,6 +179,13 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 </url>
 
 <url>
+<loc>http://spiritsaway.info/tag/chernoff.html</loc>
+<lastmod>2015-04-17T21:33:00+08:06</lastmod>
+<changefreq>daily</changefreq>
+<priority>0.5</priority>
+</url>
+
+<url>
 <loc>http://spiritsaway.info/tag/concurrency.html</loc>
 <lastmod>2015-04-28T20:23:00+08:06</lastmod>
 <changefreq>daily</changefreq>
@@ -187,7 +194,7 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
 <url>
 <loc>http://spiritsaway.info/tag/boosting.html</loc>
-<lastmod>2015-04-17T21:33:00+08:06</lastmod>
+<lastmod>2015-04-17T21:31:00+08:06</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>

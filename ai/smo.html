@@ -50,13 +50,13 @@
            <ul class="dropdown-menu">
                <li><a href="http://spiritsaway.info/ai/index.html">
                    <i class="fa fa-folder-close"></i>AI
-                      (5)</a></li>
+                      (4)</a></li>
                <li><a href="http://spiritsaway.info/cpp/index.html">
                    <i class="fa fa-folder-close"></i>CPP
                       (3)</a></li>
                <li><a href="http://spiritsaway.info/math/index.html">
                    <i class="fa fa-folder-close"></i>Math
-                      (2)</a></li>
+                      (3)</a></li>
            </ul>
         </li>
         <!--  self defined dropdown list -->
@@ -81,7 +81,7 @@
 <div class="math">\begin{equation}VC-dimension\leq min\{\frac{R^2}{M^2},n\}+1\end{equation}</div>
 <p><br />
 其中，R为包围所有数据点的最小球半径，M为分类间隔的一半，n为样本数目大小。下图就比较形象的说明了SVM是干什么用的。</p>
-<p>![ImageNeed]{http://storage.live.com/items/d5e2a786a1488739%2110218}</p>
+<p>![SVM目标]{{attach}image\SVM\svm分类间隔.png}</p>
 <p>最终SVM得到的线性分类器的公式如下</p>
 <div class="math">\begin{equation}u=w^Tx-b\end{equation}</div>
 <p><br />
@@ -132,7 +132,7 @@
 这样<span class="math">\(a_i\)</span>就可以通过<span class="math">\(a_j\)</span>表示出来，此时优化问题可以转变为一个变量的二次优化问题，这个问题的计算量非常少。所以SMO包括两个过程，一个过程选择两个拉格朗日乘子，这是一个外部循环，一个过程来求解这两个变量的二次优化问题，这个是循环内过程。我们先来解决两个变量的lagrange multipliers问题，然后再去解决乘子的选择问题。</p>
 <h1 id="691d04">Two Lagrange Multiplier</h1>
 <p>为了计算两个lagrange Multiplier的优化问题，SMO首先计算这两个乘子的取值范围，然后再这个范围限制下解决二次优化问题。为了书写方便，现在用<span class="math">\(1,2\)</span>来代替<span class="math">\(i,j\)</span>。这两个变量之间的关系我们之前已经给出了<span class="math">\(a_1y_1+a_2y_2=k\)</span>,下面这幅图生动形象的解释了这两个变量的关系。</p>
-<p>![ImageNeed]{http://storage.live.com/items/d5e2a786a1488739%2110218}</p>
+<p>![双变量关系]{{attach}image\SVM\序列最小化.png}</p>
 <p>现在我们来讨论在进行双变量二次优化时<span class="math">\(a_2\)</span>的取值范围。如果<span class="math">\(y_1!=y_2\)</span>，则<span class="math">\(a_2\)</span>的下界<span class="math">\(L\)</span>和上界<span class="math">\(H\)</span>可以表示为</p>
 <div class="math">\begin{equation}L=max(0,a_2-a_1),\quad H=min(C,C+a_2-a_1)\end{equation}</div>
 <p><br />
@@ -156,15 +156,13 @@
 <p><br />
 至此，双变量的二次规划问题基本解决，现在唯一一个遗留的问题就是，如果核矩阵不是正定，那么这个时候怎么办。<br />
 当然，有效的核函数所构建的核矩阵一定是正定的，这个是核函数有效的Mercer条件。对于坑爹的非正定核的情况，我们需要手工计算在直线两端的目标函数的值，通过比较来确定如何更新这两个变量。这里我就懒得去写公式了，直接照搬SMO那篇paper里面的说明。</p>
-<p>![ImageNeed]{http://storage.live.com/items/d5e2a786a1488739%2110218}</p>
+<p>![非正定条件更新]{{attach}image\SVM\anormal_kernal.png}</p>
 <h1 id="29bc20">乘子选择问题</h1>
 <p>由于对于任何两个乘子，只要其中一个乘子违反了KKT条件，则我们总能通过双变量二次优化使目标函数减小。因此，收敛是一定的，现在需要考虑的是收敛的速度，及如何选取候选的两个乘子来加快收敛。</p>
 <p>目前有两种启发式的方法，一种用来寻找第一个乘子，另外一种用来寻找第二个乘子。第一个启发方法构成了SMO的外部循环。这个启发方法首先对整个训练集合进行搜索，寻找那些违反下式KKT条件的样例。</p>
 <div class="math">\begin{equation}\begin{split}a_i=0&amp;\rightarrow{\mu}_i=C\rightarrow {\xi}_i=0\rightarrow\ u-1+{\xi}_i\geq 0\rightarrow y_iu_i \geq 1\\0&lt; a_i&lt;C&amp;\rightarrow {\mu}_i\neq 0\rightarrow {\xi}_i=0\rightarrow\ u-1+{\xi}_i= 0 \rightarrow y_iu_i=1\\a_i=C&amp;\rightarrow {\mu}_i=0\rightarrow{\xi}_i\geq 0\rightarrow u-1+{\xi}_i= 0\rightarrow y_iu_i \leq 1\end{split}\end{equation}</div>
 <p><br />
 如果一个数据样例违反了上述KKT条件，则我们将这个样例数据加入到候选集合。通过这样的判别条件，我们对所有的乘子不为0或<span class="math">\(C\)</span>的数据进行扫描，得到了一个待优化的候选集合。</p>
-<p><img alt="Alt Text" src="/image/han.jpg" /><br />
-<a href="{hehehhepdf}/pdfs/menu.pdf">Our Menu</a></p>
 <script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
     var align = "center",
         indent = "0em",
@@ -222,7 +220,7 @@
  
             <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/svm.html">SVM</a><sup>1</sup></div>
             <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/ai.html">AI</a><sup>6</sup></div>
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/math.html">Math</a><sup>4</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/math.html">Math</a><sup>5</sup></div>
             <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/converge.html">Converge</a><sup>6</sup></div>
     </div>
 

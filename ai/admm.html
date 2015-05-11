@@ -50,13 +50,13 @@
            <ul class="dropdown-menu">
                <li><a href="http://spiritsaway.info/ai/index.html">
                    <i class="fa fa-folder-close"></i>AI
-                      (5)</a></li>
+                      (4)</a></li>
                <li><a href="http://spiritsaway.info/cpp/index.html">
                    <i class="fa fa-folder-close"></i>CPP
                       (3)</a></li>
                <li><a href="http://spiritsaway.info/math/index.html">
                    <i class="fa fa-folder-close"></i>Math
-                      (2)</a></li>
+                      (3)</a></li>
            </ul>
         </li>
         <!--  self defined dropdown list -->
@@ -364,7 +364,7 @@ ADMM对优化问题\ref{eq:AdmmLag}的迭代更新步骤为：</p>
 <div class="math">\begin{equation}(x_i)_j = z_{\mathcal{G}(i, j)} = \hat{z}_i \end{equation}</div>
 <p><br />
 如果对所有<span class="math">\(i\)</span>有<span class="math">\(\mathcal{G}(i,j)=j\)</span>，那么<span class="math">\(x_i\)</span> 与<span class="math">\(z\)</span>就是顺序映射，也就是全局一致性优化问题，否则就不是。结合下图就比较好理解</p>
-<p><img alt="Consensus" src="http://spiritsaway.info/ai/image/ADMM_consensus.png" /></p>
+<p><img alt="Consensus" src="http://spiritsaway.info/ai/image/ADMM/ADMM_consensus.png" /></p>
 <p>虽然如果用其他方法来做感觉会复杂，但是纳入到上述ADMM框架，其实只不过是全局一致性优化问题的一个局部化变形，不过此时不是对数据进行分块，是对参数空间进行分块.新的优化问题可以表示为</p>
 <div class="math">\begin{equation}\begin{array}{lc}\min &amp; \sum^N_{i = 1}f_i(x_i) + g(z), x_i \in \mathbf{R}^{n_i}\\s.t. &amp; x_i - \hat{z}_i = 0, i = 1, \ldots N \\\end{array}\end{equation}</div>
 <p><br />
@@ -477,7 +477,7 @@ ADMM对优化问题\ref{eq:AdmmLag}的迭代更新步骤为：</p>
         <div class="niu2-sidebar-label"><i class="fa fa-tag"></i>标签:</div>
  
             <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/admm.html">ADMM</a><sup>1</sup></div>
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/math.html">Math</a><sup>4</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/math.html">Math</a><sup>5</sup></div>
             <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/ai.html">AI</a><sup>6</sup></div>
             <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/converge.html">Converge</a><sup>6</sup></div>
     </div>
