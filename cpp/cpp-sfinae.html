@@ -50,10 +50,10 @@
            <ul class="dropdown-menu">
                <li><a href="http://spiritsaway.info/ai/index.html">
                    <i class="fa fa-folder-close"></i>AI
-                      (4)</a></li>
+                      (3)</a></li>
                <li><a href="http://spiritsaway.info/cpp/index.html">
                    <i class="fa fa-folder-close"></i>CPP
-                      (3)</a></li>
+                      (4)</a></li>
                <li><a href="http://spiritsaway.info/math/index.html">
                    <i class="fa fa-folder-close"></i>Math
                       (3)</a></li>
@@ -131,7 +131,7 @@
 </pre></div>
 
 
-<p>如果类型<code>T</code>内部定义了类型<code>foobar</code>，则<code>has\_typedef\_foobar&lt;int&gt;::value</code>的值为<code>true</code>，否则为<code>false</code>。这里之所以将<code>no</code>定义为10个<code>char</code>，是因为在不同的平台上可能有不同的内存对齐要求。如果定义为3个的话，遇到4字节对齐的硬件结构会导致<code>sizeof(yes)</code>与<code>sizeof(no)</code>都返回4，在8字节对齐的机器上也是同理。目前来说还没见过大于8字节的对齐（当然自己犯贱#pragma_pack(16)的除外)，所以定义为10基本可以保证这两个类型返回的字节大小是不一样的。</p>
+<p>如果类型<code>T</code>内部定义了类型<code>foobar</code>，则<code>has_typedef_foobar&lt;int&gt;::value</code>的值为<code>true</code>，否则为<code>false</code>。这里之所以将<code>no</code>定义为10个<code>char</code>，是因为在不同的平台上可能有不同的内存对齐要求。如果定义为3个的话，遇到4字节对齐的硬件结构会导致<code>sizeof(yes)</code>与<code>sizeof(no)</code>都返回4，在8字节对齐的机器上也是同理。目前来说还没见过大于8字节的对齐（当然自己犯贱#pragma_pack(16)的除外)，所以定义为10基本可以保证这两个类型返回的字节大小是不一样的。</p>
 <h1 id="1b222c">用SFINAE实现类内部函数判断</h1>
 <p>SFINAE的功能不仅仅是能编译期确定类型内部是否定义了新类型，而且还能在编译期确定实参类型内部是否定义了某个成员函数，样例代码如下（注意 VS编译不过。。。）：</p>
 <div class="codehilite"><pre><span class="cp">#include &lt;type_traits&gt;</span>
@@ -160,7 +160,7 @@
 
 
 <p>其具体作用就是返回任意类型<code>T</code>的一个右值引用，即使该类型不存在构造函数。但是该右值引用不可以用来求值，只能用在不可求值环境，只能用来推导类型，如其成员变量和成员函数的类型。而<code>decltype(std::declval&lt;T&gt;().f(), void())</code>的作用就是强制进行<code>std::declval&lt;T&gt;().f()</code>的类型推导，并最后返回<code>void</code>类型。</p>
-<p><code>std::false\_type,std::true\_type</code>内部都有一个成员<code>value</code>，类似于我们上个事例代码中的<code>has\_typedef\_foobar&lt;int&gt;::value</code>，值分别为<code>false,true</code>。而<code>std::enable\_if</code>是一个类模板，并显示特化为了<code>true,false</code>两种类型。<code>std::enable\_if&lt;true&gt;</code>内部定义了一个新类型<code>type</code>，而<code>std::enable\_if&lt;false&gt;</code>内部则没有定义这个类型。<code>std::enable\_if</code>具体定义代码如下所示：</p>
+<p><code>std::false_type,std::true_type</code>内部都有一个成员<code>value</code>，类似于我们上个事例代码中的<code>has_typedef_foobar&lt;int&gt;::value</code>，值分别为<code>false,true</code>。而<code>std::enable_if</code>是一个类模板，并显示特化为了<code>true,false</code>两种类型。<code>std::enable_if&lt;true&gt;</code>内部定义了一个新类型<code>type</code>，而<code>std::enable_if&lt;false&gt;</code>内部则没有定义这个类型。<code>std::enable_if</code>具体定义代码如下所示：</p>
 <div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="kt">bool</span> <span class="n">B</span><span class="p">,</span> <span class="k">class</span> <span class="nc">T</span> <span class="o">=</span> <span class="kt">void</span><span class="o">&gt;</span>
 <span class="k">struct</span> <span class="n">enable_if</span> <span class="p">{};</span>
 <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
@@ -169,7 +169,7 @@
 
 
 <p>在这一系列的模板特化和实例化之下，语句<code>A&lt;B&gt;</code>能够编译通过，而语句<code>A(C)</code>则编译报错。</p>
-<p>当前我们只做到了判断没有参数也没有返回值的函数的存在性，事实上还可以判断具体签名的成员函数的存在性。假设我们要判断某个类内部是否定义了<code>size\_t used\_memory() const</code>这个函数，该需求可以通过下面的代码来实现：</p>
+<p>当前我们只做到了判断没有参数也没有返回值的函数的存在性，事实上还可以判断具体签名的成员函数的存在性。假设我们要判断某个类内部是否定义了<code>size_t used_memory() const</code>这个函数，该需求可以通过下面的代码来实现：</p>
 <div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
 <span class="k">struct</span> <span class="n">HasUsedMemoryMethod</span>
 <span class="p">{</span>
@@ -198,7 +198,7 @@
 
 <p>这里用到了成员指针<code>::*</code>这个类型，因为普通指针无法指向成员函数（多了一个this指针的参数)，具体细节读者自行百度吧。由于个人能力所限，还无法得到有参数的成员函数的存在性判断，但是现在最起码得到了有返回值类型的成员函数的存在性判断，先偷着乐一会吧。</p>
 <h1 id="2eabc6">利用SFINAE实现指针类型判断</h1>
-<p>对于一个变量，我们还可以利用SFINAE来判断该变量是否是指针类型的：包括普通变量指针，成员变量指针，成员函数指针，函数指针这四种指针类型。<code>type\_traits</code>中的<code>is\_pointer</code>元函数可以做到这一功能，代码如下：</p>
+<p>对于一个变量，我们还可以利用SFINAE来判断该变量是否是指针类型的：包括普通变量指针，成员变量指针，成员函数指针，函数指针这四种指针类型。<code>type_traits</code>中的<code>is_pointer</code>元函数可以做到这一功能，代码如下：</p>
 <div class="codehilite"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
 <span class="k">struct</span> <span class="n">is_pointer</span>
 <span class="p">{</span>
@@ -254,7 +254,7 @@
 </pre></div>
 
 
-<p><code>static\_cast&lt;D*&gt;(0)</code>这一句的作用是将0转换为一个<code>A</code>类型的指针。由于<code>Test（B*)</code>接受的是<code>B*</code>类型的参数，所以会默认进行<code>A*</code>到<code>B*</code>的转换，如果可以转换，则匹配第一个模板。如果<code>A*</code>没有到<code>B*</code>的转换，则<code>Test(B*)</code>这个模板匹配失败，并最终匹配了第二个模板。剩下的工作就好理解了，这里就不再赘述。需要注意的是，这里并不是去做真正的类型转换，而且，只有<code>enum</code>和<code>const static</code>类型的值才能在编译期动态赋值。</p>
+<p><code>static_cast&lt;D*&gt;(0)</code>这一句的作用是将0转换为一个<code>A</code>类型的指针。由于<code>Test（B*)</code>接受的是<code>B*</code>类型的参数，所以会默认进行<code>A*</code>到<code>B*</code>的转换，如果可以转换，则匹配第一个模板。如果<code>A*</code>没有到<code>B*</code>的转换，则<code>Test(B*)</code>这个模板匹配失败，并最终匹配了第二个模板。剩下的工作就好理解了，这里就不再赘述。需要注意的是，这里并不是去做真正的类型转换，而且，只有<code>enum</code>和<code>const static</code>类型的值才能在编译期动态赋值。</p>
 <p>上面的代码只能实现可转换的判断，如果<code>A</code>与<code>B</code>的类型相同的时候，会返回1。如果我们要判断的是<code>A</code>是否是<code>B</code>的继承类型的时候，该结果并不令人满意。所以我们还需要增加一个代码片段，来排除相同类型的情况。代码示例如下:</p>
 <div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
 <span class="k">class</span> <span class="nc">IsDerivedFrom</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="n">T</span><span class="o">&gt;</span>
@@ -301,7 +301,7 @@
 </pre></div>
 
 
-<p>由于有些类型的<code>T</code>是不可拷贝的，例如<code>std::mutex,std::unique\_ptr</code>。但是对于这些类型的<code>T</code>，<code>is\_copy\_constructible&lt;C&lt;T&gt;\,&gt;::value</code>仍然是<code>true</code>的。为了防止这些类型的拷贝构造，我们要把<code>C&lt;T&gt;</code>的拷贝构造函数禁用。代码如下：</p>
+<p>由于有些类型的<code>T</code>是不可拷贝的，例如<code>std::mutex,std::unique_ptr</code>。但是对于这些类型的<code>T</code>，<code>is_copy_constructible&lt;C&lt;T&gt;\,&gt;::value</code>仍然是<code>true</code>的。为了防止这些类型的拷贝构造，我们要把<code>C&lt;T&gt;</code>的拷贝构造函数禁用。代码如下：</p>
 <div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="kt">bool</span> <span class="n">copyable</span><span class="o">&gt;</span>
 <span class="k">struct</span> <span class="n">copyable_characteristic</span> <span class="p">{</span> <span class="p">};</span>
 
@@ -354,7 +354,7 @@
 </pre></div>
 
 
-<p>上面的代码中，<code>\_sum&lt;N&gt;</code>是一个模板元函数，<code>A&lt;N&gt;</code>是一个封装了N个整数的结构体。<code>\_sum&lt;N&gt;</code>非常巧妙的利用了<code>int</code>与<code>bool</code>的隐式类型转换，以及<code>std::enable\_if</code>的特性，还有类型别名机制，实现了递归求前N个元素和的壮举。同时，<code>A(A&lt;otherN&gt; const)</code>也通过利用<code>std::enable\_if</code>实现了把拷贝构造中长度控制的奇迹。看到这两个简短而又不知所云的代码是不是感觉有点怕！当SFINAE和TYPETRIATS一起结合的时候，<code>the real terror awaits you</code>。</p>
+<p>上面的代码中，<code>_sum&lt;N&gt;</code>是一个模板元函数，<code>A&lt;N&gt;</code>是一个封装了N个整数的结构体。<code>_sum&lt;N&gt;</code>非常巧妙的利用了<code>int</code>与<code>bool</code>的隐式类型转换，以及<code>std::enable_if</code>的特性，还有类型别名机制，实现了递归求前N个元素和的壮举。同时，<code>A(A&lt;otherN&gt; const)</code>也通过利用<code>std::enable_if</code>实现了把拷贝构造中长度控制的奇迹。看到这两个简短而又不知所云的代码是不是感觉有点怕！当SFINAE和TYPETRIATS一起结合的时候，<code>the real terror awaits you</code>。</p>
 <h1 id="ea6f3b">参考链接</h1>
 <ul>
 <li>
@@ -393,7 +393,7 @@
         <div class="niu2-sidebar-value"><a href="http://spiritsaway.info/cpp/index.html">CPP</a></div>
         <div class="niu2-sidebar-label"><i class="fa fa-tag"></i>标签:</div>
  
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/cpp.html">CPP</a><sup>3</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/cpp.html">CPP</a><sup>4</sup></div>
             <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/template.html">Template</a><sup>1</sup></div>
     </div>
 

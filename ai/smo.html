@@ -50,10 +50,10 @@
            <ul class="dropdown-menu">
                <li><a href="http://spiritsaway.info/ai/index.html">
                    <i class="fa fa-folder-close"></i>AI
-                      (4)</a></li>
+                      (3)</a></li>
                <li><a href="http://spiritsaway.info/cpp/index.html">
                    <i class="fa fa-folder-close"></i>CPP
-                      (3)</a></li>
+                      (4)</a></li>
                <li><a href="http://spiritsaway.info/math/index.html">
                    <i class="fa fa-folder-close"></i>Math
                       (3)</a></li>
@@ -81,7 +81,7 @@
 <div class="math">\begin{equation}VC-dimension\leq min\{\frac{R^2}{M^2},n\}+1\end{equation}</div>
 <p><br />
 其中，R为包围所有数据点的最小球半径，M为分类间隔的一半，n为样本数目大小。下图就比较形象的说明了SVM是干什么用的。</p>
-<p>![SVM目标]{{attach}image\SVM\svm分类间隔.png}</p>
+<p><img alt="SVM目标" src="http://spiritsaway.info/ai/image/SVM/svm分类间隔.png" /></p>
 <p>最终SVM得到的线性分类器的公式如下</p>
 <div class="math">\begin{equation}u=w^Tx-b\end{equation}</div>
 <p><br />
@@ -132,7 +132,7 @@
 这样<span class="math">\(a_i\)</span>就可以通过<span class="math">\(a_j\)</span>表示出来，此时优化问题可以转变为一个变量的二次优化问题，这个问题的计算量非常少。所以SMO包括两个过程，一个过程选择两个拉格朗日乘子，这是一个外部循环，一个过程来求解这两个变量的二次优化问题，这个是循环内过程。我们先来解决两个变量的lagrange multipliers问题，然后再去解决乘子的选择问题。</p>
 <h1 id="691d04">Two Lagrange Multiplier</h1>
 <p>为了计算两个lagrange Multiplier的优化问题，SMO首先计算这两个乘子的取值范围，然后再这个范围限制下解决二次优化问题。为了书写方便，现在用<span class="math">\(1,2\)</span>来代替<span class="math">\(i,j\)</span>。这两个变量之间的关系我们之前已经给出了<span class="math">\(a_1y_1+a_2y_2=k\)</span>,下面这幅图生动形象的解释了这两个变量的关系。</p>
-<p>![双变量关系]{{attach}image\SVM\序列最小化.png}</p>
+<p><img alt="双变量关系" src="http://spiritsaway.info/ai/image/SVM/序列最小化.png" /></p>
 <p>现在我们来讨论在进行双变量二次优化时<span class="math">\(a_2\)</span>的取值范围。如果<span class="math">\(y_1!=y_2\)</span>，则<span class="math">\(a_2\)</span>的下界<span class="math">\(L\)</span>和上界<span class="math">\(H\)</span>可以表示为</p>
 <div class="math">\begin{equation}L=max(0,a_2-a_1),\quad H=min(C,C+a_2-a_1)\end{equation}</div>
 <p><br />
@@ -219,9 +219,9 @@
         <div class="niu2-sidebar-label"><i class="fa fa-tag"></i>标签:</div>
  
             <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/svm.html">SVM</a><sup>1</sup></div>
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/ai.html">AI</a><sup>6</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/ai.html">AI</a><sup>5</sup></div>
             <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/math.html">Math</a><sup>5</sup></div>
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/converge.html">Converge</a><sup>6</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/converge.html">Converge</a><sup>5</sup></div>
     </div>
 
     <div id="niu2-sidebar-toc" class="niu2-sidebar" data-status="closed">

@@ -50,10 +50,10 @@
            <ul class="dropdown-menu">
                <li><a href="http://spiritsaway.info/ai/index.html">
                    <i class="fa fa-folder-close"></i>AI
-                      (4)</a></li>
+                      (3)</a></li>
                <li><a href="http://spiritsaway.info/cpp/index.html">
                    <i class="fa fa-folder-close"></i>CPP
-                      (3)</a></li>
+                      (4)</a></li>
                <li><a href="http://spiritsaway.info/math/index.html">
                    <i class="fa fa-folder-close"></i>Math
                       (3)</a></li>
@@ -80,7 +80,7 @@
 <p>Boosting方法是一种组合方法，处理的是分类问题（当前对于分类的讨论限制为二分类，下面则不再复述）。其中心思想相当的简单：每次利用一个弱分类器(weak learner)对数据进行分类，每次分类完成之后，将分错的数据权重提高一点，并迭代进行多次分类。最后通过综合多次分类的结果作为最终的分类器，这样最终得到的分类器在测试数据与训练数据上都可以得到比较好的成绩。</p>
 <h1 id="e98c41">boosting简单图解</h1>
 <p>boosting的大概流程如下图：<br />
-<img alt="boosting概述" src="{attach}image\BOOSTING\boosting_procdure.png" /></p>
+<img alt="boosting概述" src="http://spiritsaway.info/ai/image/BOOSTING/boosting_procedure.png" /></p>
 <p>训练集中一共有n个点，我们可以为里面的每一个点赋上一个权重<span class="math">\(W_i(0 \le i &lt; n)\)</span>，表示这个点的重要程度，初始时都相等（都赋值为1就可以了）。通过依次训练模型的过程，我们对点的权重进行修正，如果分类正确了，权重不变或者降低；如果分类错了，则权重提高。程序越往后执行，训练出的模型就越会在意那些容易分错（权重高）的点。正因为boosting对于错误分类的过于强调，在数据有错误或误差时如果使用强分类器来做基础分类器的话会导致非常严重的overfitting。因此，boosting中推荐使用弱分类器（必须大于1/2）来进行组装。</p>
 <p>上图中绿色的线就是表示依次训练模型。当全部的程序执行完后，会得到M个模型，分别对应上图的<span class="math">\(y_1\cdots y_M(x)\)</span>，通过加权的方式组合成一个最终的模型<span class="math">\(Y_M(x)\)</span>。</p>
 <p><img alt="PRML boosting" src="http://spiritsaway.info/ai/image/BOOSTING/prml_boosting_illustration.png" /></p>
@@ -229,9 +229,9 @@
         <div class="niu2-sidebar-value"><a href="http://spiritsaway.info/ai/index.html">AI</a></div>
         <div class="niu2-sidebar-label"><i class="fa fa-tag"></i>标签:</div>
  
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/boosting.html">Boosting</a><sup>2</sup></div>
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/ai.html">AI</a><sup>6</sup></div>
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/converge.html">Converge</a><sup>6</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/boosting.html">Boosting</a><sup>1</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/ai.html">AI</a><sup>5</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/converge.html">Converge</a><sup>5</sup></div>
     </div>
 
     <div id="niu2-sidebar-toc" class="niu2-sidebar" data-status="closed">

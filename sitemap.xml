@@ -5,21 +5,21 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
 <url>
 <loc>http://spiritsaway.info/</loc>
-<lastmod>2015-05-11T15:54:23-00:00</lastmod>
+<lastmod>2015-05-11T16:04:46-00:00</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
 
 <url>
 <loc>http://spiritsaway.info/archives.html</loc>
-<lastmod>2015-05-11T15:54:23-00:00</lastmod>
+<lastmod>2015-05-11T16:04:46-00:00</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
 
 <url>
 <loc>http://spiritsaway.info/categories.html</loc>
-<lastmod>2015-05-11T15:54:23-00:00</lastmod>
+<lastmod>2015-05-11T16:04:46-00:00</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
@@ -88,7 +88,7 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 </url>
 
 <url>
-<loc>http://spiritsaway.info/ai/cpp-bind.html</loc>
+<loc>http://spiritsaway.info/cpp/cpp-bind.html</loc>
 <lastmod>2015-04-17T21:31:00+08:00</lastmod>
 <changefreq>weekly</changefreq>
 <priority>0.5</priority>
@@ -153,6 +153,13 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
 <loc>http://spiritsaway.info/tag/ai.html</loc>
 <lastmod>2015-05-07T13:31:00+08:06</lastmod>
+<changefreq>daily</changefreq>
+<priority>0.5</priority>
+</url>
+
+<url>
+<loc>http://spiritsaway.info/tag/bind.html</loc>
+<lastmod>2015-04-17T21:31:00+08:06</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
