@@ -80,10 +80,10 @@
 <p>Boosting方法是一种组合方法，处理的是分类问题（当前对于分类的讨论限制为二分类，下面则不再复述）。其中心思想相当的简单：每次利用一个弱分类器(weak learner)对数据进行分类，每次分类完成之后，将分错的数据权重提高一点，并迭代进行多次分类。最后通过综合多次分类的结果作为最终的分类器，这样最终得到的分类器在测试数据与训练数据上都可以得到比较好的成绩。</p>
 <h1 id="e98c41">boosting简单图解</h1>
 <p>boosting的大概流程如下图：<br />
-![boosting概述]{{attach}image\BOOSTING\boosting_procdure.png}</p>
+<img alt="boosting概述" src="{attach}image\BOOSTING\boosting_procdure.png" /></p>
 <p>训练集中一共有n个点，我们可以为里面的每一个点赋上一个权重<span class="math">\(W_i(0 \le i &lt; n)\)</span>，表示这个点的重要程度，初始时都相等（都赋值为1就可以了）。通过依次训练模型的过程，我们对点的权重进行修正，如果分类正确了，权重不变或者降低；如果分类错了，则权重提高。程序越往后执行，训练出的模型就越会在意那些容易分错（权重高）的点。正因为boosting对于错误分类的过于强调，在数据有错误或误差时如果使用强分类器来做基础分类器的话会导致非常严重的overfitting。因此，boosting中推荐使用弱分类器（必须大于1/2）来进行组装。</p>
 <p>上图中绿色的线就是表示依次训练模型。当全部的程序执行完后，会得到M个模型，分别对应上图的<span class="math">\(y_1\cdots y_M(x)\)</span>，通过加权的方式组合成一个最终的模型<span class="math">\(Y_M(x)\)</span>。</p>
-<p>![PRML boosting]{{attach}image\BOOSTING\prml_boosting_illustration.png}</p>
+<p><img alt="PRML boosting" src="http://spiritsaway.info/ai/image/BOOSTING/prml_boosting_illustration.png" /></p>
 <p>上图（图片来自prml p660）就是一个Boosting的分类过程，绿色的线表示目前取得的模型（模型是由前m次得到的模型合并得到的），虚线表示当前这次模型。每次分类的时候，会更关注分错的数据，上图中，红色和蓝色的点就是数据，点越大表示权重越高，看看右下角的图片，当m=150的时候，获取的模型已经几乎能够将红色和蓝色的点区分开了。</p>
 <p>当前只是一个浅显的介绍，并没有涉及那些具体细节：对于点的权重如何调整，对于生成的多个分类器如何组合，如何选择和使用弱分类器。此外，还有最重要的一点：该方法为何能得到非常好的效果。下面便以几种知名的boosting方法来解释其中的一些细节和原理。</p>
 <h1 id="085c16">极简boosting</h1>
