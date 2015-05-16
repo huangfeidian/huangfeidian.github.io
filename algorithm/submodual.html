@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submodual - Spirits Away</title>
+    <link rel="shortcut icon" type="image/x-icon" href="\favicon.ico">
+    <link rel="stylesheet" href="http://spiritsaway.info/theme/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="http://spiritsaway.info/theme/font-awesome/css/font-awesome.min.css" type="text/css" />
+    <link rel="stylesheet" href="http://spiritsaway.info/theme/css/niu2.css" type="text/css" />
+
+    <link rel="canonical" href="http://spiritsaway.info/algorithm/submodual.html" />
+    
+    <script type="text/javascript">window.onload=function(){};</script>
+    <!--[if lt IE 9]>
+        <script src="http://spiritsaway.info/theme/js/html5shiv.js"></script>
+        <script src="http://spiritsaway.info/theme/js/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body> 
+    <div id="body-header">
+<div class="navbar navbar-inverse navbar-fixed-top">
+<div class="col-md-12">
+    <div class="navbar-header col-md-offset-2">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="http://spiritsaway.info">
+            <i class="fa fa-home"></i>Spirits Away
+        </a>
+    </div>
+    <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+        <ul class="nav navbar-nav">
+            <li><a href="/about.html" title="about">
+                <i class="fa fa-anchor"></i>关于</a>
+            </li>
+            <li><a href="/archives.html" title="archives">
+                <i class="fa fa-archive"></i>存档</a>
+            </li>
+            <li><a href="/tag/" title="tags">
+                <i class="fa fa-tag"></i>标签</a>
+            </li>
+        <!-- category dropdown list -->
+        <li class="dropdown">
+           <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                <i class="fa fa-folder-open"></i>分类<b class="caret"></b>
+           </a>
+           <ul class="dropdown-menu">
+               <li><a href="http://spiritsaway.info/ai/index.html">
+                   <i class="fa fa-folder-close"></i>AI
+                      (3)</a></li>
+               <li><a href="http://spiritsaway.info/algorithm/index.html">
+                   <i class="fa fa-folder-close"></i>Algorithm
+                      (2)</a></li>
+               <li><a href="http://spiritsaway.info/code/index.html">
+                   <i class="fa fa-folder-close"></i>Code
+                      (3)</a></li>
+               <li><a href="http://spiritsaway.info/cpp/index.html">
+                   <i class="fa fa-folder-close"></i>CPP
+                      (4)</a></li>
+               <li><a href="http://spiritsaway.info/math/index.html">
+                   <i class="fa fa-folder-close"></i>Math
+                      (4)</a></li>
+           </ul>
+        </li>
+        <!--  self defined dropdown list -->
+        </ul>
+        
+        <!-- right nav bar -->
+        <ul class="nav navbar-nav navbar-right">
+        <!-- google custom search -->
+       </ul>
+    </nav>
+</div>
+</div>    </div>
+    
+    <div id="body-content">
+<div class="col-md-8 col-md-offset-2">
+    <h1 id="content-heading">Submodual</h1>
+</div>
+<div id="niu2-left-container" class="col-md-6 col-md-offset-2 with-right-border">
+    <div id="niu2-main-content">
+        <h1 id="5e6325">子模态定义</h1>
+<p>子模态是集合函数的一种性质。一个集合函数<span class="math">\(f(x)\)</span>的定义要满足下面这个性质</p>
+<div class="math">\begin{equation}f: 2^{\Omega}\rightarrow \mathbb{R}\end{equation}</div>
+<p><br />
+即<span class="math">\(f(x)\)</span>的定义域为集合<span class="math">\(Ω\)</span>的任何一个子集，值域为实数集。而这个集合函数如果要满足子模态性质的话，还需要满足下面三个等价条件中的任何一个。</p>
+<ul>
+<li>
+<p>对于任何一个<span class="math">\(X,Y\subset Ω\)</span>且<span class="math">\(X\subset Y\)</span>，以及对任何一个<span class="math">\(x\in Ω \\ Y\)</span>，下面的式子一定成立。<div class="math">$$f(X\cup {x})-f(X)\geq f(Y\cup {x})-f(Y)$$</div>
+</p>
+</li>
+<li>
+<p>对于任何一个<span class="math">\(X,Y\subset Ω\)</span> ，下面的式子一定成立。<div class="math">$$f(X)+f(Y)\geq f(X\cup Y)+f(X\cap Y)$$</div>
+</p>
+</li>
+<li>
+<p>对于任何一个<span class="math">\(X\subset Ω\)</span>及<span class="math">\(x_1 ,x_2 \in Ω∖X\)</span>，下面的式子一定成立,<div class="math">$$f(X\cup {x_1})+f(X\cup {x_2})\geq f(X\cup {x_1,x_2})+f(X)$$</div>
+</p>
+</li>
+</ul>
+<p>读者可以很轻松的验证这几个条件是等价的，这里就不去证明了。</p>
+<p>根据这些条件，我们可以得出下面这个结论。设<span class="math">\(f_1 (x),f_2 (x),\cdots,f_k (x)\)</span>都是有子模态性质的函数，<span class="math">\(c_1 ,c_2 ,\cdots,c_k\)</span> 是非负实数，则下面这个函数</p>
+<div class="math">\begin{equation}F(x)=\sum_{i=1}^{k}{c_if_i(x)}\end{equation}</div>
+<p><br />
+仍然是子模态的。即多个子模态函数的非负线性组合仍然是子模态函数。这个推论可以很简单的验证出来，这里也就懒得做证明的。</p>
+<h1 id="7c0625">子模态与贪心方法</h1>
+<p>接下来的问题就是，子模态这个函数性质有什么用。简单来说子模态这个函数性质在组合优化中很有用。特别是针对保持|x| 的大小固定，然后去求<span class="math">\(f(x)\)</span>的最大值这种问题。 这个子模态性质可以保证我们在贪心求解这个问题得到的解不会差，事实上贪心解<span class="math">\(f(x)\)</span>的值不会小于<span class="math">\((1−1/e )*OPT\)</span>，其中<span class="math">\(OPT\)</span>为最优解。在该问题的贪心求解过程中，我们是从<span class="math">\(0\)</span>开始构建目标集合<span class="math">\(x\)</span>的。每一步我们将一个新的元素加入到<span class="math">\(x\)</span>中，迭代<span class="math">\(k\)</span>步。我们以<span class="math">\(X_i\)</span> 来代表迭代<span class="math">\(i\)</span>次之后的<span class="math">\(x\)</span>集合，初始<span class="math">\(x_0 =\emptyset\)</span>。我们对下一个要加入的节点<span class="math">\(u\)</span>的选取的贪心规则为</p>
+<div class="math">\begin{equation}u=arg max_{u}{f(X_{i-1}\cup { u})}\end{equation}</div>
+<p><br />
+现在我们要证明在此贪心规则下</p>
+<div class="math">\begin{equation}f(x)\geq (1-\frac{1}{e})*OPT\end{equation}</div>
+<p><br />
+为此，我们先证明一个引理</p>
+<div class="math">\begin{equation} f(A\cup B)-f(A)\leq \sum_{j=1}^{k}{[f(A\cup {b_j})-f(A)]}\end{equation}</div>
+<p><br />
+ 其中<span class="math">\(B={b_1,\cdots,b_k}\)</span>.此时我们定义<span class="math">\(Bi=b_1,\cdots,b_i\)</span>，则</p>
+<div class="math">\begin{equation}\begin{split}f(A\cup B)-f(A)&amp;=\sum_{i=1}^{k}{[f(A\cup B_i)-f(A\cup B_{i-1})]}\\&amp;=\sum_{i=1}^{k}{[f(A\cup B_{i-1}\cup {b_i})-f(A\cup B_{i-1})]}\\&amp;\leq\sum_{j=1}^{k}{[f(A\cup {b_j})-f(A)]}\end{split}\end{equation}</div>
+<p><br />
+设最优解为<span class="math">\(T={t_1,\cdots,t_k}\)</span>,<span class="math">\(\delta_i=f(X_i)-f(X_{i-1})\)</span>,根据上面这个不等式我们可以推出</p>
+<div class="math">\begin{equation}\begin{split}f(T)&amp;\leq f(X_i\cup T)\\&amp;=f(X_i\cup T)-f(X_i)+f(X_i)\\&amp;\leq\sum_{j=1}^{k}{[f(X_i\cup {t_j})-f(X_i)]}+f(X_i)\\&amp;\leq\sum_{j=1}^{k}{[\delta_{i+1}]}+f(X_i)\\&amp;=f(X_i)+k\delta_{i+1}\end{split}\end{equation}</div>
+<p><br />
+综上我们可以得出这个结论</p>
+<div class="math">\begin{equation}\delta_{i+1}\geq \frac{1}{k}[f(T)-f(X_i)]\end{equation}</div>
+<p><br />
+ 所以</p>
+<div class="math">\begin{equation}\begin{split}f(X_{i+1})&amp;=f(X_i)+\delta_{i+1}\\&amp;\geq f(X_i)+\frac{1}{k}[f(T)-f(X_i)]\\&amp;=(1-\frac{1}{k})f(X_i)+\frac{1}{k}f(T)\end{split}\end{equation}</div>
+<p><br />
+ 通过上面的递推式，我们可以给出<span class="math">\(f(X_i)\)</span></p>
+<div class="math">\begin{equation}f(X_i)\geq [1-{(1-\frac{1}{k})}^i]f(T)\end{equation}</div>
+<p><br />
+ 这个是简单的递推数列求通项，这里也就懒得证明了。所以</p>
+<div class="math">\begin{equation}f(X_k)\geq [1-{(1-\frac{1}{k})}^k]f(T)\geq [1-\frac{1}{e}]f(T)\end{equation}</div>
+<p><br />
+ 这就是贪心大法好的证明。</p>
+<h1 id="220c3c">子模态的应用</h1>
+<p>下面我就以影响最大化这个例子来说明这个东西还是有点用的。</p>
+<p>影响最大化(<strong>influence maXimization</strong>)这个问题是定义在一个有向无环图<span class="math">\(G=(V,E)\)</span>上的。对于这个图的任意一条边<span class="math">\((v,w)\)</span>，我们都有这条边的权值<span class="math">\(p_{vw}\)</span> 。<span class="math">\(p_{vw}\)</span> 用来代表<span class="math">\(v\)</span>对<span class="math">\(w\)</span>的影响能力，这个影响能力是一个概率，因此<span class="math">\(p _{vw} \in [0,1]\)</span>。对于边<span class="math">\((v,w)\)</span>不存在的时候，<span class="math">\(p_{vw}\)</span> 定义为0.</p>
+<p><img alt="发散网络" src="http://spiritsaway.info/algorithm/image/Submodual/DiffusionNetwork.png" /></p>
+<p>这个图类似于一个传播网络，或者感染网络。现在我们来定义影响函数<span class="math">\(f(X)\)</span>，这是一个集合函数。为了表征这个函数，我们需要定义一个随机过程<span class="math">\(S\)</span>。初始时刻0，我们给定输入<span class="math">\(P=X_0\)</span> ，<span class="math">\(P\)</span>表示活动集合。在时刻<span class="math">\(t\)</span>，我们对<span class="math">\(\forall v \in X_t\)</span>做如下操作：<span class="math">\(\forall w\in V/P\)</span>，我们以概率<span class="math">\(p_{vw}\)</span> 将节点<span class="math">\(w\)</span>加入到<span class="math">\(X_{t+1}\)</span> 中。此操作完成之后，检查<span class="math">\(X_{t+1}\)</span> 是否为空。如果为空，则返回<span class="math">\(P\)</span>；否则<span class="math">\(P=P \cup X_{t+1}\)</span> ，然后重复上面的操作。这个模型叫做independent Cascade Model，由Goldenberg, Libai,and Muller提出来的（这个模型是不是跟微博上的转发非常像）。</p>
+<p><img alt="发散过程" src="http://spiritsaway.info/algorithm/image/Submodual/DiffusionProcedure.png" /></p>
+<p>最后我们来表征<span class="math">\(f(X)\)</span>，就是初始集合<span class="math">\(X\)</span>该过程<span class="math">\(S\)</span>下所返回的集合<span class="math">\(P\)</span>的大小的平均值。</p>
+<p>影响最大化问题就是在固定集合<span class="math">\(X\)</span>大小<span class="math">\(k\)</span>的情况下，最大化<span class="math">\(f(X)\)</span>。我们可以证明这个优化问题是NPHard 的。该问题的简化形式为<span class="math">\(p_{vw}\)</span> 都是1，此时该问题不再是一个随机过程。每个初始点<span class="math">\(v\)</span>的可达集是固定的，我们可以表示为<span class="math">\(R_v\)</span> 。因此，原问题等价于在集合<span class="math">\(R_1 ,\cdots,R_{|v|}\)</span> 中找到<span class="math">\(k\)</span>个集合，使得</p>
+<div class="math">\begin{equation} arg\max_u{f(S_{i-1}\cup{u})}\end{equation}</div>
+<p>但是，如何证明这个贪心是有效的一个难题，因为这是一个随机过程，每个点的增益在每一个时刻都是一个不同的随机变量，函数表达式也不是一个解析式。</p>
+<p>我们现在先从简化问题出发，然后再去求解原问题。而简化问题就是我们之前提到的集合覆盖问题<span class="math">\(f(S)=|\cup  i\in S x_i |\)</span>，这个问题其实是子模态的。证明也很简单，直接对集合进行分割就行了，这里就省去了具体的证明。我们再回归到原问题，在<span class="math">\(t\)</span>时刻节点<span class="math">\(v\)</span>引发<span class="math">\(w\)</span>的概率为<span class="math">\(p_{vw}\)</span> ，这是一个<span class="math">\(01\)</span>分布。事实上这个结果是<span class="math">\(0\)</span>还是<span class="math">\(1\)</span>与时刻<span class="math">\(t\)</span>是无关的，所以我们可以预先生成好这个随机变量。对所有的边进行提前生成随机变量之后，我们就得到了一个图<span class="math">\(N\)</span>.<span class="math">\(N\)</span>的拓扑结构与原图一致，不同的地方就是<span class="math">\(p_{vw}\)</span> 。</p>
+<p><img alt="新图1" src="http://spiritsaway.info/algorithm/image/Submodual/NewGraph1.png" /></p>
+<p><img alt="新图2" src="http://spiritsaway.info/algorithm/image/Submodual/NewGraph2.png" /></p>
+<p><img alt="新图3" src="http://spiritsaway.info/algorithm/image/Submodual/NewGraph3.png" /></p>
+<p>而当<span class="math">\(v\)</span>引发<span class="math">\(w\)</span>时，<span class="math">\(p_{vw} =1\)</span>，否则就等于0.在<span class="math">\(N\)</span>中的影响最大等价于之前讨论的集合覆盖问题。设生成图<span class="math">\(N_i\)</span> 的概率为<span class="math">\(p_i\)</span> ，设<span class="math">\(f_i(X)\)</span>为在图<span class="math">\(N_i\)</span> 上寻找影响最大的解，则</p>
+<div class="math">\begin{equation}f(X)=\sum_{i=1}{p_if_i(X)}\end{equation}</div>
+<p><br />
+ 可以看出这是多个子模态函数的非负线性组合，因此<span class="math">\(f(X)\)</span>是子模态的。又根据我们在之前证明贪心法在子模态函数上是可行的，所以贪心法对影响最大问题是可行的。</p>
+<h1 id="ea6f3b">参考链接</h1>
+<ul>
+<li>
+<p><a href="http://en.wikipedia.org/wiki/Submodular">http://en.wikipedia.org/wiki/Submodular</a> 维基百科上的介绍</p>
+</li>
+<li>
+<p><a href="http://www.cs.cornell.edu/home/kleinber/kdd03-inf.pdf">http://www.cs.cornell.edu/home/kleinber/kdd03-inf.pdf</a> 业界大佬kleinberg ，请收下我的膝盖。</p>
+</li>
+</ul>
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+    
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = '//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+    mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
+        "    showMathMenu: true," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); ";
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
+    </div>
+    <div id="content-comments">
+<div id="disqus_thread"></div>
+<script type="text/javascript">var disqus_shortname="SpiritsAway";(function(){var a=document.createElement("script");a.type="text/javascript";a.async=true;a.src="//"+disqus_shortname+".disqus.com/embed.js";(document.getElementsByTagName("head")[0]||document.getElementsByTagName("body")[0]).appendChild(a)})();</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+
+</div>
+<div class="niu2-right-container col-md-2">
+    <div id="niu2-sidebar-meta" class="niu2-sidebar">
+        <div class="niu2-sidebar-label"><i class="fa fa-calendar"></i>发布时间:</div>
+        <div class="niu2-sidebar-value">2014-06-23</div>
+        <div class="niu2-sidebar-label"><i class="fa fa-open-folder"></i>分类:</div>
+        <div class="niu2-sidebar-value"><a href="http://spiritsaway.info/algorithm/index.html">Algorithm</a></div>
+        <div class="niu2-sidebar-label"><i class="fa fa-tag"></i>标签:</div>
+ 
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/algorithm.html">Algorithm</a><sup>3</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/greedy.html">Greedy</a><sup>1</sup></div>
+    </div>
+
+    <div id="niu2-sidebar-toc" class="niu2-sidebar" data-status="closed">
+        <div class="niu2-sidebar-label">
+            <i id="niu2-sidebar-toc-ctrl" class="fa fa-plus"></i>目录
+        </div>
+        <a href="#content-heading">Submodual</a>
+        <ol id="niu2-sidebar-toc-list">
+            <li><a href='#5e6325'>子模态定义</a></li><li><a href='#7c0625'>子模态与贪心方法</a></li><li><a href='#220c3c'>子模态的应用</a></li><li><a href='#ea6f3b'>参考链接</a></li>
+            <li><a href="#content-comments">评论</a></li>
+        </ol>
+    </div>
+</div>
+    </div>
+
+    <div id="body-footer" class="col-md-6 col-md-offset-3">
+<div class="niu2-footer">
+    <hr/>
+	<p>
+		Powered by <a href="https://github.com/getpelican/pelican">Pelican</a>, 
+        theme built with <a href="http://getbootstrap.com">Bootstrap3</a> 
+		modified by <a href="https://github.com/FinalTheory/pelican-theme">FinalTheory</a>, 
+		icons by <a href="http://fortawesome.github.io/Font-Awesome">Font Awesome</a>.
+	</p>
+	<p>
+		COPYRIGHT ©
+				2014-2015
+		<a class="niu2-footer-link" href="http://spiritsaway.info">Huiliang Huang</a>
+    </p>
+</div>    </div>
+    
+    <div id="niu2-pygments" data-theme="github"></div>
+
+    <script type="text/javascript" src="http://spiritsaway.info/theme/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="http://spiritsaway.info/theme/js/niu2.js"></script>
+    <script type="text/javascript" src="http://spiritsaway.info/theme/js/bootstrap.min.js"></script>
+    <script type="text/javascript">onContentLoaded();</script>
+  </body>
+</html>

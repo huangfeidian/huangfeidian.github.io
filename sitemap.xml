@@ -5,21 +5,21 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
 <url>
 <loc>http://spiritsaway.info/</loc>
-<lastmod>2015-05-11T16:04:46-00:00</lastmod>
+<lastmod>2015-05-16T14:00:17-00:00</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
 
 <url>
 <loc>http://spiritsaway.info/archives.html</loc>
-<lastmod>2015-05-11T16:04:46-00:00</lastmod>
+<lastmod>2015-05-16T14:00:17-00:00</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
 
 <url>
 <loc>http://spiritsaway.info/categories.html</loc>
-<lastmod>2015-05-11T16:04:46-00:00</lastmod>
+<lastmod>2015-05-16T14:00:17-00:00</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
@@ -28,6 +28,13 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <loc>http://spiritsaway.info/about.html</loc>
 <lastmod>2013-08-25T12:14:00+08:00</lastmod>
 <changefreq>monthly</changefreq>
+<priority>0.5</priority>
+</url>
+
+<url>
+<loc>http://spiritsaway.info/code/under-the-hood-pogs.html</loc>
+<lastmod>2015-05-15T21:31:00+08:00</lastmod>
+<changefreq>weekly</changefreq>
 <priority>0.5</priority>
 </url>
 
@@ -81,6 +88,20 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 </url>
 
 <url>
+<loc>http://spiritsaway.info/code/under-the-hood-parallel-caffe.html</loc>
+<lastmod>2015-04-21T21:31:00+08:00</lastmod>
+<changefreq>weekly</changefreq>
+<priority>0.5</priority>
+</url>
+
+<url>
+<loc>http://spiritsaway.info/code/under-the-hood-caffe.html</loc>
+<lastmod>2015-04-20T21:31:00+08:00</lastmod>
+<changefreq>weekly</changefreq>
+<priority>0.5</priority>
+</url>
+
+<url>
 <loc>http://spiritsaway.info/math/the-chernoff-bound.html</loc>
 <lastmod>2015-04-17T21:33:00+08:00</lastmod>
 <changefreq>weekly</changefreq>
@@ -102,8 +123,43 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 </url>
 
 <url>
+<loc>http://spiritsaway.info/math/normal-distribution.html</loc>
+<lastmod>2014-07-17T20:31:00+08:00</lastmod>
+<changefreq>weekly</changefreq>
+<priority>0.5</priority>
+</url>
+
+<url>
+<loc>http://spiritsaway.info/algorithm/submodual.html</loc>
+<lastmod>2014-06-23T20:31:00+08:00</lastmod>
+<changefreq>weekly</changefreq>
+<priority>0.5</priority>
+</url>
+
+<url>
+<loc>http://spiritsaway.info/algorithm/hopcroft-karp-algorithm.html</loc>
+<lastmod>2014-04-17T17:31:00+08:00</lastmod>
+<changefreq>weekly</changefreq>
+<priority>0.5</priority>
+</url>
+
+<url>
 <loc>http://spiritsaway.info/ai/index.html</loc>
 <lastmod>2015-05-07T13:31:00+08:06</lastmod>
+<changefreq>daily</changefreq>
+<priority>0.5</priority>
+</url>
+
+<url>
+<loc>http://spiritsaway.info/algorithm/index.html</loc>
+<lastmod>2014-06-23T20:31:00+08:06</lastmod>
+<changefreq>daily</changefreq>
+<priority>0.5</priority>
+</url>
+
+<url>
+<loc>http://spiritsaway.info/code/index.html</loc>
+<lastmod>2015-05-15T21:31:00+08:06</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
@@ -124,7 +180,7 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
 <url>
 <loc>http://spiritsaway.info/tag/admm.html</loc>
-<lastmod>2015-05-07T13:31:00+08:06</lastmod>
+<lastmod>2015-05-15T21:31:00+08:06</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
@@ -151,6 +207,13 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 </url>
 
 <url>
+<loc>http://spiritsaway.info/tag/probability.html</loc>
+<lastmod>2014-07-17T20:31:00+08:06</lastmod>
+<changefreq>daily</changefreq>
+<priority>0.5</priority>
+</url>
+
+<url>
 <loc>http://spiritsaway.info/tag/ai.html</loc>
 <lastmod>2015-05-07T13:31:00+08:06</lastmod>
 <changefreq>daily</changefreq>
@@ -160,6 +223,20 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
 <loc>http://spiritsaway.info/tag/bind.html</loc>
 <lastmod>2015-04-17T21:31:00+08:06</lastmod>
+<changefreq>daily</changefreq>
+<priority>0.5</priority>
+</url>
+
+<url>
+<loc>http://spiritsaway.info/tag/nn.html</loc>
+<lastmod>2015-04-21T21:31:00+08:06</lastmod>
+<changefreq>daily</changefreq>
+<priority>0.5</priority>
+</url>
+
+<url>
+<loc>http://spiritsaway.info/tag/greedy.html</loc>
+<lastmod>2014-06-23T20:31:00+08:06</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
@@ -181,6 +258,20 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
 <loc>http://spiritsaway.info/tag/lazy-evaluation.html</loc>
 <lastmod>2015-04-28T20:22:00+08:06</lastmod>
+<changefreq>daily</changefreq>
+<priority>0.5</priority>
+</url>
+
+<url>
+<loc>http://spiritsaway.info/tag/code.html</loc>
+<lastmod>2015-05-15T21:31:00+08:06</lastmod>
+<changefreq>daily</changefreq>
+<priority>0.5</priority>
+</url>
+
+<url>
+<loc>http://spiritsaway.info/tag/caffe.html</loc>
+<lastmod>2015-04-21T21:31:00+08:06</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
@@ -229,7 +320,7 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
 <url>
 <loc>http://spiritsaway.info/author/huiliang-huang.html</loc>
-<lastmod>2015-05-07T13:31:00+08:06</lastmod>
+<lastmod>2015-05-15T21:31:00+08:06</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
