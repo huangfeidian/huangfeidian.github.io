@@ -258,7 +258,7 @@ ADMM对优化问题\ref{eq:AdmmLag}的迭代更新步骤为：</p>
 <p>由于这里的每一个变量<span class="math">\(x_i\)</span>都可以单独计算，所以是并行化的理想场所。</p>
 <h1 id="022eb3">ADMM问题转化</h1>
 <p>现在回到我们最开始的ADMM问题形式：</p>
-<div class="math">\begin{equation}\label{eq:AdmmOrigin} minimize \quad f(x)+g(z) \quad w.r.t. \quad Ax+Bz=c \end{equation}</div>
+<div class="math">\begin{equation}\label{eq:AdmmOrigin} minimize \quad f(x)+g(z) \quad w.r.t. \quad Ax+Bz=c\end{equation}</div>
 <p><br />
 但是，我们一般遇到的是单变量的目标函数，并没有<span class="math">\(z\)</span>的存在。所以，我们需要构造出一个<span class="math">\(z\)</span>出来。下面来谈一下一些常见目标函数的ADMM形式的构建方法。</p>
 <p>对于一般的受约束的凸优化问题，我们有如下形式</p>
