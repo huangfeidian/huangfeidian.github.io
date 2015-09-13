@@ -6,8 +6,8 @@
     <title>Under the Hood : Caffe - Spirits Away</title>
     <link rel="shortcut icon" type="image/x-icon" href="\favicon.ico">
     <link rel="stylesheet" href="http://spiritsaway.info/theme/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="http://spiritsaway.info/theme/font-awesome/css/font-awesome.min.css" type="text/css" />
-    <link rel="stylesheet" href="http://spiritsaway.info/theme/css/niu2.css" type="text/css" />
+    <link rel="stylesheet" href="http://spiritsaway.info/theme/font-icons/style.min.css" type="text/css" />
+    <link rel="stylesheet" href="http://spiritsaway.info/theme/css/niu2.min.css" type="text/css" />
 
     <link rel="canonical" href="http://spiritsaway.info/code/under-the-hood-caffe.html" />
     
@@ -21,47 +21,47 @@
     <div id="body-header">
 <div class="navbar navbar-inverse navbar-fixed-top">
 <div class="col-md-12">
-    <div class="navbar-header col-md-offset-2">
+    <div class="navbar-header">
         <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
         </button>
         <a class="navbar-brand" href="http://spiritsaway.info">
-            <i class="fa fa-home"></i>Spirits Away
+            <i class="icon-home"></i>Spirits Away
         </a>
     </div>
     <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
         <ul class="nav navbar-nav">
             <li><a href="/about.html" title="about">
-                <i class="fa fa-anchor"></i>关于</a>
+                <i class="fa-anchor"></i>关于</a>
             </li>
             <li><a href="/archives.html" title="archives">
-                <i class="fa fa-archive"></i>存档</a>
+                <i class="fa-archive"></i>存档</a>
             </li>
             <li><a href="/tag/" title="tags">
-                <i class="fa fa-tag"></i>标签</a>
+                <i class="fa-tag"></i>标签</a>
             </li>
         <!-- category dropdown list -->
         <li class="dropdown">
            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                <i class="fa fa-folder-open"></i>分类<b class="caret"></b>
+                <i class="icon-folder-open"></i>分类<b class="caret"></b>
            </a>
            <ul class="dropdown-menu">
                <li><a href="http://spiritsaway.info/ai/index.html">
-                   <i class="fa fa-folder-close"></i>AI
+                   <i class="icon-folder-close"></i>AI
                       (3)</a></li>
                <li><a href="http://spiritsaway.info/algorithm/index.html">
-                   <i class="fa fa-folder-close"></i>Algorithm
-                      (2)</a></li>
+                   <i class="icon-folder-close"></i>Algorithm
+                      (3)</a></li>
                <li><a href="http://spiritsaway.info/code/index.html">
-                   <i class="fa fa-folder-close"></i>Code
+                   <i class="icon-folder-close"></i>Code
                       (3)</a></li>
                <li><a href="http://spiritsaway.info/cpp/index.html">
-                   <i class="fa fa-folder-close"></i>CPP
+                   <i class="icon-folder-close"></i>CPP
                       (4)</a></li>
                <li><a href="http://spiritsaway.info/math/index.html">
-                   <i class="fa fa-folder-close"></i>Math
+                   <i class="icon-folder-close"></i>Math
                       (4)</a></li>
            </ul>
         </li>
@@ -819,11 +819,11 @@ What distinguishes the method from SGD is the weight setting <span class="math">
 </div>
 <div class="niu2-right-container col-md-2">
     <div id="niu2-sidebar-meta" class="niu2-sidebar">
-        <div class="niu2-sidebar-label"><i class="fa fa-calendar"></i>发布时间:</div>
-        <div class="niu2-sidebar-value">2015-04-20</div>
-        <div class="niu2-sidebar-label"><i class="fa fa-open-folder"></i>分类:</div>
+        <div class="niu2-sidebar-label"><i class="icon-calendar"></i>发布时间:</div>
+        <div class="niu2-sidebar-value">2015-04-20 21:31</div>
+        <div class="niu2-sidebar-label"><i class="icon-open-folder"></i>分类:</div>
         <div class="niu2-sidebar-value"><a href="http://spiritsaway.info/code/index.html">Code</a></div>
-        <div class="niu2-sidebar-label"><i class="fa fa-tag"></i>标签:</div>
+        <div class="niu2-sidebar-label"><i class="icon-tag"></i>标签:</div>
  
             <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/nn.html">NN</a><sup>2</sup></div>
             <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/code.html">Code</a><sup>3</sup></div>
@@ -832,37 +832,44 @@ What distinguishes the method from SGD is the weight setting <span class="math">
 
     <div id="niu2-sidebar-toc" class="niu2-sidebar" data-status="closed">
         <div class="niu2-sidebar-label">
-            <i id="niu2-sidebar-toc-ctrl" class="fa fa-plus"></i>目录
+            <i id="niu2-sidebar-toc-ctrl" class="icon-open-tocs"></i>目录
         </div>
-        <a href="#content-heading">Under the Hood : Caffe</a>
         <ol id="niu2-sidebar-toc-list">
+            <li><a href="#content-heading">Under the Hood : Caffe</a></li>
             <li><a href='#9fc63e'>device_alternate.hpp</a></li><li><a href='#0e4f38'>proto/caffe.pb.h</a></li><li><a href='#23937f'>util/rng.hpp</a></li><li><a href='#ad7c65'>util/mkl_alternate.h</a></li><li><a href='#83fcbe'>util/math_fucntions</a></li><li><a href='#16cd7a'>common.hpp</a></li><li><a href='#552c74'>syncedmem.hpp</a></li><li><a href='#ed894f'>util/db.hpp</a></li><li><a href='#8e17f8'>util/io.hpp</a></li><li><a href='#e16c12'>internal_thread.hpp</a></li><li><a href='#f1872c'>The Main Structure of Caffe</a></li><li><a href='#a7d6d5'>blob.hpp</a></li><li><a href='#401b9c'>filler.hpp</a></li><li><a href='#e22d0b'>layer.hpp</a></li><li><a href='#4ae9e3'>net.hpp</a></li><li><a href='#c50011'>solver.hpp</a></li><li><a href='#767efa'>The workflow of caffe</a></li><li><a href='#cc2808'>network initiation</a></li><li><a href='#fa9de3'>network trainning</a></li>
             <li><a href="#content-comments">评论</a></li>
         </ol>
     </div>
-</div>
-    </div>
-
-    <div id="body-footer" class="col-md-6 col-md-offset-3">
-<div class="niu2-footer">
-    <hr/>
-	<p>
-		Powered by <a href="https://github.com/getpelican/pelican">Pelican</a>, 
-        theme built with <a href="http://getbootstrap.com">Bootstrap3</a> 
-		modified by <a href="https://github.com/FinalTheory/pelican-theme">FinalTheory</a>, 
-		icons by <a href="http://fortawesome.github.io/Font-Awesome">Font Awesome</a>.
-	</p>
-	<p>
-		COPYRIGHT ©
-				2014-2015
-		<a class="niu2-footer-link" href="http://spiritsaway.info">Huiliang Huang</a>
-    </p>
 </div>    </div>
+
+    <div class="niu2-footer">
+        <div id="body-footer" class="col-md-6 col-md-offset-2">
+<hr/>
+<p>
+    Powered by <a href="https://github.com/getpelican/pelican">Pelican</a>, 
+    <a href="https://github.com/mawenbao/niu-x2-sidebar">theme</a> built with <a href="http://getbootstrap.com">Bootstrap3</a>
+    by <a href="http://blog.atime.me">Ma Wenbao</a>, icons by 
+    <a href="http://fortawesome.github.io/Font-Awesome">Font Awesome</a>.
+</p>
+<p>
+    ©
+            2014-2015
+    <a class="niu2-footer-link" href="http://spiritsaway.info">Huiliang Huang</a>
+</p>
+<p class="niu2-icons">
+        <a class="niu2-footer-icon" href="mailto: spiritsaway@outlook.com" title="my email address">
+            <i class="fa-envelope-alt icon-lg"></i>
+        </a>
+        <a class="niu2-footer-icon" href="https://github.com/huangfeidian" title="my github page">
+            <i class="fa-github-alt icon-lg"></i>
+        </a>
+</p>        </div>
+    </div>
     
     <div id="niu2-pygments" data-theme="github"></div>
 
     <script type="text/javascript" src="http://spiritsaway.info/theme/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="http://spiritsaway.info/theme/js/niu2.js"></script>
+    <script type="text/javascript" src="http://spiritsaway.info/theme/js/niu2.min.js"></script>
     <script type="text/javascript" src="http://spiritsaway.info/theme/js/bootstrap.min.js"></script>
     <script type="text/javascript">onContentLoaded();</script>
   </body>
