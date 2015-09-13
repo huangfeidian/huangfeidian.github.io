@@ -59,7 +59,7 @@
                       (3)</a></li>
                <li><a href="http://spiritsaway.info/cpp/index.html">
                    <i class="icon-folder-close"></i>CPP
-                      (4)</a></li>
+                      (5)</a></li>
                <li><a href="http://spiritsaway.info/math/index.html">
                    <i class="icon-folder-close"></i>Math
                       (4)</a></li>
@@ -87,9 +87,9 @@
 <h1 id="7fc8c3">naive topk问题</h1>
 <p>所谓的naive topk问题可以表述为：</p>
 <blockquote>
-<p>从n个数中找出其最大的k个数</p>
+<p>\centering&gt;从n个数中找出其最大的k个数<br />
+言简意赅。解决方案也是非常直接，基本可用的方法用3种：</p>
 </blockquote>
-<p>言简意赅。解决方案也是非常直接，基本可用的方法用3种：</p>
 <ul>
 <li>
 <p>堆排序：用一个大小为k的最小堆，所需时间为<span class="math">\(\mathcal{O}(nlogk)\)</span>，空间为<span class="math">\(k\)</span>,其实额外空间都不需要，直接原地排就可以。</p>
@@ -105,7 +105,7 @@
 <h1 id="93a142">一维区间topk</h1>
 <p>所谓的一维区间topk问题可以表述为</p>
 <blockquote>
-<p>在给定的大小为<span class="math">\(n\)</span>的数组a中，寻找<span class="math">\(a[i]-a[j]\)</span>之间的前<span class="math">\(k\)</span>大的数。</p>
+<p>\centering&gt;在给定的大小为<span class="math">\(n\)</span>的数组a中，寻找<span class="math">\(a[i]-a[j]\)</span>之间的前<span class="math">\(k\)</span>大的数。</p>
 </blockquote>
 <p>这次我们就不能像前面的naive topk直接上排序，因为这样会直接毁掉原来的序列。naive topk毁掉序列信息倒没啥关系，反正只操作一次。而区间topk基本是会执行多次查询的，毁掉了原来的序列信息后面的查询就全是错的了。为此，我们需要一个另外的结构来记录中间信息，这种结构就叫做划分树。通过使用划分树，我们可以在<span class="math">\(\mathcal{O}(logn)\)</span>的时间内获得区间<span class="math">\(i-j\)</span>之间的第<span class="math">\(k\)</span>大的数。通过执行<span class="math">\(k\)</span>次这样的查询，我们就可以获得前<span class="math">\(k\)</span>大的数。</p>
 <p>划分树的基本思想就是对于某个区间，把它划分成两个子区间，左边区间的数小于右边区间的数。查找的时候通过记录进入左子树的数的个数，确定下一个查找区间，最后范围缩小到1，就找到了。</p>
@@ -113,11 +113,11 @@
 <p>建树的过程比较简单，对于区间<span class="math">\([l,r]\)</span>，首先通过对原数组的排序找到这个区间的中位数<span class="math">\(a[mid]\)</span>，小于<span class="math">\(a[mid]\)</span>的数划入他的左子树<span class="math">\([l,mid-1]\)</span>，大于它的划入右子树<span class="math">\([mid,r]\)</span>。同时，对于第<span class="math">\(i\)</span>个数，记录在<span class="math">\([l,i]\)</span>区间内有多少数被划入左子树。最后，对它的左子树区间<span class="math">\([l,mid-1]\)</span>和右子树区间<span class="math">\([mid,r]\)</span>递归的继续建树就可以了。</p>
 <p>建树的时候要注意对于被分到同一子树的元素，元素间的相对位置不能改变。</p>
 <h2 id="44cf54">划分树的查询</h2>
-<p>查找的过程中主要问题就是确定将要查找的区间。这个问题有些麻烦。为此我们定义一个辅助函数<span class="math">\(tree_find\)</span>,其定义如下：</p>
+<p>查找的过程中主要问题就是确定将要查找的区间。这个问题有些麻烦。为此我们定义一个辅助函数<span class="math">\(tree\_find\)</span>,其定义如下：</p>
 <blockquote>
-<p>查找深度为h，在大区间[st,ed]中找小区间[s,e]中的第k元素。</p>
+<p>查找深度为h，在大区间[st,ed]中找小区间[s,e]中的第k元素。<br />
+我们的想法是，先判断[s,e]中第k元素在[st,ed]的哪个子树中，然后找出对应的小区间和k，递归的进行查找，直到小区间的s=e为止。</p>
 </blockquote>
-<p>我们的想法是，先判断[s,e]中第k元素在[st,ed]的哪个子树中，然后找出对应的小区间和k，递归的进行查找，直到小区间的s=e为止。</p>
 <p>那如何解决这个问题呢？这时候前面记录的进入左子树的元素个数就派上用场了。通过之前的记录可以知道，在区间<span class="math">\([st,s-1]\)</span>中有<span class="math">\(el[h,s-1]\)</span>进入左子树，记它为<span class="math">\(l\)</span>。同理区间<span class="math">\([st,e]\)</span>中有<span class="math">\(el[h,e]\)</span>个数进去左子树，记它为<span class="math">\(r\)</span>。所以，我们知道区间小区间<span class="math">\([s,e]\)</span>中有<span class="math">\((r-l)\)</span>个数进入左子树。那么如果<span class="math">\((r-l)\ge k\)</span>，那么就在左子树中继续查找，否则就在右子树中继续查找。</p>
 <p>接着解决查找的小区间的问题。</p>
 <ul>
@@ -194,19 +194,19 @@
 实际测试中使用该函数线性扫描比简单的线性扫描快10倍左右。这里我们来解释一下其中所用到的各个指令</p>
 <ul>
 <li>
-<p><code>_mm256_broadcast_ss</code> 这个函数是将单精度浮点数复制8次，然后填充到<code>_mm256</code>的内存区域中；</p>
+<p><code>\_mm256\_broadcast\_ss</code> 这个函数是将单精度浮点数复制8次，然后填充到<code>\_mm256</code>的内存区域中；</p>
 </li>
 <li>
-<p><code>_mm256_load_ps</code>这个函数是将特定的<code>_mm256</code>的值复制到另外一个<code>_mm256</code>的内存区域中，可以认为是赋值运算符；</p>
+<p><code>\_mm256\_load\_ps</code>这个函数是将特定的<code>\_mm256</code>的值复制到另外一个<code>\_mm256</code>的内存区域中，可以认为是赋值运算符；</p>
 </li>
 <li>
-<p><code>_mm256_and_ps</code>这个函数基本就是位操作的256位扩充版，不再解释；</p>
+<p><code>\_mm256\_and\_ps</code>这个函数基本就是位操作的256位扩充版，不再解释；</p>
 </li>
 <li>
-<p><code>_mm256_cmp_ps</code> 这个函数是用来比较256位的值，其比较时是通过将其中每一个32浮点单独比较，如果结果为真则对应的字节位填充为1，否则填充为0.可使用的比较操作类型有很多种，我们这里只使用了<code>_CMP_LE_OQ</code>和<code>_CMP_GE_OQ</code>，分别代表小于等于和大于等于。</p>
+<p><code>\_mm256\_cmp\_ps</code> 这个函数是用来比较256位的值，其比较时是通过将其中每一个32浮点单独比较，如果结果为真则对应的字节位填充为1，否则填充为0.可使用的比较操作类型有很多种，我们这里只使用了<code>\_CMP\_LE\_OQ</code>和<code>\_CMP\_GE\_OQ</code>，分别代表小于等于和大于等于。</p>
 </li>
 <li>
-<p><code>_mm256_testz_ps</code> 这个函数有两个操作数，其作用是比较两个操作数bitand操作之后是否每一位都为0，如果都是0返回true，否则返回false。</p>
+<p><code>\_mm256\_testz\_ps</code> 这个函数有两个操作数，其作用是比较两个操作数bitand操作之后是否每一位都为0，如果都是0返回true，否则返回false。</p>
 </li>
 </ul>
 <h2 id="065bf5">点与区间关系判断</h2>
@@ -254,7 +254,7 @@
 同样的，我们可以转换为</p>
 <div class="math">\begin{equation}x\le ux \wedge -x\le -lx \wedge y\le uy \wedge -y\le -ly\end{equation}</div>
 <p><br />
-这样，我们可以将一个点的坐标扩充为128位，然后就可以对于一个点调用<code>_mm128_cmp_ps</code>做单独的判断了。如果是double类型的就更好了，直接利用<code>_mm256_cmp_ps</code>。但是这样会增加一倍的使用空间，所带来的优势就是不需要处理对齐问题和多重判断问题。具体的测试目前还比较缺乏，待会补充。</p>
+这样，我们可以将一个点的坐标扩充为128位，然后就可以对于一个点调用<code>\_mm128\_cmp\_ps</code>做单独的判断了。如果是double类型的就更好了，直接利用<code>\_mm256\_cmp\_ps</code>。但是这样会增加一倍的使用空间，所带来的优势就是不需要处理对齐问题和多重判断问题。具体的测试目前还比较缺乏，待会补充。</p>
 <h2 id="66257c">区间关系判断</h2>
 <p>这是一个拓展问题，如何判断两个二维区间之间的关系：相交、相离、包含。我们首先以一维区间入手，两个区间分别为<span class="math">\((a_1,b_1),(a_2,b_2)\)</span>。</p>
 <ul>
@@ -334,7 +334,7 @@
 <div class="niu2-right-container col-md-2">
     <div id="niu2-sidebar-meta" class="niu2-sidebar">
         <div class="niu2-sidebar-label"><i class="icon-calendar"></i>发布时间:</div>
-        <div class="niu2-sidebar-value">2015-09-13 21:50</div>
+        <div class="niu2-sidebar-value">2015-09-13 22:00</div>
         <div class="niu2-sidebar-label"><i class="icon-open-folder"></i>分类:</div>
         <div class="niu2-sidebar-value"><a href="http://spiritsaway.info/algorithm/index.html">Algorithm</a></div>
         <div class="niu2-sidebar-label"><i class="icon-tag"></i>标签:</div>

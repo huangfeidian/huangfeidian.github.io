@@ -5,21 +5,21 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
 <url>
 <loc>http://spiritsaway.info/</loc>
-<lastmod>2015-09-13T22:09:51-00:00</lastmod>
+<lastmod>2015-09-14T00:55:10-00:00</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
 
 <url>
 <loc>http://spiritsaway.info/archives.html</loc>
-<lastmod>2015-09-13T22:09:51-00:00</lastmod>
+<lastmod>2015-09-14T00:55:10-00:00</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
 
 <url>
 <loc>http://spiritsaway.info/categories.html</loc>
-<lastmod>2015-09-13T22:09:51-00:00</lastmod>
+<lastmod>2015-09-14T00:55:10-00:00</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
@@ -32,8 +32,15 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 </url>
 
 <url>
+<loc>http://spiritsaway.info/cpp/curiously-recurring-template-pattern.html</loc>
+<lastmod>2015-09-14T01:00:00+08:00</lastmod>
+<changefreq>weekly</changefreq>
+<priority>0.5</priority>
+</url>
+
+<url>
 <loc>http://spiritsaway.info/algorithm/2d-topk-search.html</loc>
-<lastmod>2015-09-13T21:50:00+08:00</lastmod>
+<lastmod>2015-09-13T22:00:00+08:00</lastmod>
 <changefreq>weekly</changefreq>
 <priority>0.5</priority>
 </url>
@@ -159,7 +166,7 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
 <url>
 <loc>http://spiritsaway.info/algorithm/index.html</loc>
-<lastmod>2015-09-13T21:50:00+08:06</lastmod>
+<lastmod>2015-09-13T22:00:00+08:06</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
@@ -173,7 +180,7 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
 <url>
 <loc>http://spiritsaway.info/cpp/index.html</loc>
-<lastmod>2015-04-28T20:23:00+08:06</lastmod>
+<lastmod>2015-09-14T01:00:00+08:06</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
@@ -208,7 +215,7 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
 <url>
 <loc>http://spiritsaway.info/tag/algorithm.html</loc>
-<lastmod>2015-09-13T21:50:00+08:06</lastmod>
+<lastmod>2015-09-13T22:00:00+08:06</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
@@ -306,7 +313,7 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
 <url>
 <loc>http://spiritsaway.info/tag/cpp.html</loc>
-<lastmod>2015-04-28T20:23:00+08:06</lastmod>
+<lastmod>2015-09-14T01:00:00+08:06</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
@@ -327,7 +334,7 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
 <url>
 <loc>http://spiritsaway.info/author/huiliang-huang.html</loc>
-<lastmod>2015-09-13T21:50:00+08:06</lastmod>
+<lastmod>2015-09-14T01:00:00+08:06</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
