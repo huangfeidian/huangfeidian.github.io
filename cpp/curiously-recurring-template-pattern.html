@@ -83,7 +83,7 @@
 <div id="niu2-left-container" class="col-md-6 col-md-offset-2 with-right-border">
     <div id="niu2-main-content">
         <h1 id="c615cc">CRTP介绍</h1>
-<p>CRTP的全称为[Curiously recurring template pattern]{https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern}，描述的是C++中的一种模板应用模式。其示例代码可以抽象为这样的：</p>
+<p>CRTP的全称为<a href="https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern">Curiously recurring template pattern</a>，描述的是C++中的一种模板应用模式。其示例代码可以抽象为这样的：</p>
 <div class="codehilite"><pre><span class="c1">// The Curiously Recurring Template Pattern (CRTP)</span>
 <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
 <span class="k">class</span> <span class="nc">Base</span>
@@ -165,8 +165,8 @@
 
 <p>通过这两个静态计数器，我们就可以得到类型X的创建销毁的统计信息。</p>
 <h1 id="cd5cdf">通过CRTP实现对象引用计数</h1>
-<p>上面的那个例子是针对特定类型的对象创建和销毁计数，事实上我们还可以将单一对象的引用计数也实现。其实也不是完整实现，而只是通过<code>shared\_ptr</code>来实现自动生命周期管理，计数方面还是由<code>shared\_ptr</code>内部维持。</p>
-<p>事实上，如果我们只使用<code>shared\_ptr</code>也能达到自动生命周期管理的效果。但是有这样的一种情况，<code>shared\_ptr</code>是无法满足的，即内部函数需要异步执行的时候。此时该内部异步函数需要获得当前对象的<code>shared\_ptr</code>拷贝，但是类内部对象是无法得到这个拷贝的，只能得到<code>this</code>指针。而从<code>this</code>指针我们无法推演出对应的<code>shared\_ptr</code>的地址。所以，为了实现这个功能，我们需要内部嵌入一个函数来获得该智能指针备份。这就是<code>enable\_shared\_from\_this</code>的典型应用场景，目前见过的都是在网络连接管理的时候使用，例如<code>Boost.Asio</code>。</p>
+<p>上面的那个例子是针对特定类型的对象创建和销毁计数，事实上我们还可以将单一对象的引用计数也实现。其实也不是完整实现，而只是通过<code>shared_ptr</code>来实现自动生命周期管理，计数方面还是由<code>shared_ptr</code>内部维持。</p>
+<p>事实上，如果我们只使用<code>shared_ptr</code>也能达到自动生命周期管理的效果。但是有这样的一种情况，<code>shared_ptr</code>是无法满足的，即内部函数需要异步执行的时候。此时该内部异步函数需要获得当前对象的<code>shared_ptr</code>拷贝，但是类内部对象是无法得到这个拷贝的，只能得到<code>this</code>指针。而从<code>this</code>指针我们无法推演出对应的<code>shared_ptr</code>的地址。所以，为了实现这个功能，我们需要内部嵌入一个函数来获得该智能指针备份。这就是<code>enable_shared_from_this</code>的典型应用场景，目前见过的都是在网络连接管理的时候使用，例如<code>Boost.Asio</code>。</p>
 <div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">_Ty</span><span class="o">&gt;</span>
     <span class="k">class</span> <span class="nc">enable_shared_from_this</span>
     <span class="p">{</span>   <span class="c1">// provide member functions that create shared_ptr to this</span>
@@ -181,8 +181,8 @@
 </pre></div>
 
 
-<p>这样，我们就可以从<code>this-&gt;shared\_from\_this</code>中获得原始的<code>shared\_ptr</code>的指针，当然前提是<code>this</code>是通过<code>shared\_ptr</code>来管理的。</p>
-<p>其主要原理是<code>enable\_shared\_from\_this&lt;T&gt;</code>中存储了一个<code>weak\_ptr&lt;T&gt;</code>。而<code>shared\_ptr</code>的构造函数中有一个是从<code>weak\_ptr&lt;T&gt;</code>来转换的，所以我们就可以通过<code>shared\_from\_this</code>来从这个保存的<code>weak\_ptr&lt;T&gt;</code>来获得<code>shared\_ptr&lt;T&gt;</code>。之所以不保存<code>shared\_ptr</code>，是为了防止自引用。自引用的情况下，对象无法析构，从而导致资源泄漏。</p>
+<p>这样，我们就可以从<code>this-&gt;shared_from_this</code>中获得原始的<code>shared_ptr</code>的指针，当然前提是<code>this</code>是通过<code>shared_ptr</code>来管理的。</p>
+<p>其主要原理是<code>enable_shared_from_this&lt;T&gt;</code>中存储了一个<code>weak_ptr&lt;T&gt;</code>。而<code>shared_ptr</code>的构造函数中有一个是从<code>weak_ptr&lt;T&gt;</code>来转换的，所以我们就可以通过<code>shared_from_this</code>来从这个保存的<code>weak_ptr&lt;T&gt;</code>来获得<code>shared_ptr&lt;T&gt;</code>。之所以不保存<code>shared_ptr</code>，是为了防止自引用。自引用的情况下，对象无法析构，从而导致资源泄漏。</p>
 <h1 id="4f02ea">使用CRTP实现不可继承类</h1>
 <p>在<code>C++</code>中，实现不可继承类主要通过的是将构造函数私有化，同时定义一个静态函数来调用该构造函数。</p>
 <div class="codehilite"><pre><span class="k">class</span> <span class="nc">Taijian</span><span class="p">{</span>
