@@ -5,63 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Submodual - Spirits Away</title>
     <link rel="shortcut icon" type="image/x-icon" href="\favicon.ico">
-    <link rel="stylesheet" href="http://spiritsaway.info/theme/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="http://spiritsaway.info/theme/font-awesome/css/font-awesome.min.css" type="text/css" />
-    <link rel="stylesheet" href="http://spiritsaway.info/theme/css/niu2.css" type="text/css" />
+    <link rel="stylesheet" href="/theme/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="/theme/font-icons/style.min.css" type="text/css" />
+    <link rel="stylesheet" href="/theme/css/niu2.min.css" type="text/css" />
 
-    <link rel="canonical" href="http://spiritsaway.info/algorithm/submodual.html" />
+    <link rel="canonical" href="/algorithm/submodual.html" />
     
     <script type="text/javascript">window.onload=function(){};</script>
     <!--[if lt IE 9]>
-        <script src="http://spiritsaway.info/theme/js/html5shiv.js"></script>
-        <script src="http://spiritsaway.info/theme/js/respond.min.js"></script>
+        <script src="/theme/js/html5shiv.js"></script>
+        <script src="/theme/js/respond.min.js"></script>
     <![endif]-->
   </head>
   <body> 
     <div id="body-header">
 <div class="navbar navbar-inverse navbar-fixed-top">
 <div class="col-md-12">
-    <div class="navbar-header col-md-offset-2">
+    <div class="navbar-header">
         <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="http://spiritsaway.info">
-            <i class="fa fa-home"></i>Spirits Away
+        <a class="navbar-brand" href="">
+            <i class="icon-home"></i>Spirits Away
         </a>
     </div>
     <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
         <ul class="nav navbar-nav">
             <li><a href="/about.html" title="about">
-                <i class="fa fa-anchor"></i>关于</a>
+                <i class="fa-anchor"></i>关于</a>
             </li>
             <li><a href="/archives.html" title="archives">
-                <i class="fa fa-archive"></i>存档</a>
+                <i class="fa-archive"></i>存档</a>
             </li>
             <li><a href="/tag/" title="tags">
-                <i class="fa fa-tag"></i>标签</a>
+                <i class="fa-tag"></i>标签</a>
             </li>
         <!-- category dropdown list -->
         <li class="dropdown">
            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                <i class="fa fa-folder-open"></i>分类<b class="caret"></b>
+                <i class="icon-folder-open"></i>分类<b class="caret"></b>
            </a>
            <ul class="dropdown-menu">
-               <li><a href="http://spiritsaway.info/ai/index.html">
-                   <i class="fa fa-folder-close"></i>AI
+               <li><a href="/ai/index.html">
+                   <i class="icon-folder-close"></i>AI
                       (3)</a></li>
-               <li><a href="http://spiritsaway.info/algorithm/index.html">
-                   <i class="fa fa-folder-close"></i>Algorithm
-                      (2)</a></li>
-               <li><a href="http://spiritsaway.info/code/index.html">
-                   <i class="fa fa-folder-close"></i>Code
+               <li><a href="/algorithm/index.html">
+                   <i class="icon-folder-close"></i>Algorithm
                       (3)</a></li>
-               <li><a href="http://spiritsaway.info/cpp/index.html">
-                   <i class="fa fa-folder-close"></i>CPP
+               <li><a href="/code/index.html">
+                   <i class="icon-folder-close"></i>Code
+                      (3)</a></li>
+               <li><a href="/cpp/index.html">
+                   <i class="icon-folder-close"></i>CPP
                       (4)</a></li>
-               <li><a href="http://spiritsaway.info/math/index.html">
-                   <i class="fa fa-folder-close"></i>Math
+               <li><a href="/math/index.html">
+                   <i class="icon-folder-close"></i>Math
                       (4)</a></li>
            </ul>
         </li>
@@ -138,17 +138,17 @@
 <h1 id="220c3c">子模态的应用</h1>
 <p>下面我就以影响最大化这个例子来说明这个东西还是有点用的。</p>
 <p>影响最大化(<strong>influence maXimization</strong>)这个问题是定义在一个有向无环图<span class="math">\(G=(V,E)\)</span>上的。对于这个图的任意一条边<span class="math">\((v,w)\)</span>，我们都有这条边的权值<span class="math">\(p_{vw}\)</span> 。<span class="math">\(p_{vw}\)</span> 用来代表<span class="math">\(v\)</span>对<span class="math">\(w\)</span>的影响能力，这个影响能力是一个概率，因此<span class="math">\(p _{vw} \in [0,1]\)</span>。对于边<span class="math">\((v,w)\)</span>不存在的时候，<span class="math">\(p_{vw}\)</span> 定义为0.</p>
-<p><img alt="发散网络" src="http://spiritsaway.info/algorithm/image/Submodual/DiffusionNetwork.png" /></p>
+<p><img alt="发散网络" src="/algorithm/image/Submodual/DiffusionNetwork.png" /></p>
 <p>这个图类似于一个传播网络，或者感染网络。现在我们来定义影响函数<span class="math">\(f(X)\)</span>，这是一个集合函数。为了表征这个函数，我们需要定义一个随机过程<span class="math">\(S\)</span>。初始时刻0，我们给定输入<span class="math">\(P=X_0\)</span> ，<span class="math">\(P\)</span>表示活动集合。在时刻<span class="math">\(t\)</span>，我们对<span class="math">\(\forall v \in X_t\)</span>做如下操作：<span class="math">\(\forall w\in V/P\)</span>，我们以概率<span class="math">\(p_{vw}\)</span> 将节点<span class="math">\(w\)</span>加入到<span class="math">\(X_{t+1}\)</span> 中。此操作完成之后，检查<span class="math">\(X_{t+1}\)</span> 是否为空。如果为空，则返回<span class="math">\(P\)</span>；否则<span class="math">\(P=P \cup X_{t+1}\)</span> ，然后重复上面的操作。这个模型叫做independent Cascade Model，由Goldenberg, Libai,and Muller提出来的（这个模型是不是跟微博上的转发非常像）。</p>
-<p><img alt="发散过程" src="http://spiritsaway.info/algorithm/image/Submodual/DiffusionProcedure.png" /></p>
+<p><img alt="发散过程" src="/algorithm/image/Submodual/DiffusionProcedure.png" /></p>
 <p>最后我们来表征<span class="math">\(f(X)\)</span>，就是初始集合<span class="math">\(X\)</span>该过程<span class="math">\(S\)</span>下所返回的集合<span class="math">\(P\)</span>的大小的平均值。</p>
 <p>影响最大化问题就是在固定集合<span class="math">\(X\)</span>大小<span class="math">\(k\)</span>的情况下，最大化<span class="math">\(f(X)\)</span>。我们可以证明这个优化问题是NPHard 的。该问题的简化形式为<span class="math">\(p_{vw}\)</span> 都是1，此时该问题不再是一个随机过程。每个初始点<span class="math">\(v\)</span>的可达集是固定的，我们可以表示为<span class="math">\(R_v\)</span> 。因此，原问题等价于在集合<span class="math">\(R_1 ,\cdots,R_{|v|}\)</span> 中找到<span class="math">\(k\)</span>个集合，使得</p>
 <div class="math">\begin{equation} arg\max_u{f(S_{i-1}\cup{u})}\end{equation}</div>
 <p>但是，如何证明这个贪心是有效的一个难题，因为这是一个随机过程，每个点的增益在每一个时刻都是一个不同的随机变量，函数表达式也不是一个解析式。</p>
 <p>我们现在先从简化问题出发，然后再去求解原问题。而简化问题就是我们之前提到的集合覆盖问题<span class="math">\(f(S)=|\cup  i\in S x_i |\)</span>，这个问题其实是子模态的。证明也很简单，直接对集合进行分割就行了，这里就省去了具体的证明。我们再回归到原问题，在<span class="math">\(t\)</span>时刻节点<span class="math">\(v\)</span>引发<span class="math">\(w\)</span>的概率为<span class="math">\(p_{vw}\)</span> ，这是一个<span class="math">\(01\)</span>分布。事实上这个结果是<span class="math">\(0\)</span>还是<span class="math">\(1\)</span>与时刻<span class="math">\(t\)</span>是无关的，所以我们可以预先生成好这个随机变量。对所有的边进行提前生成随机变量之后，我们就得到了一个图<span class="math">\(N\)</span>.<span class="math">\(N\)</span>的拓扑结构与原图一致，不同的地方就是<span class="math">\(p_{vw}\)</span> 。</p>
-<p><img alt="新图1" src="http://spiritsaway.info/algorithm/image/Submodual/NewGraph1.png" /></p>
-<p><img alt="新图2" src="http://spiritsaway.info/algorithm/image/Submodual/NewGraph2.png" /></p>
-<p><img alt="新图3" src="http://spiritsaway.info/algorithm/image/Submodual/NewGraph3.png" /></p>
+<p><img alt="新图1" src="/algorithm/image/Submodual/NewGraph1.png" /></p>
+<p><img alt="新图2" src="/algorithm/image/Submodual/NewGraph2.png" /></p>
+<p><img alt="新图3" src="/algorithm/image/Submodual/NewGraph3.png" /></p>
 <p>而当<span class="math">\(v\)</span>引发<span class="math">\(w\)</span>时，<span class="math">\(p_{vw} =1\)</span>，否则就等于0.在<span class="math">\(N\)</span>中的影响最大等价于之前讨论的集合覆盖问题。设生成图<span class="math">\(N_i\)</span> 的概率为<span class="math">\(p_i\)</span> ，设<span class="math">\(f_i(X)\)</span>为在图<span class="math">\(N_i\)</span> 上寻找影响最大的解，则</p>
 <div class="math">\begin{equation}f(X)=\sum_{i=1}{p_if_i(X)}\end{equation}</div>
 <p><br />
@@ -211,50 +211,57 @@
 </div>
 <div class="niu2-right-container col-md-2">
     <div id="niu2-sidebar-meta" class="niu2-sidebar">
-        <div class="niu2-sidebar-label"><i class="fa fa-calendar"></i>发布时间:</div>
-        <div class="niu2-sidebar-value">2014-06-23</div>
-        <div class="niu2-sidebar-label"><i class="fa fa-open-folder"></i>分类:</div>
-        <div class="niu2-sidebar-value"><a href="http://spiritsaway.info/algorithm/index.html">Algorithm</a></div>
-        <div class="niu2-sidebar-label"><i class="fa fa-tag"></i>标签:</div>
+        <div class="niu2-sidebar-label"><i class="icon-calendar"></i>发布时间:</div>
+        <div class="niu2-sidebar-value">2014-06-23 20:31</div>
+        <div class="niu2-sidebar-label"><i class="icon-open-folder"></i>分类:</div>
+        <div class="niu2-sidebar-value"><a href="/algorithm/index.html">Algorithm</a></div>
+        <div class="niu2-sidebar-label"><i class="icon-tag"></i>标签:</div>
  
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/algorithm.html">Algorithm</a><sup>3</sup></div>
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/greedy.html">Greedy</a><sup>1</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="/tag/algorithm.html">Algorithm</a><sup>4</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="/tag/greedy.html">Greedy</a><sup>1</sup></div>
     </div>
 
     <div id="niu2-sidebar-toc" class="niu2-sidebar" data-status="closed">
         <div class="niu2-sidebar-label">
-            <i id="niu2-sidebar-toc-ctrl" class="fa fa-plus"></i>目录
+            <i id="niu2-sidebar-toc-ctrl" class="icon-open-tocs"></i>目录
         </div>
-        <a href="#content-heading">Submodual</a>
         <ol id="niu2-sidebar-toc-list">
+            <li><a href="#content-heading">Submodual</a></li>
             <li><a href='#5e6325'>子模态定义</a></li><li><a href='#7c0625'>子模态与贪心方法</a></li><li><a href='#220c3c'>子模态的应用</a></li><li><a href='#ea6f3b'>参考链接</a></li>
             <li><a href="#content-comments">评论</a></li>
         </ol>
     </div>
-</div>
-    </div>
-
-    <div id="body-footer" class="col-md-6 col-md-offset-3">
-<div class="niu2-footer">
-    <hr/>
-	<p>
-		Powered by <a href="https://github.com/getpelican/pelican">Pelican</a>, 
-        theme built with <a href="http://getbootstrap.com">Bootstrap3</a> 
-		modified by <a href="https://github.com/FinalTheory/pelican-theme">FinalTheory</a>, 
-		icons by <a href="http://fortawesome.github.io/Font-Awesome">Font Awesome</a>.
-	</p>
-	<p>
-		COPYRIGHT ©
-				2014-2015
-		<a class="niu2-footer-link" href="http://spiritsaway.info">Huiliang Huang</a>
-    </p>
 </div>    </div>
+
+    <div class="niu2-footer">
+        <div id="body-footer" class="col-md-6 col-md-offset-2">
+<hr/>
+<p>
+    Powered by <a href="https://github.com/getpelican/pelican">Pelican</a>, 
+    <a href="https://github.com/mawenbao/niu-x2-sidebar">theme</a> built with <a href="http://getbootstrap.com">Bootstrap3</a>
+    by <a href="http://blog.atime.me">Ma Wenbao</a>, icons by 
+    <a href="http://fortawesome.github.io/Font-Awesome">Font Awesome</a>.
+</p>
+<p>
+    ©
+            2014-2015
+    <a class="niu2-footer-link" href="">Huiliang Huang</a>
+</p>
+<p class="niu2-icons">
+        <a class="niu2-footer-icon" href="mailto: spiritsaway@outlook.com" title="my email address">
+            <i class="fa-envelope-alt icon-lg"></i>
+        </a>
+        <a class="niu2-footer-icon" href="https://github.com/huangfeidian" title="my github page">
+            <i class="fa-github-alt icon-lg"></i>
+        </a>
+</p>        </div>
+    </div>
     
     <div id="niu2-pygments" data-theme="github"></div>
 
-    <script type="text/javascript" src="http://spiritsaway.info/theme/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="http://spiritsaway.info/theme/js/niu2.js"></script>
-    <script type="text/javascript" src="http://spiritsaway.info/theme/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/theme/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="/theme/js/niu2.min.js"></script>
+    <script type="text/javascript" src="/theme/js/bootstrap.min.js"></script>
     <script type="text/javascript">onContentLoaded();</script>
   </body>
 </html>

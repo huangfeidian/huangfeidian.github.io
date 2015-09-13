@@ -5,63 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ADMM - Spirits Away</title>
     <link rel="shortcut icon" type="image/x-icon" href="\favicon.ico">
-    <link rel="stylesheet" href="http://spiritsaway.info/theme/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="http://spiritsaway.info/theme/font-awesome/css/font-awesome.min.css" type="text/css" />
-    <link rel="stylesheet" href="http://spiritsaway.info/theme/css/niu2.css" type="text/css" />
+    <link rel="stylesheet" href="/theme/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="/theme/font-icons/style.min.css" type="text/css" />
+    <link rel="stylesheet" href="/theme/css/niu2.min.css" type="text/css" />
 
-    <link rel="canonical" href="http://spiritsaway.info/ai/admm.html" />
+    <link rel="canonical" href="/ai/admm.html" />
     
     <script type="text/javascript">window.onload=function(){};</script>
     <!--[if lt IE 9]>
-        <script src="http://spiritsaway.info/theme/js/html5shiv.js"></script>
-        <script src="http://spiritsaway.info/theme/js/respond.min.js"></script>
+        <script src="/theme/js/html5shiv.js"></script>
+        <script src="/theme/js/respond.min.js"></script>
     <![endif]-->
   </head>
   <body> 
     <div id="body-header">
 <div class="navbar navbar-inverse navbar-fixed-top">
 <div class="col-md-12">
-    <div class="navbar-header col-md-offset-2">
+    <div class="navbar-header">
         <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="http://spiritsaway.info">
-            <i class="fa fa-home"></i>Spirits Away
+        <a class="navbar-brand" href="">
+            <i class="icon-home"></i>Spirits Away
         </a>
     </div>
     <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
         <ul class="nav navbar-nav">
             <li><a href="/about.html" title="about">
-                <i class="fa fa-anchor"></i>关于</a>
+                <i class="fa-anchor"></i>关于</a>
             </li>
             <li><a href="/archives.html" title="archives">
-                <i class="fa fa-archive"></i>存档</a>
+                <i class="fa-archive"></i>存档</a>
             </li>
             <li><a href="/tag/" title="tags">
-                <i class="fa fa-tag"></i>标签</a>
+                <i class="fa-tag"></i>标签</a>
             </li>
         <!-- category dropdown list -->
         <li class="dropdown">
            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                <i class="fa fa-folder-open"></i>分类<b class="caret"></b>
+                <i class="icon-folder-open"></i>分类<b class="caret"></b>
            </a>
            <ul class="dropdown-menu">
-               <li><a href="http://spiritsaway.info/ai/index.html">
-                   <i class="fa fa-folder-close"></i>AI
+               <li><a href="/ai/index.html">
+                   <i class="icon-folder-close"></i>AI
                       (3)</a></li>
-               <li><a href="http://spiritsaway.info/algorithm/index.html">
-                   <i class="fa fa-folder-close"></i>Algorithm
-                      (2)</a></li>
-               <li><a href="http://spiritsaway.info/code/index.html">
-                   <i class="fa fa-folder-close"></i>Code
+               <li><a href="/algorithm/index.html">
+                   <i class="icon-folder-close"></i>Algorithm
                       (3)</a></li>
-               <li><a href="http://spiritsaway.info/cpp/index.html">
-                   <i class="fa fa-folder-close"></i>CPP
+               <li><a href="/code/index.html">
+                   <i class="icon-folder-close"></i>Code
+                      (3)</a></li>
+               <li><a href="/cpp/index.html">
+                   <i class="icon-folder-close"></i>CPP
                       (4)</a></li>
-               <li><a href="http://spiritsaway.info/math/index.html">
-                   <i class="fa fa-folder-close"></i>Math
+               <li><a href="/math/index.html">
+                   <i class="icon-folder-close"></i>Math
                       (4)</a></li>
            </ul>
         </li>
@@ -258,7 +258,7 @@ ADMM对优化问题\ref{eq:AdmmLag}的迭代更新步骤为：</p>
 <p>由于这里的每一个变量<span class="math">\(x_i\)</span>都可以单独计算，所以是并行化的理想场所。</p>
 <h1 id="022eb3">ADMM问题转化</h1>
 <p>现在回到我们最开始的ADMM问题形式：</p>
-<div class="math">\begin{equation}\label{eq:AdmmOrigin} minimize \quad f(x)+g(z) \quad w.r.t. \quad Ax+Bz=c\end{equation}</div>
+<div class="math">\begin{equation}\label{eq:AdmmOrigin} minimize \quad f(x)+g(z) \quad w.r.t. \quad Ax+Bz=c \end{equation}</div>
 <p><br />
 但是，我们一般遇到的是单变量的目标函数，并没有<span class="math">\(z\)</span>的存在。所以，我们需要构造出一个<span class="math">\(z\)</span>出来。下面来谈一下一些常见目标函数的ADMM形式的构建方法。</p>
 <p>对于一般的受约束的凸优化问题，我们有如下形式</p>
@@ -370,7 +370,7 @@ ADMM对优化问题\ref{eq:AdmmLag}的迭代更新步骤为：</p>
 <div class="math">\begin{equation}(x_i)_j = z_{\mathcal{G}(i, j)} = \hat{z}_i \end{equation}</div>
 <p><br />
 如果对所有<span class="math">\(i\)</span>有<span class="math">\(\mathcal{G}(i,j)=j\)</span>，那么<span class="math">\(x_i\)</span> 与<span class="math">\(z\)</span>就是顺序映射，也就是全局一致性优化问题，否则就不是。结合下图就比较好理解</p>
-<p><img alt="Consensus" src="http://spiritsaway.info/ai/image/ADMM/ADMM_consensus.png" /></p>
+<p><img alt="Consensus" src="/ai/image/ADMM/ADMM_consensus.png" /></p>
 <p>虽然如果用其他方法来做感觉会复杂，但是纳入到上述ADMM框架，其实只不过是全局一致性优化问题的一个局部化变形，不过此时不是对数据进行分块，是对参数空间进行分块.新的优化问题可以表示为</p>
 <div class="math">\begin{equation}\begin{array}{lc}\min &amp; \sum^N_{i = 1}f_i(x_i) + g(z), x_i \in \mathbf{R}^{n_i}\\s.t. &amp; x_i - \hat{z}_i = 0, i = 1, \ldots N \\\end{array}\end{equation}</div>
 <p><br />
@@ -476,52 +476,59 @@ ADMM对优化问题\ref{eq:AdmmLag}的迭代更新步骤为：</p>
 </div>
 <div class="niu2-right-container col-md-2">
     <div id="niu2-sidebar-meta" class="niu2-sidebar">
-        <div class="niu2-sidebar-label"><i class="fa fa-calendar"></i>发布时间:</div>
-        <div class="niu2-sidebar-value">2015-05-07</div>
-        <div class="niu2-sidebar-label"><i class="fa fa-open-folder"></i>分类:</div>
-        <div class="niu2-sidebar-value"><a href="http://spiritsaway.info/ai/index.html">AI</a></div>
-        <div class="niu2-sidebar-label"><i class="fa fa-tag"></i>标签:</div>
+        <div class="niu2-sidebar-label"><i class="icon-calendar"></i>发布时间:</div>
+        <div class="niu2-sidebar-value">2015-05-07 13:31</div>
+        <div class="niu2-sidebar-label"><i class="icon-open-folder"></i>分类:</div>
+        <div class="niu2-sidebar-value"><a href="/ai/index.html">AI</a></div>
+        <div class="niu2-sidebar-label"><i class="icon-tag"></i>标签:</div>
  
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/admm.html">ADMM</a><sup>2</sup></div>
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/math.html">Math</a><sup>6</sup></div>
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/ai.html">AI</a><sup>5</sup></div>
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/converge.html">Converge</a><sup>5</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="/tag/admm.html">ADMM</a><sup>2</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="/tag/math.html">Math</a><sup>6</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="/tag/ai.html">AI</a><sup>5</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="/tag/converge.html">Converge</a><sup>5</sup></div>
     </div>
 
     <div id="niu2-sidebar-toc" class="niu2-sidebar" data-status="closed">
         <div class="niu2-sidebar-label">
-            <i id="niu2-sidebar-toc-ctrl" class="fa fa-plus"></i>目录
+            <i id="niu2-sidebar-toc-ctrl" class="icon-open-tocs"></i>目录
         </div>
-        <a href="#content-heading">ADMM</a>
         <ol id="niu2-sidebar-toc-list">
+            <li><a href="#content-heading">ADMM</a></li>
             <li><a href='#844962'>扩展的拉格朗日乘子方法</a></li><li><a href='#d20776'>ADMM介绍</a></li><li><a href='#9fb890'>ADMM收敛性分析</a></li><li><a href='#5bad24'>终止条件分析</a></li><li><a href='#7bc220'>ADMM计算方法</a></li><li><a href='#022eb3'>ADMM问题转化</a></li><li><a href='#e75465'>norm-1 范数问题</a></li><li><a href='#ce364f'>Least Absolute Deviations</a></li><li><a href='#f8419e'>Huber Fitting</a></li><li><a href='#417b4b'>Basis Pursuit</a></li><li><a href='#5d6d2c'>一般化损失函数加norm-1正则化</a></li><li><a href='#46ae36'>全局一致问题</a></li><li><a href='#ba07db'>Global variable consensus optimization</a></li><li><a href='#780082'>带正则项的全局一致性问题</a></li><li><a href='#57a4a9'>数据切割</a></li><li><a href='#68467d'>一般形式的一致性优化问题</a></li><li><a href='#483c09'>共享问题</a></li><li><a href='#ea6f3b'>参考链接</a></li>
             <li><a href="#content-comments">评论</a></li>
         </ol>
     </div>
-</div>
-    </div>
-
-    <div id="body-footer" class="col-md-6 col-md-offset-3">
-<div class="niu2-footer">
-    <hr/>
-	<p>
-		Powered by <a href="https://github.com/getpelican/pelican">Pelican</a>, 
-        theme built with <a href="http://getbootstrap.com">Bootstrap3</a> 
-		modified by <a href="https://github.com/FinalTheory/pelican-theme">FinalTheory</a>, 
-		icons by <a href="http://fortawesome.github.io/Font-Awesome">Font Awesome</a>.
-	</p>
-	<p>
-		COPYRIGHT ©
-				2014-2015
-		<a class="niu2-footer-link" href="http://spiritsaway.info">Huiliang Huang</a>
-    </p>
 </div>    </div>
+
+    <div class="niu2-footer">
+        <div id="body-footer" class="col-md-6 col-md-offset-2">
+<hr/>
+<p>
+    Powered by <a href="https://github.com/getpelican/pelican">Pelican</a>, 
+    <a href="https://github.com/mawenbao/niu-x2-sidebar">theme</a> built with <a href="http://getbootstrap.com">Bootstrap3</a>
+    by <a href="http://blog.atime.me">Ma Wenbao</a>, icons by 
+    <a href="http://fortawesome.github.io/Font-Awesome">Font Awesome</a>.
+</p>
+<p>
+    ©
+            2014-2015
+    <a class="niu2-footer-link" href="">Huiliang Huang</a>
+</p>
+<p class="niu2-icons">
+        <a class="niu2-footer-icon" href="mailto: spiritsaway@outlook.com" title="my email address">
+            <i class="fa-envelope-alt icon-lg"></i>
+        </a>
+        <a class="niu2-footer-icon" href="https://github.com/huangfeidian" title="my github page">
+            <i class="fa-github-alt icon-lg"></i>
+        </a>
+</p>        </div>
+    </div>
     
     <div id="niu2-pygments" data-theme="github"></div>
 
-    <script type="text/javascript" src="http://spiritsaway.info/theme/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="http://spiritsaway.info/theme/js/niu2.js"></script>
-    <script type="text/javascript" src="http://spiritsaway.info/theme/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/theme/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="/theme/js/niu2.min.js"></script>
+    <script type="text/javascript" src="/theme/js/bootstrap.min.js"></script>
     <script type="text/javascript">onContentLoaded();</script>
   </body>
 </html>
