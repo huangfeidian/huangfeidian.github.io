@@ -5,63 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SMO - Spirits Away</title>
     <link rel="shortcut icon" type="image/x-icon" href="\favicon.ico">
-    <link rel="stylesheet" href="/theme/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="/theme/font-icons/style.min.css" type="text/css" />
-    <link rel="stylesheet" href="/theme/css/niu2.min.css" type="text/css" />
+    <link rel="stylesheet" href="http://spiritsaway.info/theme/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="http://spiritsaway.info/theme/font-awesome/css/font-awesome.min.css" type="text/css" />
+    <link rel="stylesheet" href="http://spiritsaway.info/theme/css/niu2.css" type="text/css" />
 
-    <link rel="canonical" href="/ai/smo.html" />
+    <link rel="canonical" href="http://spiritsaway.info/ai/smo.html" />
     
     <script type="text/javascript">window.onload=function(){};</script>
     <!--[if lt IE 9]>
-        <script src="/theme/js/html5shiv.js"></script>
-        <script src="/theme/js/respond.min.js"></script>
+        <script src="http://spiritsaway.info/theme/js/html5shiv.js"></script>
+        <script src="http://spiritsaway.info/theme/js/respond.min.js"></script>
     <![endif]-->
   </head>
   <body> 
     <div id="body-header">
 <div class="navbar navbar-inverse navbar-fixed-top">
 <div class="col-md-12">
-    <div class="navbar-header">
+    <div class="navbar-header col-md-offset-2">
         <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="">
-            <i class="icon-home"></i>Spirits Away
+        <a class="navbar-brand" href="http://spiritsaway.info">
+            <i class="fa fa-home"></i>Spirits Away
         </a>
     </div>
     <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
         <ul class="nav navbar-nav">
             <li><a href="/about.html" title="about">
-                <i class="fa-anchor"></i>关于</a>
+                <i class="fa fa-anchor"></i>关于</a>
             </li>
             <li><a href="/archives.html" title="archives">
-                <i class="fa-archive"></i>存档</a>
+                <i class="fa fa-archive"></i>存档</a>
             </li>
             <li><a href="/tag/" title="tags">
-                <i class="fa-tag"></i>标签</a>
+                <i class="fa fa-tag"></i>标签</a>
             </li>
         <!-- category dropdown list -->
         <li class="dropdown">
            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                <i class="icon-folder-open"></i>分类<b class="caret"></b>
+                <i class="fa fa-folder-open"></i>分类<b class="caret"></b>
            </a>
            <ul class="dropdown-menu">
-               <li><a href="/ai/index.html">
-                   <i class="icon-folder-close"></i>AI
+               <li><a href="http://spiritsaway.info/ai/index.html">
+                   <i class="fa fa-folder-close"></i>AI
                       (3)</a></li>
-               <li><a href="/algorithm/index.html">
-                   <i class="icon-folder-close"></i>Algorithm
+               <li><a href="http://spiritsaway.info/algorithm/index.html">
+                   <i class="fa fa-folder-close"></i>Algorithm
+                      (2)</a></li>
+               <li><a href="http://spiritsaway.info/code/index.html">
+                   <i class="fa fa-folder-close"></i>Code
                       (3)</a></li>
-               <li><a href="/code/index.html">
-                   <i class="icon-folder-close"></i>Code
-                      (3)</a></li>
-               <li><a href="/cpp/index.html">
-                   <i class="icon-folder-close"></i>CPP
+               <li><a href="http://spiritsaway.info/cpp/index.html">
+                   <i class="fa fa-folder-close"></i>CPP
                       (4)</a></li>
-               <li><a href="/math/index.html">
-                   <i class="icon-folder-close"></i>Math
+               <li><a href="http://spiritsaway.info/math/index.html">
+                   <i class="fa fa-folder-close"></i>Math
                       (4)</a></li>
            </ul>
         </li>
@@ -87,7 +87,7 @@
 <div class="math">\begin{equation}VC-dimension\leq min\{\frac{R^2}{M^2},n\}+1\end{equation}</div>
 <p><br />
 其中，R为包围所有数据点的最小球半径，M为分类间隔的一半，n为样本数目大小。下图就比较形象的说明了SVM是干什么用的。</p>
-<p><img alt="SVM目标" src="/ai/image/SVM/svm分类间隔.png" /></p>
+<p><img alt="SVM目标" src="http://spiritsaway.info/ai/image/SVM/svm分类间隔.png" /></p>
 <p>最终SVM得到的线性分类器的公式如下</p>
 <div class="math">\begin{equation}u=w^Tx-b\end{equation}</div>
 <p><br />
@@ -138,7 +138,7 @@
 这样<span class="math">\(a_i\)</span>就可以通过<span class="math">\(a_j\)</span>表示出来，此时优化问题可以转变为一个变量的二次优化问题，这个问题的计算量非常少。所以SMO包括两个过程，一个过程选择两个拉格朗日乘子，这是一个外部循环，一个过程来求解这两个变量的二次优化问题，这个是循环内过程。我们先来解决两个变量的lagrange multipliers问题，然后再去解决乘子的选择问题。</p>
 <h1 id="691d04">Two Lagrange Multiplier</h1>
 <p>为了计算两个lagrange Multiplier的优化问题，SMO首先计算这两个乘子的取值范围，然后再这个范围限制下解决二次优化问题。为了书写方便，现在用<span class="math">\(1,2\)</span>来代替<span class="math">\(i,j\)</span>。这两个变量之间的关系我们之前已经给出了<span class="math">\(a_1y_1+a_2y_2=k\)</span>,下面这幅图生动形象的解释了这两个变量的关系。</p>
-<p><img alt="双变量关系" src="/ai/image/SVM/序列最小化.png" /></p>
+<p><img alt="双变量关系" src="http://spiritsaway.info/ai/image/SVM/序列最小化.png" /></p>
 <p>现在我们来讨论在进行双变量二次优化时<span class="math">\(a_2\)</span>的取值范围。如果<span class="math">\(y_1!=y_2\)</span>，则<span class="math">\(a_2\)</span>的下界<span class="math">\(L\)</span>和上界<span class="math">\(H\)</span>可以表示为</p>
 <div class="math">\begin{equation}L=max(0,a_2-a_1),\quad H=min(C,C+a_2-a_1)\end{equation}</div>
 <p><br />
@@ -218,59 +218,52 @@
 </div>
 <div class="niu2-right-container col-md-2">
     <div id="niu2-sidebar-meta" class="niu2-sidebar">
-        <div class="niu2-sidebar-label"><i class="icon-calendar"></i>发布时间:</div>
-        <div class="niu2-sidebar-value">2015-04-28 20:09</div>
-        <div class="niu2-sidebar-label"><i class="icon-open-folder"></i>分类:</div>
-        <div class="niu2-sidebar-value"><a href="/ai/index.html">AI</a></div>
-        <div class="niu2-sidebar-label"><i class="icon-tag"></i>标签:</div>
+        <div class="niu2-sidebar-label"><i class="fa fa-calendar"></i>发布时间:</div>
+        <div class="niu2-sidebar-value">2015-04-28</div>
+        <div class="niu2-sidebar-label"><i class="fa fa-open-folder"></i>分类:</div>
+        <div class="niu2-sidebar-value"><a href="http://spiritsaway.info/ai/index.html">AI</a></div>
+        <div class="niu2-sidebar-label"><i class="fa fa-tag"></i>标签:</div>
  
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="/tag/svm.html">SVM</a><sup>1</sup></div>
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="/tag/ai.html">AI</a><sup>5</sup></div>
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="/tag/math.html">Math</a><sup>6</sup></div>
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="/tag/converge.html">Converge</a><sup>5</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/svm.html">SVM</a><sup>1</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/ai.html">AI</a><sup>5</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/math.html">Math</a><sup>6</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/converge.html">Converge</a><sup>5</sup></div>
     </div>
 
     <div id="niu2-sidebar-toc" class="niu2-sidebar" data-status="closed">
         <div class="niu2-sidebar-label">
-            <i id="niu2-sidebar-toc-ctrl" class="icon-open-tocs"></i>目录
+            <i id="niu2-sidebar-toc-ctrl" class="fa fa-plus"></i>目录
         </div>
+        <a href="#content-heading">SMO</a>
         <ol id="niu2-sidebar-toc-list">
-            <li><a href="#content-heading">SMO</a></li>
             <li><a href='#615262'>SVM基础</a></li><li><a href='#2a2f3e'>SMO优化方法</a></li><li><a href='#691d04'>Two Lagrange Multiplier</a></li><li><a href='#29bc20'>乘子选择问题</a></li>
             <li><a href="#content-comments">评论</a></li>
         </ol>
     </div>
-</div>    </div>
-
-    <div class="niu2-footer">
-        <div id="body-footer" class="col-md-6 col-md-offset-2">
-<hr/>
-<p>
-    Powered by <a href="https://github.com/getpelican/pelican">Pelican</a>, 
-    <a href="https://github.com/mawenbao/niu-x2-sidebar">theme</a> built with <a href="http://getbootstrap.com">Bootstrap3</a>
-    by <a href="http://blog.atime.me">Ma Wenbao</a>, icons by 
-    <a href="http://fortawesome.github.io/Font-Awesome">Font Awesome</a>.
-</p>
-<p>
-    ©
-            2014-2015
-    <a class="niu2-footer-link" href="">Huiliang Huang</a>
-</p>
-<p class="niu2-icons">
-        <a class="niu2-footer-icon" href="mailto: spiritsaway@outlook.com" title="my email address">
-            <i class="fa-envelope-alt icon-lg"></i>
-        </a>
-        <a class="niu2-footer-icon" href="https://github.com/huangfeidian" title="my github page">
-            <i class="fa-github-alt icon-lg"></i>
-        </a>
-</p>        </div>
+</div>
     </div>
+
+    <div id="body-footer" class="col-md-6 col-md-offset-3">
+<div class="niu2-footer">
+    <hr/>
+	<p>
+		Powered by <a href="https://github.com/getpelican/pelican">Pelican</a>, 
+        theme built with <a href="http://getbootstrap.com">Bootstrap3</a> 
+		modified by <a href="https://github.com/FinalTheory/pelican-theme">FinalTheory</a>, 
+		icons by <a href="http://fortawesome.github.io/Font-Awesome">Font Awesome</a>.
+	</p>
+	<p>
+		COPYRIGHT ©
+				2014-2015
+		<a class="niu2-footer-link" href="http://spiritsaway.info">Huiliang Huang</a>
+    </p>
+</div>    </div>
     
     <div id="niu2-pygments" data-theme="github"></div>
 
-    <script type="text/javascript" src="/theme/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="/theme/js/niu2.min.js"></script>
-    <script type="text/javascript" src="/theme/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="http://spiritsaway.info/theme/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="http://spiritsaway.info/theme/js/niu2.js"></script>
+    <script type="text/javascript" src="http://spiritsaway.info/theme/js/bootstrap.min.js"></script>
     <script type="text/javascript">onContentLoaded();</script>
   </body>
 </html>
