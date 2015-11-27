@@ -253,7 +253,7 @@
 </pre></div>
 
 
-<p>这里的\scode{HashTable}就是一个\scode{map<string,IdentifierInfo*>}，所有本地的名称与标识符的映射信息就存在里面。如果是外部标识符，则需要经过\scode{ExternalLookup}这个位置来访问。所以，总的查询函数为：</p>
+<p>这里的<code>HashTable</code>就是一个<code>map&lt;string,IdentifierInfo*&gt;</code>，所有本地的名称与标识符的映射信息就存在里面。如果是外部标识符，则需要经过<code>ExternalLookup</code>这个位置来访问。所以，总的查询函数为：</p>
 <div class="codehilite"><pre><span class="c1">/// \brief Return the identifier token info for the specified named</span>
 <span class="c1">/// identifier.</span>
 <span class="n">IdentifierInfo</span> <span class="o">&amp;</span><span class="n">get</span><span class="p">(</span><span class="n">StringRef</span> <span class="n">Name</span><span class="p">)</span>
