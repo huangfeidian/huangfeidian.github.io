@@ -62,7 +62,7 @@
                       (2)</a></li>
                <li><a href="http://spiritsaway.info/cpp/index.html">
                    <i class="icon-folder-close"></i>CPP
-                      (7)</a></li>
+                      (8)</a></li>
                <li><a href="http://spiritsaway.info/math/index.html">
                    <i class="icon-folder-close"></i>Math
                       (4)</a></li>
@@ -87,7 +87,7 @@
     <div id="niu2-main-content">
         <h1 id="c615cc">CRTP介绍</h1>
 <p>CRTP的全称为<a href="https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern">Curiously recurring template pattern</a>，描述的是C++中的一种模板应用模式。其示例代码可以抽象为这样的：</p>
-<div class="codehilite"><pre><span class="c1">// The Curiously Recurring Template Pattern (CRTP)</span>
+<div class="codehilite"><pre><span></span><span class="c1">// The Curiously Recurring Template Pattern (CRTP)</span>
 <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
 <span class="k">class</span> <span class="nc">Base</span>
 <span class="p">{</span>
@@ -104,7 +104,7 @@
 <p>这样的代码看上去蛋疼无比，但是这样的代码演变为一种模式，一定有其特别的地方。所以下文我们就来探究一下其特别之处。</p>
 <h1 id="95f4ef">CRTP模拟虚函数</h1>
 <p>在C++中，虚函数是利用虚函数表来实现的。当调用一个虚函数时，首先获得虚表指针，然后在虚函数表中查找对应的函数指针，最后根据得到的函数指针来进行调用。完整的执行流程中，涉及到多次指针跳转，所以虚函数的开销还是比较大的。而利用CRTP这种模板继承来实现虚函数则可以避免这种查表的负担，其事例代码如下：</p>
-<div class="codehilite"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span> 
+<div class="codehilite"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span> 
 <span class="k">struct</span> <span class="n">Base</span>
 <span class="p">{</span>
     <span class="kt">void</span> <span class="n">interface</span><span class="p">()</span>
@@ -133,7 +133,7 @@
 <p>这里使用的主要机制就是强制类型转换，如果不涉及到虚继承，强制类型转换基本可以在编译期完成。</p>
 <h1 id="f6aae6">CRTP实现对象类型计数</h1>
 <p>有时情况下，我们需要知道特定类型的活跃对象数目。类似于引用计数，只不过是针对类型而言，而不是针对特定对象。通过继承一个<code>counter</code>类，来存储其活跃对象数和总创建对象数。</p>
-<div class="codehilite"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
 <span class="k">struct</span> <span class="n">counter</span>
 <span class="p">{</span>
     <span class="k">static</span> <span class="kt">int</span> <span class="n">objects_created</span><span class="p">;</span>
@@ -170,7 +170,7 @@
 <h1 id="cd5cdf">通过CRTP实现对象引用计数</h1>
 <p>上面的那个例子是针对特定类型的对象创建和销毁计数，事实上我们还可以将单一对象的引用计数也实现。其实也不是完整实现，而只是通过<code>shared_ptr</code>来实现自动生命周期管理，计数方面还是由<code>shared_ptr</code>内部维持。</p>
 <p>事实上，如果我们只使用<code>shared_ptr</code>也能达到自动生命周期管理的效果。但是有这样的一种情况，<code>shared_ptr</code>是无法满足的，即内部函数需要异步执行的时候。此时该内部异步函数需要获得当前对象的<code>shared_ptr</code>拷贝，但是类内部对象是无法得到这个拷贝的，只能得到<code>this</code>指针。而从<code>this</code>指针我们无法推演出对应的<code>shared_ptr</code>的地址。所以，为了实现这个功能，我们需要内部嵌入一个函数来获得该智能指针备份。这就是<code>enable_shared_from_this</code>的典型应用场景，目前见过的都是在网络连接管理的时候使用，例如<code>Boost.Asio</code>。</p>
-<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">_Ty</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">_Ty</span><span class="o">&gt;</span>
     <span class="k">class</span> <span class="nc">enable_shared_from_this</span>
     <span class="p">{</span>   <span class="c1">// provide member functions that create shared_ptr to this</span>
 <span class="k">public</span><span class="o">:</span>
@@ -188,7 +188,7 @@
 <p>其主要原理是<code>enable_shared_from_this&lt;T&gt;</code>中存储了一个<code>weak_ptr&lt;T&gt;</code>。而<code>shared_ptr</code>的构造函数中有一个是从<code>weak_ptr&lt;T&gt;</code>来转换的，所以我们就可以通过<code>shared_from_this</code>来从这个保存的<code>weak_ptr&lt;T&gt;</code>来获得<code>shared_ptr&lt;T&gt;</code>。之所以不保存<code>shared_ptr</code>，是为了防止自引用。自引用的情况下，对象无法析构，从而导致资源泄漏。</p>
 <h1 id="4f02ea">使用CRTP实现不可继承类</h1>
 <p>在<code>C++</code>中，实现不可继承类主要通过的是将构造函数私有化，同时定义一个静态函数来调用该构造函数。</p>
-<div class="codehilite"><pre><span class="k">class</span> <span class="nc">Taijian</span><span class="p">{</span>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">Taijian</span><span class="p">{</span>
 <span class="k">public</span><span class="o">:</span>
      <span class="k">static</span> <span class="n">Taijian</span><span class="o">*</span> <span class="n">publicFunc</span><span class="p">()</span>
      <span class="p">{</span>
@@ -210,7 +210,7 @@
 
 
 <p>但是这种实现由一个问题，就是如果子类也定义一个静态函数来调用父类的静态函数的话，就可以绕过该限制。如果子类大小与父类大小等同的话，就不会出现任何问题。</p>
-<div class="codehilite"><pre><span class="k">class</span> <span class="nc">NoTaijian</span><span class="o">:</span><span class="k">public</span> <span class="n">Taijian</span>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">NoTaijian</span><span class="o">:</span><span class="k">public</span> <span class="n">Taijian</span>
 <span class="p">{</span>
 <span class="k">public</span><span class="o">:</span>
      <span class="k">static</span> <span class="n">NoTaijian</span><span class="o">*</span> <span class="n">publicFunc</span><span class="p">()</span>
@@ -227,7 +227,7 @@
 
 
 <p>所以，之前的解决方案并不是完美的。下面我们通过<code>CRTP</code>和友元类来实现完美的<code>final</code>方案。</p>
-<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span> <span class="k">typename</span> <span class="n">TDerive</span><span class="p">,</span> <span class="k">typename</span> <span class="n">TProvider</span> <span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span> <span class="k">typename</span> <span class="n">TDerive</span><span class="p">,</span> <span class="k">typename</span> <span class="n">TProvider</span> <span class="o">&gt;</span>
 <span class="k">class</span>  <span class="nc">CFobidDeriveProviderBase</span>
 <span class="p">{</span>
     <span class="k">friend</span> <span class="n">TDerive</span><span class="p">;</span>
@@ -285,7 +285,7 @@
         <div class="niu2-sidebar-value"><a href="http://spiritsaway.info/cpp/index.html">CPP</a></div>
         <div class="niu2-sidebar-label"><i class="icon-tag"></i>标签:</div>
  
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/cpp.html">CPP</a><sup>10</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/cpp.html">CPP</a><sup>11</sup></div>
     </div>
 
     <div id="niu2-sidebar-toc" class="niu2-sidebar" data-status="closed">
@@ -311,7 +311,7 @@
 </p>
 <p>
     ©
-            2014-2015
+            2014-2016
     <a class="niu2-footer-link" href="http://spiritsaway.info">Huiliang Huang</a>
 </p>
 <p class="niu2-icons">

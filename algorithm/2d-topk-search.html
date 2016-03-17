@@ -62,7 +62,7 @@
                       (2)</a></li>
                <li><a href="http://spiritsaway.info/cpp/index.html">
                    <i class="icon-folder-close"></i>CPP
-                      (7)</a></li>
+                      (8)</a></li>
                <li><a href="http://spiritsaway.info/math/index.html">
                    <i class="icon-folder-close"></i>Math
                       (4)</a></li>
@@ -172,15 +172,15 @@
 <p>在上一节所提到的各种策略中，我们论证了其优缺点，综合来说pst是最优的。但是从最后公布的结果中可以看出，pst也只排到18名，比第一名慢了将近10倍。为什么会有这样的结果？因为我们的算法只是在理论上最优，而算法的实际运行是要在硬件上跑的，罔顾体系结构的算法基本都会败的一踏涂地。而所谓的体系结构在程序运行效率上的影响主要包括：专有指令和缓存系统。数组类型的扫描访问总是比树类型的递归访问的缓存局部性好，举个例子来说就像快排与堆排。同样的复杂度<span class="math">\(\mathcal{O}(nlogn)\)</span>，快排总是比堆排序快很多倍，其优势就在于对于缓存系统的友好性。而专有指令的存在可以更好的利用缓存系统和指令级并行，其带来的加速比也是很大的。下面我们就来探讨一下AVX指令集如何运用到在区间查询中的使用。</p>
 <h2 id="7ea143">AVX指令集</h2>
 <p>AVX，全称为<a href="https://en.wikipedia.org/wiki/Advanced_Vector_Extensions">Advanced Vector Extensions</a>，是SIMD指令的典范。其指令的操作数可以为128位、256位、512位，但是512位只有在个别xeno处理器才有，我们在本文中只使用256位的AVX2.在C++编译器中，通过引用头文件<code>immintrin.h</code>来利用AVX2。在该头文件中，主要类型定义如下。</p>
-<div class="codehilite"><pre><span class="k">typedef</span> <span class="k">union</span> <span class="kr">__declspec</span><span class="p">(</span><span class="n">intrin_type</span><span class="p">)</span> <span class="n">_CRT_ALIGN</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span> <span class="n">__m256</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="k">union</span> <span class="nf">__declspec</span><span class="p">(</span><span class="n">intrin_type</span><span class="p">)</span> <span class="n">_CRT_ALIGN</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span> <span class="n">__m256</span> <span class="p">{</span>
     <span class="kt">float</span> <span class="n">m256_f32</span><span class="p">[</span><span class="mi">8</span><span class="p">];</span>
 <span class="p">}</span> <span class="n">__m256</span><span class="p">;</span>
 
-<span class="k">typedef</span> <span class="k">struct</span> <span class="kr">__declspec</span><span class="p">(</span><span class="n">intrin_type</span><span class="p">)</span> <span class="n">_CRT_ALIGN</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span> <span class="n">__m256d</span> <span class="p">{</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="nf">__declspec</span><span class="p">(</span><span class="n">intrin_type</span><span class="p">)</span> <span class="n">_CRT_ALIGN</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span> <span class="n">__m256d</span> <span class="p">{</span>
     <span class="kt">double</span> <span class="n">m256d_f64</span><span class="p">[</span><span class="mi">4</span><span class="p">];</span>
 <span class="p">}</span> <span class="n">__m256d</span><span class="p">;</span>
 
-<span class="k">typedef</span> <span class="k">union</span>  <span class="kr">__declspec</span><span class="p">(</span><span class="n">intrin_type</span><span class="p">)</span> <span class="n">_CRT_ALIGN</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span> <span class="n">__m256i</span> <span class="p">{</span>
+<span class="k">typedef</span> <span class="k">union</span>  <span class="nf">__declspec</span><span class="p">(</span><span class="n">intrin_type</span><span class="p">)</span> <span class="n">_CRT_ALIGN</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span> <span class="n">__m256i</span> <span class="p">{</span>
     <span class="kr">__int8</span>              <span class="n">m256i_i8</span><span class="p">[</span><span class="mi">32</span><span class="p">];</span>
     <span class="kr">__int16</span>             <span class="n">m256i_i16</span><span class="p">[</span><span class="mi">16</span><span class="p">];</span>
     <span class="kr">__int32</span>             <span class="n">m256i_i32</span><span class="p">[</span><span class="mi">8</span><span class="p">];</span>
@@ -214,7 +214,7 @@
 </ul>
 <h2 id="065bf5">点与区间关系判断</h2>
 <p>通过利用上述的AVX相关指令，我们定义一个搜索函数：</p>
-<div class="codehilite"><pre><span class="n">point_index</span> <span class="n">Solution</span><span class="o">::</span><span class="n">search_linear</span><span class="p">(</span><span class="k">const</span> <span class="n">Rect</span> <span class="n">rect</span><span class="p">,</span> <span class="k">const</span> <span class="n">point_index</span> <span class="n">count</span><span class="p">,</span> <span class="n">Point</span> <span class="o">*</span><span class="n">out_points</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="n">point_index</span> <span class="n">Solution</span><span class="o">::</span><span class="n">search_linear</span><span class="p">(</span><span class="k">const</span> <span class="n">Rect</span> <span class="n">rect</span><span class="p">,</span> <span class="k">const</span> <span class="n">point_index</span> <span class="n">count</span><span class="p">,</span> <span class="n">Point</span> <span class="o">*</span><span class="n">out_points</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">__m256</span> <span class="n">rect_lx</span> <span class="o">=</span> <span class="n">_mm256_broadcast_ss</span><span class="p">(</span><span class="o">&amp;</span><span class="n">rect</span><span class="p">.</span><span class="n">lx</span><span class="p">);</span>
     <span class="n">__m256</span> <span class="n">rect_hx</span> <span class="o">=</span> <span class="n">_mm256_broadcast_ss</span><span class="p">(</span><span class="o">&amp;</span><span class="n">rect</span><span class="p">.</span><span class="n">hx</span><span class="p">);</span>
@@ -368,7 +368,7 @@
 </p>
 <p>
     ©
-            2014-2015
+            2014-2016
     <a class="niu2-footer-link" href="http://spiritsaway.info">Huiliang Huang</a>
 </p>
 <p class="niu2-icons">

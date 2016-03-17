@@ -62,7 +62,7 @@
                       (2)</a></li>
                <li><a href="http://spiritsaway.info/cpp/index.html">
                    <i class="icon-folder-close"></i>CPP
-                      (7)</a></li>
+                      (8)</a></li>
                <li><a href="http://spiritsaway.info/math/index.html">
                    <i class="icon-folder-close"></i>Math
                       (4)</a></li>
@@ -92,7 +92,7 @@
 <p>这里还提到了加载域，如果当前文件是从当前模块中加载的，则这个<code>ID</code>是正的，否则是负的。实现时是通过一个全局的<code>ID=index++</code>来分配，如果是从其他模块中加载进来的，则设置为<code>ID=-ID-2</code>。如果<code>ID=-1</code>，则认为是非法<code>FileID</code>.</p>
 <h3 id="c8787f">FileInfo</h3>
 <p><code>FileInfo</code>代表的是一个文件相关的引入文件信息和自身的被引入信息。</p>
-<div class="codehilite"><pre><span class="k">class</span> <span class="nc">FileInfo</span>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">FileInfo</span>
 <span class="p">{</span>
     <span class="c1">/// \brief The location of the #include that brought in this file.</span>
     <span class="c1">///</span>
@@ -125,7 +125,7 @@
 </li>
 </ul>
 <p>这个<code>FileInfo</code>的构造是通过一个静态函数来做的：</p>
-<div class="codehilite"><pre><span class="k">static</span> <span class="n">FileInfo</span> <span class="nf">get</span><span class="p">(</span><span class="n">SourceLocation</span> <span class="n">IL</span><span class="p">,</span> <span class="k">const</span> <span class="n">ContentCache</span> <span class="o">*</span><span class="n">Con</span><span class="p">,</span>
+<div class="codehilite"><pre><span></span><span class="k">static</span> <span class="n">FileInfo</span> <span class="nf">get</span><span class="p">(</span><span class="n">SourceLocation</span> <span class="n">IL</span><span class="p">,</span> <span class="k">const</span> <span class="n">ContentCache</span> <span class="o">*</span><span class="n">Con</span><span class="p">,</span>
     <span class="n">CharacteristicKind</span> <span class="n">FileCharacter</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">FileInfo</span> <span class="n">X</span><span class="p">;</span>
@@ -141,7 +141,7 @@
 
 
 <p>这里的<code>CharacteristicKind</code>是一个很简单的枚举类，用来指明当前文件是用户文件还是系统文件还是通过<code>extern C</code>引入的系统文件：</p>
-<div class="codehilite"><pre><span class="k">enum</span> <span class="n">CharacteristicKind</span>
+<div class="codehilite"><pre><span></span><span class="k">enum</span> <span class="n">CharacteristicKind</span>
 <span class="p">{</span>
     <span class="n">C_User</span><span class="p">,</span> <span class="n">C_System</span><span class="p">,</span> <span class="n">C_ExternCSystem</span>
 <span class="p">};</span>
@@ -150,7 +150,7 @@
 
 <h3 id="a71181">ContentCache</h3>
 <p><code>clang</code>为每一个读入的文件都提供了一个<code>ContentCache</code>结构来管理缓存：</p>
-<div class="codehilite"><pre><span class="k">class</span> <span class="nc">LLVM_ALIGNAS</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span> <span class="n">ContentCache</span>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nf">LLVM_ALIGNAS</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span> <span class="n">ContentCache</span>
 <span class="p">{</span>
     <span class="k">enum</span> <span class="n">CCFlags</span>
     <span class="p">{</span>
@@ -182,7 +182,7 @@
 <p>这里有一个不怎么好理解的<code>OrigEntry</code>和<code>ContentEntry</code>：<code>OrigEntry</code>代表的是当前文件的句柄，而<code>ContentEntry</code>代表的是实际内容来源的文件句柄，这两者一般是相同的。如果当前文件是在内存中建立的临时文件的话，<code>origEntry</code>可以是空的。如果当前文件被另外一个文件的内容覆盖了的话，<code>ContentEntry</code>就是覆盖文件的句柄。</p>
 <p>对于<code>ContentCache</code>具体包含的内容，存储在<code>SourceLineCache</code>这个数据成员中，指向缓存的初始位置。这是一个<code>bump the pointer</code>，具体的不怎么清楚，涉及到自动内存管理相关。同时用<code>NumLines</code>记录缓存中的行数。<code>BufferOverridden</code>代表的是当前缓存是否最后将写回相关文件。</p>
 <p>在这一层又一层的封装下，最后<code>SourceManager</code>中的处理就简单多了：</p>
-<div class="codehilite"><pre><span class="n">llvm</span><span class="o">::</span><span class="n">MemoryBuffer</span> <span class="o">*</span><span class="n">SourceManager</span><span class="o">::</span><span class="n">getMemoryBufferForFile</span><span class="p">(</span><span class="k">const</span> <span class="n">FileEntry</span> <span class="o">*</span><span class="n">File</span><span class="p">,</span>
+<div class="codehilite"><pre><span></span><span class="n">llvm</span><span class="o">::</span><span class="n">MemoryBuffer</span> <span class="o">*</span><span class="n">SourceManager</span><span class="o">::</span><span class="n">getMemoryBufferForFile</span><span class="p">(</span><span class="k">const</span> <span class="n">FileEntry</span> <span class="o">*</span><span class="n">File</span><span class="p">,</span>
     <span class="kt">bool</span> <span class="o">*</span><span class="n">Invalid</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">const</span> <span class="n">SrcMgr</span><span class="o">::</span><span class="n">ContentCache</span> <span class="o">*</span><span class="n">IR</span> <span class="o">=</span> <span class="n">getOrCreateContentCache</span><span class="p">(</span><span class="n">File</span><span class="p">);</span>
@@ -193,7 +193,7 @@
 
 
 <p>在从<code>ContentCache</code>中获得<code>MemoryBuffer</code>的函数比较复杂，就先分部分介绍。其函数签名如下：</p>
-<div class="codehilite"><pre><span class="n">llvm</span><span class="o">::</span><span class="n">MemoryBuffer</span> <span class="o">*</span><span class="n">ContentCache</span><span class="o">::</span><span class="n">getBuffer</span><span class="p">(</span><span class="n">DiagnosticsEngine</span> <span class="o">&amp;</span><span class="n">Diag</span><span class="p">,</span>
+<div class="codehilite"><pre><span></span><span class="n">llvm</span><span class="o">::</span><span class="n">MemoryBuffer</span> <span class="o">*</span><span class="n">ContentCache</span><span class="o">::</span><span class="n">getBuffer</span><span class="p">(</span><span class="n">DiagnosticsEngine</span> <span class="o">&amp;</span><span class="n">Diag</span><span class="p">,</span>
     <span class="k">const</span> <span class="n">SourceManager</span> <span class="o">&amp;</span><span class="n">SM</span><span class="p">,</span>
     <span class="n">SourceLocation</span> <span class="n">Loc</span><span class="p">,</span>
     <span class="kt">bool</span> <span class="o">*</span><span class="n">Invalid</span><span class="p">)</span> <span class="k">const</span>
@@ -202,7 +202,7 @@
 
 <p>首先，我们并不能直接返回<code>ContentCache</code>所存储的 <code>MemoryBuffer</code>的指针。因为文件的<code>MemoryBuffer</code>是延迟构造的，只有在需要的时候才会分配这些资源，否则整个内存空间就炸了。</p>
 <p>所以我们首先需要判断<code>ContentCache</code>保存的这个内部<code>memoryBuffer</code>指针是否是有效的，如果有效则直接返回，否则再建立一个<code>MemoryBuffer</code>，然后再返回。</p>
-<div class="codehilite"><pre><span class="c1">// Lazily create the Buffer for ContentCaches that wrap files.  If we already</span>
+<div class="codehilite"><pre><span></span><span class="c1">// Lazily create the Buffer for ContentCaches that wrap files.  If we already</span>
 <span class="c1">// computed it, just return what we have.</span>
 <span class="k">if</span> <span class="p">(</span><span class="n">Buffer</span><span class="p">.</span><span class="n">getPointer</span><span class="p">()</span> <span class="o">||</span> <span class="o">!</span><span class="n">ContentsEntry</span><span class="p">)</span>
 <span class="p">{</span>
@@ -219,7 +219,7 @@
 
 
 <p>如果这个操作返回的并不是<code>MemoryBuffer</code>，而是错误的话(基本可以肯定是源文件不见了被删了)，我们需要做一些错误处理：</p>
-<div class="codehilite"><pre><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">BufferOrError</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">BufferOrError</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">StringRef</span> <span class="n">FillStr</span><span class="p">(</span><span class="s">&quot;&lt;&lt;&lt;MISSING SOURCE FILE&gt;&gt;&gt;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
     <span class="n">Buffer</span><span class="p">.</span><span class="n">setPointer</span><span class="p">(</span><span class="n">MemoryBuffer</span><span class="o">::</span><span class="n">getNewUninitMemBuffer</span><span class="p">(</span>
@@ -246,7 +246,7 @@
 
 <p>主要的操作就是分配一个<code>MemoryBuffer</code>，这个<code>MemoryBuffer</code>的名字就是<code>&lt;invalid&gt;</code>，其中的内容就是错误信息的循环填充。同时向错误诊断管理器中报告错误，最后返回这个错误的<code>MemoryBuffer</code>。</p>
 <p>如果没有返回错误，则检查我们新建的<code>MemoryBuffer</code>的大小是否等于我们所期待的大小。如果不是的话，说明源文件被修改了，向诊断管理器中报告错误，同时返回这个<code>MemoryBuffer</code>。如果是的话，再检查文件头的UTF Byte Order Mark。</p>
-<div class="codehilite"><pre><span class="c1">// If the buffer is valid, check to see if it has a UTF Byte Order Mark</span>
+<div class="codehilite"><pre><span></span><span class="c1">// If the buffer is valid, check to see if it has a UTF Byte Order Mark</span>
 <span class="c1">// (BOM).  We only support UTF-8 with and without a BOM right now.  See</span>
 <span class="c1">// http://en.wikipedia.org/wiki/Byte_order_mark for more information.</span>
 <span class="n">StringRef</span> <span class="n">BufStr</span> <span class="o">=</span> <span class="n">Buffer</span><span class="p">.</span><span class="n">getPointer</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">getBuffer</span><span class="p">();</span>
@@ -268,7 +268,7 @@
 <p>如果并不是合法的BOM，则继续报错。</p>
 <p>首先获得文件对应的<code>ContentCache</code>，然后再由<code>ContentCache</code>获得<code>MemoryBuffer</code>。</p>
 <p>如果文件的内容被<code>MemoryBuffer</code>给重写了，就将对应的<code>ContentCache</code>里面的<code>MemoryBuffer</code>替换一下，然后往缓存替换表里注册一下。这里又涉及到了延迟构造的问题，真烦。</p>
-<div class="codehilite"><pre><span class="kt">void</span> <span class="n">SourceManager</span><span class="o">::</span><span class="n">overrideFileContents</span><span class="p">(</span><span class="k">const</span> <span class="n">FileEntry</span> <span class="o">*</span><span class="n">SourceFile</span><span class="p">,</span>
+<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="n">SourceManager</span><span class="o">::</span><span class="n">overrideFileContents</span><span class="p">(</span><span class="k">const</span> <span class="n">FileEntry</span> <span class="o">*</span><span class="n">SourceFile</span><span class="p">,</span>
     <span class="n">llvm</span><span class="o">::</span><span class="n">MemoryBuffer</span> <span class="o">*</span><span class="n">Buffer</span><span class="p">,</span>
     <span class="kt">bool</span> <span class="n">DoNotFree</span><span class="p">)</span>
 <span class="p">{</span>
@@ -284,7 +284,7 @@
 
 
 <p>如果文件内容是被另外一个文件所覆盖的话，处理也是比较简单，直接向文件覆盖表中添加映射就可以了。</p>
-<div class="codehilite"><pre><span class="kt">void</span> <span class="n">SourceManager</span><span class="o">::</span><span class="n">overrideFileContents</span><span class="p">(</span><span class="k">const</span> <span class="n">FileEntry</span> <span class="o">*</span><span class="n">SourceFile</span><span class="p">,</span>
+<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="n">SourceManager</span><span class="o">::</span><span class="n">overrideFileContents</span><span class="p">(</span><span class="k">const</span> <span class="n">FileEntry</span> <span class="o">*</span><span class="n">SourceFile</span><span class="p">,</span>
     <span class="k">const</span> <span class="n">FileEntry</span> <span class="o">*</span><span class="n">NewFile</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">assert</span><span class="p">(</span><span class="n">SourceFile</span><span class="o">-&gt;</span><span class="n">getSize</span><span class="p">()</span> <span class="o">==</span> <span class="n">NewFile</span><span class="o">-&gt;</span><span class="n">getSize</span><span class="p">()</span> <span class="o">&amp;&amp;</span>
@@ -299,7 +299,7 @@
 
 
 <p>搞笑的是这里还提供了撤销操作：</p>
-<div class="codehilite"><pre><span class="kt">void</span> <span class="n">SourceManager</span><span class="o">::</span><span class="n">disableFileContentsOverride</span><span class="p">(</span><span class="k">const</span> <span class="n">FileEntry</span> <span class="o">*</span><span class="n">File</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="n">SourceManager</span><span class="o">::</span><span class="n">disableFileContentsOverride</span><span class="p">(</span><span class="k">const</span> <span class="n">FileEntry</span> <span class="o">*</span><span class="n">File</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">isFileOverridden</span><span class="p">(</span><span class="n">File</span><span class="p">))</span>
         <span class="k">return</span><span class="p">;</span>
@@ -329,7 +329,7 @@
 </li>
 </ul>
 <p>同一个物理位置他的<code>expansion location</code>与<code>presumed location</code>只有行号不一样，这种差异是<code>#line</code>导言造成的。举个例子来说，在下面的代码中</p>
-<div class="codehilite"><pre><span class="cp">#define min(x,y) (x)&gt;(y)?(y):(x)</span>
+<div class="codehilite"><pre><span></span><span class="cp">#define min(x,y) (x)&gt;(y)?(y):(x)</span>
 
 <span class="kt">void</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span><span class="kt">char</span><span class="o">**</span><span class="n">argv</span><span class="p">){</span>
 
@@ -342,7 +342,7 @@
 <p>第6行的数字2的<code>spelling location</code>是第一行，其<code>expansion location</code>是第六行，而<code>presumed location</code>是第4行。</p>
 <h3 id="6c9f9e_1">SourceLocation</h3>
 <p>SourceLocation是一个偏移，整个type大小为四个字节（4==sizeof（SourceLocation）），SourceRange是两个SourceLocation组成的区间。<code>SourceLocation</code>的具体定义如下，数据成员只有一个<code>unsigned int</code></p>
-<div class="codehilite"><pre><span class="k">class</span> <span class="nc">SourceLocation</span>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">SourceLocation</span>
 <span class="p">{</span>
     <span class="kt">unsigned</span> <span class="n">ID</span><span class="p">;</span>
     <span class="k">enum</span> <span class="o">:</span> <span class="kt">unsigned</span>
@@ -354,7 +354,7 @@
 
 
 <p>这个ID的最高位是用来表明当前Location是宏展开还是正常文本，同时有效的SourceLocation的ID不为0。实现时是这样做的，一个全局的递增<code>index</code>作为<code>ID</code>的分配值，如果这个是文件中的文本，则<code>index=ID</code>，否则是宏的话<code>index=-ID-2</code>。根据这个性质，这个类内置了几个函数，比较简单，分别是判断是否有效和是否是宏：</p>
-<div class="codehilite"><pre><span class="n">SourceLocation</span><span class="p">()</span> <span class="o">:</span> <span class="n">ID</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="p">{}</span>
+<div class="codehilite"><pre><span></span><span class="n">SourceLocation</span><span class="p">()</span> <span class="o">:</span> <span class="n">ID</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="p">{}</span>
 <span class="c1">//默认无效Location</span>
 <span class="kt">bool</span> <span class="n">isFileID</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="n">ID</span> <span class="o">&amp;</span> <span class="n">MacroIDBit</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">;</span> <span class="p">}</span>
 <span class="kt">bool</span> <span class="n">isMacroID</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="n">ID</span> <span class="o">&amp;</span> <span class="n">MacroIDBit</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">;</span> <span class="p">}</span>
@@ -371,13 +371,13 @@
 
 <p>作为无效的Location，一般是用来组成SourceRange的end端的，表明当前并不需要这个end，一般是处理单token的时候。</p>
 <p>为了构造有效的SourceLocation，需要用到另外的几个静态构造函数：</p>
-<div class="codehilite"><pre><span class="c1">/// \brief Return the offset into the manager&#39;s global input view.</span>
-<span class="kt">unsigned</span> <span class="n">getOffset</span><span class="p">()</span> <span class="k">const</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// \brief Return the offset into the manager&#39;s global input view.</span>
+<span class="kt">unsigned</span> <span class="nf">getOffset</span><span class="p">()</span> <span class="k">const</span>
 <span class="p">{</span>
     <span class="k">return</span> <span class="n">ID</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">MacroIDBit</span><span class="p">;</span>
 <span class="p">}</span>
 
-<span class="k">static</span> <span class="n">SourceLocation</span> <span class="n">getFileLoc</span><span class="p">(</span><span class="kt">unsigned</span> <span class="n">ID</span><span class="p">)</span>
+<span class="k">static</span> <span class="n">SourceLocation</span> <span class="nf">getFileLoc</span><span class="p">(</span><span class="kt">unsigned</span> <span class="n">ID</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">assert</span><span class="p">((</span><span class="n">ID</span> <span class="o">&amp;</span> <span class="n">MacroIDBit</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="s">&quot;Ran out of source locations!&quot;</span><span class="p">);</span>
     <span class="n">SourceLocation</span> <span class="n">L</span><span class="p">;</span>
@@ -385,7 +385,7 @@
     <span class="k">return</span> <span class="n">L</span><span class="p">;</span>
 <span class="p">}</span>
 
-<span class="k">static</span> <span class="n">SourceLocation</span> <span class="n">getMacroLoc</span><span class="p">(</span><span class="kt">unsigned</span> <span class="n">ID</span><span class="p">)</span>
+<span class="k">static</span> <span class="n">SourceLocation</span> <span class="nf">getMacroLoc</span><span class="p">(</span><span class="kt">unsigned</span> <span class="n">ID</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">assert</span><span class="p">((</span><span class="n">ID</span> <span class="o">&amp;</span> <span class="n">MacroIDBit</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="s">&quot;Ran out of source locations!&quot;</span><span class="p">);</span>
     <span class="n">SourceLocation</span> <span class="n">L</span><span class="p">;</span>
@@ -397,7 +397,7 @@
 
 <p>虽然这几个都是<code>private</code>的，不过由于声明了几个友元类，所以还是可以调用的。</p>
 <p>对于<code>SourceRange</code>来说，很简单，就是两个<code>SourceLocation</code>的复合。</p>
-<div class="codehilite"><pre><span class="k">class</span> <span class="nc">SourceRange</span>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">SourceRange</span>
 <span class="p">{</span>
     <span class="n">SourceLocation</span> <span class="n">B</span><span class="p">;</span>
     <span class="n">SourceLocation</span> <span class="n">E</span><span class="p">;</span>
@@ -408,7 +408,7 @@
 <p>相关的代码也比较简单直白，基本都是一些<code>get,set valid</code>方法，就懒得说了。</p>
 <h3 id="1460b6">CharSourceRange</h3>
 <p>这里还定义了一个<code>CharSourceRange</code>，在<code>SourceRange</code>上加了一个<code>bool IsTokenRange</code>作为一个标志位。</p>
-<div class="codehilite"><pre><span class="k">class</span> <span class="nc">CharSourceRange</span>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">CharSourceRange</span>
 <span class="p">{</span>
     <span class="n">SourceRange</span> <span class="n">Range</span><span class="p">;</span>
     <span class="kt">bool</span> <span class="n">IsTokenRange</span><span class="p">;</span>
@@ -419,7 +419,7 @@
 <p>当这个<code>IsTokenRange</code>为真时，这里的<code>Range</code>的<code>end</code>指明的是我们所指代区域内最后一个<code>token</code>的第一个字节的<code>SourceLocation</code>；否则指的是该区域内最后一个字节的<code>SourceLocation</code>。</p>
 <h3 id="8f4b07">FullSourceLoc</h3>
 <p>一个<code>SourceLocation</code>只包含一个<code>ID</code>，其具体意义需要相应的<code>SourceManager</code>来管理。<code>SourceLocation</code>与<code>SourceManager</code>的复合体为<code>FullSourceLoc</code></p>
-<div class="codehilite"><pre><span class="k">class</span> <span class="nc">FullSourceLoc</span> <span class="o">:</span> <span class="k">public</span> <span class="n">SourceLocation</span>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">FullSourceLoc</span> <span class="o">:</span> <span class="k">public</span> <span class="n">SourceLocation</span>
 <span class="p">{</span>
     <span class="k">const</span> <span class="n">SourceManager</span> <span class="o">*</span><span class="n">SrcMgr</span><span class="p">;</span>
 <span class="p">}</span>
@@ -428,25 +428,25 @@
 
 <p>这个类型主要是用来传递<code>SourceLocation</code>和<code>SourceManager</code>这两个参数的，打包传递。</p>
 <p>事实上很多操作都被打包进了这个<code>FullSourceLoc</code>之中，主要的就是行号、列号、文件名、宏定义位置、宏展开位置等</p>
-<div class="codehilite"><pre><span class="n">FileID</span> <span class="n">getFileID</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><span class="n">FileID</span> <span class="nf">getFileID</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
 
-<span class="n">FullSourceLoc</span> <span class="n">getExpansionLoc</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
-<span class="n">FullSourceLoc</span> <span class="n">getSpellingLoc</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+<span class="n">FullSourceLoc</span> <span class="nf">getExpansionLoc</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+<span class="n">FullSourceLoc</span> <span class="nf">getSpellingLoc</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
 
-<span class="kt">unsigned</span> <span class="n">getExpansionLineNumber</span><span class="p">(</span><span class="kt">bool</span> <span class="o">*</span><span class="n">Invalid</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
-<span class="kt">unsigned</span> <span class="n">getExpansionColumnNumber</span><span class="p">(</span><span class="kt">bool</span> <span class="o">*</span><span class="n">Invalid</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+<span class="kt">unsigned</span> <span class="nf">getExpansionLineNumber</span><span class="p">(</span><span class="kt">bool</span> <span class="o">*</span><span class="n">Invalid</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+<span class="kt">unsigned</span> <span class="nf">getExpansionColumnNumber</span><span class="p">(</span><span class="kt">bool</span> <span class="o">*</span><span class="n">Invalid</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
 
-<span class="kt">unsigned</span> <span class="n">getSpellingLineNumber</span><span class="p">(</span><span class="kt">bool</span> <span class="o">*</span><span class="n">Invalid</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
-<span class="kt">unsigned</span> <span class="n">getSpellingColumnNumber</span><span class="p">(</span><span class="kt">bool</span> <span class="o">*</span><span class="n">Invalid</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+<span class="kt">unsigned</span> <span class="nf">getSpellingLineNumber</span><span class="p">(</span><span class="kt">bool</span> <span class="o">*</span><span class="n">Invalid</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+<span class="kt">unsigned</span> <span class="nf">getSpellingColumnNumber</span><span class="p">(</span><span class="kt">bool</span> <span class="o">*</span><span class="n">Invalid</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
 
-<span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">getCharacterData</span><span class="p">(</span><span class="kt">bool</span> <span class="o">*</span><span class="n">Invalid</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+<span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="nf">getCharacterData</span><span class="p">(</span><span class="kt">bool</span> <span class="o">*</span><span class="n">Invalid</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
 </pre></div>
 
 
 <p>不过这些操作都被委托进了<code>SourceManager</code>的对应操作中，这些函数只是作为转接存在的。。</p>
 <h3 id="b8ce1f">PresumedLoc</h3>
 <p>这个<code>PresumedLoc</code>其实也是一个打包类，因为<code>SourceLocation</code>就可以判断是不是经过 <code>#line</code>导言调整过的行号了，这个主要是通过<code>SourceManager</code>来进行。但是作为参数传递出去的时候，不想让另外一方操作<code>SourceManager</code>，所以把相关信息都提取出来了，作为了 <code>PresumedLoc</code>:</p>
-<div class="codehilite"><pre><span class="k">class</span> <span class="nc">PresumedLoc</span>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">PresumedLoc</span>
 <span class="p">{</span>
     <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">Filename</span><span class="p">;</span>
     <span class="kt">unsigned</span> <span class="n">Line</span><span class="p">,</span> <span class="n">Col</span><span class="p">;</span>
@@ -456,7 +456,7 @@
 
 
 <p>事实上这个<code>PresumedLoc</code>就是以一个<code>SourceLocation</code>通过<code>SourceManager</code>构造出来的，非常复杂：</p>
-<div class="codehilite"><pre><span class="n">PresumedLoc</span> <span class="n">SourceManager</span><span class="o">::</span><span class="n">getPresumedLoc</span><span class="p">(</span><span class="n">SourceLocation</span> <span class="n">Loc</span><span class="p">,</span>
+<div class="codehilite"><pre><span></span><span class="n">PresumedLoc</span> <span class="n">SourceManager</span><span class="o">::</span><span class="n">getPresumedLoc</span><span class="p">(</span><span class="n">SourceLocation</span> <span class="n">Loc</span><span class="p">,</span>
     <span class="kt">bool</span> <span class="n">UseLineDirectives</span><span class="p">)</span> <span class="k">const</span>
 </pre></div>
 
@@ -464,7 +464,7 @@
 <p>对于这个函数的具体逻辑我们在这里先不详细解释，因为这个依赖于<code>SourceManager</code>的定义，需要先介绍<code>SourceManager</code>的相关操作。</p>
 <h2 id="bc4716">LineTable</h2>
 <p>这个<code>LineTable</code>是用来处理<code>#line</code>导言的，所以需要记录所有文件中该类型导言的相关信息，每一个信息都存储为一个<code>LineEntry</code>结构，记录了改导言所在文件的行位置<code>FileOffset</code>、该导言自定义的行号<code>LineNo</code>和文件名<code>FilenameID</code>。</p>
-<div class="codehilite"><pre><span class="k">struct</span> <span class="n">LineEntry</span>
+<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">LineEntry</span>
 <span class="p">{</span>
     <span class="c1">/// \brief The offset in this file that the line entry occurs at.</span>
     <span class="kt">unsigned</span> <span class="n">FileOffset</span><span class="p">;</span>
@@ -491,7 +491,7 @@
 
 <p>按照惯例，这个类型的构造仍然是通过<code>static</code>来做的，就是简单的字段赋值，不再说明。</p>
 <p>而所有的<code>LineEntry</code>信息都维护在一个<code>LineTableInfo</code>中，记录了每一个文件中所包含的<code>LineEntry</code>信息。</p>
-<div class="codehilite"><pre><span class="c1">/// \brief Used to hold and unique data used to represent #line information.</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// \brief Used to hold and unique data used to represent #line information.</span>
 <span class="k">class</span> <span class="nc">LineTableInfo</span>
 <span class="p">{</span>
     <span class="c1">/// \brief Map used to assign unique IDs to filenames in #line directives. </span>
@@ -512,7 +512,7 @@
 
 <p>这里的<code>FilenameIDs</code>和<code>FilenamesByID</code>是一个典型的互索引结构，新的<code>Filename</code>首先通过 <code>FilenamesByID.size()</code>获得其<code>ID</code>，然后将这二元组插入到<code>FilenameIDs</code>中。根据所获得的    <code>llvm::StringMapEntry</code>再<code>push_back</code>到<code>FilenamesByID</code>中。所以这里管理了<code>FileID</code>的注册于发放。</p>
 <p>在使用的时候，我们希望得到的是给定<code>expansion</code>的行号，如何获得其在<code>presumed</code>中的行号。这个操作需要获得在当前文件中离当前行最近的<code>LineEntry</code>信息，基本就是一个二分查找过程。</p>
-<div class="codehilite"><pre><span class="k">const</span> <span class="n">LineEntry</span> <span class="o">*</span><span class="n">LineTableInfo</span><span class="o">::</span><span class="n">FindNearestLineEntry</span><span class="p">(</span><span class="n">FileID</span> <span class="n">FID</span><span class="p">,</span>
+<div class="codehilite"><pre><span></span><span class="k">const</span> <span class="n">LineEntry</span> <span class="o">*</span><span class="n">LineTableInfo</span><span class="o">::</span><span class="n">FindNearestLineEntry</span><span class="p">(</span><span class="n">FileID</span> <span class="n">FID</span><span class="p">,</span>
     <span class="kt">unsigned</span> <span class="n">Offset</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">LineEntry</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">Entries</span> <span class="o">=</span> <span class="n">LineEntries</span><span class="p">[</span><span class="n">FID</span><span class="p">];</span>
@@ -534,7 +534,7 @@
 
 <h2 id="3525a6">ExpansionInfo</h2>
 <p>这个<code>ExpansionInfo</code>代表了宏展开相关的信息：展开位置和宏定义位置。</p>
-<div class="codehilite"><pre><span class="k">class</span> <span class="nc">ExpansionInfo</span>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">ExpansionInfo</span>
 <span class="p">{</span>
     <span class="c1">// Really these are all SourceLocations.</span>
     <span class="c1">/// \brief Where the spelling for the token can be found.</span>
@@ -564,7 +564,7 @@
 </li>
 </ul>
 <p>这个类型的默认构造函数也是无效的，构造都委托到了下面这个静态函数里面：</p>
-<div class="codehilite"><pre><span class="k">static</span> <span class="n">ExpansionInfo</span> <span class="nf">create</span><span class="p">(</span><span class="n">SourceLocation</span> <span class="n">SpellingLoc</span><span class="p">,</span>
+<div class="codehilite"><pre><span></span><span class="k">static</span> <span class="n">ExpansionInfo</span> <span class="nf">create</span><span class="p">(</span><span class="n">SourceLocation</span> <span class="n">SpellingLoc</span><span class="p">,</span>
     <span class="n">SourceLocation</span> <span class="n">Start</span><span class="p">,</span> <span class="n">SourceLocation</span> <span class="n">End</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">ExpansionInfo</span> <span class="n">X</span><span class="p">;</span>
@@ -577,7 +577,7 @@
 
 
 <p>对于参数展开来说，那就直接调用上面这个函数了，非常机制啊：</p>
-<div class="codehilite"><pre><span class="k">static</span> <span class="n">ExpansionInfo</span> <span class="nf">createForMacroArg</span><span class="p">(</span><span class="n">SourceLocation</span> <span class="n">SpellingLoc</span><span class="p">,</span>
+<div class="codehilite"><pre><span></span><span class="k">static</span> <span class="n">ExpansionInfo</span> <span class="nf">createForMacroArg</span><span class="p">(</span><span class="n">SourceLocation</span> <span class="n">SpellingLoc</span><span class="p">,</span>
     <span class="n">SourceLocation</span> <span class="n">ExpansionLoc</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="c1">// We store an intentionally invalid source location for the end of the</span>
@@ -590,7 +590,7 @@
 
 <h2 id="f2128a">SLocEntry</h2>
 <p>这个类型是一个联合类，包含了<code>FileInfo</code>和<code>ExpansionInfo</code>这两种类型：</p>
-<div class="codehilite"><pre><span class="k">class</span> <span class="nc">SLocEntry</span>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">SLocEntry</span>
 <span class="p">{</span>
     <span class="kt">unsigned</span> <span class="n">Offset</span><span class="p">;</span>   <span class="c1">// low bit is set for expansion info.</span>
     <span class="k">union</span>
@@ -603,14 +603,14 @@
 
 
 <p>这里的<code>Offset</code>的最低位用来作为标志位，来区分是哪一个具体类型：</p>
-<div class="codehilite"><pre><span class="kt">unsigned</span> <span class="n">getOffset</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">Offset</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">;</span> <span class="p">}</span>
-<span class="kt">bool</span> <span class="n">isExpansion</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">Offset</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">;</span> <span class="p">}</span>
-<span class="kt">bool</span> <span class="n">isFile</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="o">!</span><span class="n">isExpansion</span><span class="p">();</span> <span class="p">}</span>
+<div class="codehilite"><pre><span></span><span class="kt">unsigned</span> <span class="nf">getOffset</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">Offset</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">;</span> <span class="p">}</span>
+<span class="kt">bool</span> <span class="nf">isExpansion</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">Offset</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">;</span> <span class="p">}</span>
+<span class="kt">bool</span> <span class="nf">isFile</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="o">!</span><span class="n">isExpansion</span><span class="p">();</span> <span class="p">}</span>
 </pre></div>
 
 
 <p>这个类的构造函数也是静态的，主要是这个对象经常需要临时构造，静态处理比较方便。</p>
-<div class="codehilite"><pre><span class="k">static</span> <span class="n">SLocEntry</span> <span class="nf">get</span><span class="p">(</span><span class="kt">unsigned</span> <span class="n">Offset</span><span class="p">,</span> <span class="k">const</span> <span class="n">FileInfo</span> <span class="o">&amp;</span><span class="n">FI</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="k">static</span> <span class="n">SLocEntry</span> <span class="nf">get</span><span class="p">(</span><span class="kt">unsigned</span> <span class="n">Offset</span><span class="p">,</span> <span class="k">const</span> <span class="n">FileInfo</span> <span class="o">&amp;</span><span class="n">FI</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">SLocEntry</span> <span class="n">E</span><span class="p">;</span>
     <span class="n">E</span><span class="p">.</span><span class="n">Offset</span> <span class="o">=</span> <span class="n">Offset</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span><span class="p">;</span>
@@ -630,26 +630,26 @@
 
 <h2 id="390ca7">SourceManager</h2>
 <p>这个类是一个非常大的类，管理了所有与源文件相关的资源，同时他也是一个被侵入式引用计数<code>IntrusiveRefPtr</code>管理的资源，因为在其他地方经常有<code>SourceManager</code>的指针副本。</p>
-<div class="codehilite"><pre><span class="k">class</span> <span class="nc">SourceManager</span> <span class="o">:</span> <span class="k">public</span> <span class="n">RefCountedBase</span><span class="o">&lt;</span><span class="n">SourceManager</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">SourceManager</span> <span class="o">:</span> <span class="k">public</span> <span class="n">RefCountedBase</span><span class="o">&lt;</span><span class="n">SourceManager</span><span class="o">&gt;</span>
 </pre></div>
 
 
 <h1 id="6478fc">资源管理</h1>
 <h2 id="51bef6">资源句柄</h2>
 <p>在<code>SourceManager</code>中，首先保存了<code>DiagnosticEngine</code>和<code>FileManager</code>这两个引用，至此源文件管理相关的大类已经集合完毕。</p>
-<div class="codehilite"><pre><span class="n">DiagnosticsEngine</span> <span class="o">&amp;</span><span class="n">Diag</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><span class="n">DiagnosticsEngine</span> <span class="o">&amp;</span><span class="n">Diag</span><span class="p">;</span>
 
 <span class="n">FileManager</span> <span class="o">&amp;</span><span class="n">FileMgr</span><span class="p">;</span>
 </pre></div>
 
 
 <p>首先记录在案的是文件<code>FileEntry</code>与相应缓存<code>ContentCache</code>之间的映射，这是通过一个<code>map</code>来实现的。</p>
-<div class="codehilite"><pre><span class="n">llvm</span><span class="o">::</span><span class="n">DenseMap</span><span class="o">&lt;</span><span class="k">const</span> <span class="n">FileEntry</span><span class="o">*</span><span class="p">,</span> <span class="n">SrcMgr</span><span class="o">::</span><span class="n">ContentCache</span><span class="o">*&gt;</span> <span class="n">FileInfos</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><span class="n">llvm</span><span class="o">::</span><span class="n">DenseMap</span><span class="o">&lt;</span><span class="k">const</span> <span class="n">FileEntry</span><span class="o">*</span><span class="p">,</span> <span class="n">SrcMgr</span><span class="o">::</span><span class="n">ContentCache</span><span class="o">*&gt;</span> <span class="n">FileInfos</span><span class="p">;</span>
 </pre></div>
 
 
 <p>对于文件被重写的情况，<code>SourceManager</code>也记录了这些信息</p>
-<div class="codehilite"><pre><span class="k">struct</span> <span class="n">OverriddenFilesInfoTy</span>
+<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">OverriddenFilesInfoTy</span>
 <span class="p">{</span>
     <span class="c1">/// \brief Files that have been overridden with the contents from another</span>
     <span class="c1">/// file.</span>
@@ -673,12 +673,12 @@
 
 <p>这里还设置这个覆盖结构为延迟实例化的，注释里面说这个东西很少用到。但是你们真的缺这两个<code>map,set</code>的内存空间吗！过早优化是万恶之源啊。</p>
 <p>这里还管理了所有的<code>ContentCache</code></p>
-<div class="codehilite"><pre><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">SrcMgr</span><span class="o">::</span><span class="n">ContentCache</span><span class="o">*&gt;</span> <span class="n">MemBufferInfos</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">SrcMgr</span><span class="o">::</span><span class="n">ContentCache</span><span class="o">*&gt;</span> <span class="n">MemBufferInfos</span><span class="p">;</span>
 </pre></div>
 
 
 <p>同时还对错误处理专门分配了缓存空间</p>
-<div class="codehilite"><pre><span class="c1">// Cache for the &quot;fake&quot; buffer used for error-recovery purposes.</span>
+<div class="codehilite"><pre><span></span><span class="c1">// Cache for the &quot;fake&quot; buffer used for error-recovery purposes.</span>
 <span class="k">mutable</span> <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">llvm</span><span class="o">::</span><span class="n">MemoryBuffer</span><span class="o">&gt;</span> <span class="n">FakeBufferForRecovery</span><span class="p">;</span>
 
 <span class="k">mutable</span> <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">SrcMgr</span><span class="o">::</span><span class="n">ContentCache</span><span class="o">&gt;</span> <span class="n">FakeContentCacheForRecovery</span><span class="p">;</span>
@@ -686,7 +686,7 @@
 
 
 <p>对于<code>SlocEntry</code>的管理，分为了两个部分，一个是本模块内的<code>SlocEntry</code>，另外一个是从其他模块中装载进来的<code>SlocEntry</code>，也就是<code>local</code>和<code>loaded</code>之分。</p>
-<div class="codehilite"><pre><span class="c1">/// \brief The table of SLocEntries that are local to this module.</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// \brief The table of SLocEntries that are local to this module.</span>
 <span class="c1">///</span>
 <span class="c1">/// Positive FileIDs are indexes into this table. Entry 0 indicates an invalid</span>
 <span class="c1">/// expansion.</span>
@@ -701,7 +701,7 @@
 
 
 <p>还有一个位图来表示外部的<code>SlocEntry</code>是否真正的加载进来了，看来加载过程是延迟的：</p>
-<div class="codehilite"><pre><span class="c1">/// \brief A bitmap that indicates whether the entries of LoadedSLocEntryTable</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// \brief A bitmap that indicates whether the entries of LoadedSLocEntryTable</span>
 <span class="c1">/// have already been loaded from the external source.</span>
 <span class="c1">///</span>
 <span class="c1">/// Same indexing as LoadedSLocEntryTable.</span>
@@ -710,7 +710,7 @@
 
 
 <p><code>SourceManager</code>中也有一个<code>LineTable</code>的指针，用来延迟实例化这个结构。由于延迟实例化导致了每次使用的时候都需要判断是否已经实例化，真是蛋疼。</p>
-<div class="codehilite"><pre><span class="c1">/// \brief Holds information for #line directives.</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// \brief Holds information for #line directives.</span>
 <span class="c1">///</span>
 <span class="c1">/// This is referenced by indices from SLocEntryTable.</span>
 <span class="n">LineTableInfo</span> <span class="o">*</span><span class="n">LineTable</span><span class="p">;</span>
@@ -718,7 +718,7 @@
 
 
 <p>对于宏参数的处理，则存储在另外一个<code>Map</code>中：</p>
-<div class="codehilite"><pre><span class="c1">/// \brief Lazily computed map of macro argument chunks to their expanded</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// \brief Lazily computed map of macro argument chunks to their expanded</span>
 <span class="c1">/// source location.</span>
 <span class="k">typedef</span> <span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="kt">unsigned</span><span class="p">,</span> <span class="n">SourceLocation</span><span class="o">&gt;</span> <span class="n">MacroArgsMap</span><span class="p">;</span>
 
@@ -727,7 +727,7 @@
 
 
 <p>这里还记录了几个重要的<code>FileID</code>，包括当前文件的和预编译导言区，话说这个预编译导言区是干嘛的？</p>
-<div class="codehilite"><pre><span class="c1">/// \brief The file ID for the main source file of the translation unit.</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// \brief The file ID for the main source file of the translation unit.</span>
 <span class="n">FileID</span> <span class="n">MainFileID</span><span class="p">;</span>
 
 <span class="c1">/// \brief The file ID for the precompiled preamble there is one.</span>
@@ -736,7 +736,7 @@
 
 
 <p>对于模块之间的引用与依赖关系，存储于一个<code>vector</code>中。</p>
-<div class="codehilite"><pre><span class="c1">/// \brief The stack of modules being built, which is used to detect</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// \brief The stack of modules being built, which is used to detect</span>
 <span class="c1">/// cycles in the module dependency graph as modules are being built, as</span>
 <span class="c1">/// well as to describe why we&#39;re rebuilding a particular module.</span>
 <span class="c1">///</span>
@@ -748,7 +748,7 @@
 
 
 <p>这里的<code>pair&lt;string,FullSourceLoc&gt;</code>中的<code>string</code>是模块名称，而<code>FullSourceLoc</code>则是引入模块的位置。</p>
-<div class="codehilite"><pre><span class="kt">void</span> <span class="nf">pushModuleBuildStack</span><span class="p">(</span><span class="n">StringRef</span> <span class="n">moduleName</span><span class="p">,</span> <span class="n">FullSourceLoc</span> <span class="n">importLoc</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="nf">pushModuleBuildStack</span><span class="p">(</span><span class="n">StringRef</span> <span class="n">moduleName</span><span class="p">,</span> <span class="n">FullSourceLoc</span> <span class="n">importLoc</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">StoredModuleBuildStack</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_pair</span><span class="p">(</span><span class="n">moduleName</span><span class="p">.</span><span class="n">str</span><span class="p">(),</span> <span class="n">importLoc</span><span class="p">));</span>
 <span class="p">}</span>
@@ -757,7 +757,7 @@
 
 <h2 id="e91e3f">为File构建MemoryBuffer</h2>
 <p>为<code>File</code>准备<code>MemoryBuffer</code>分为了好几步来进行。首先记录文件的大小，如果文件是处于编辑状态的话，设置大小为-1。如果文件为打开状态，则调用<code>vfs::getBuffer</code>准备好<code>Buffer</code>，并按照要求选择是否关闭文件，感觉像把文件完整的读进来啊。如果文件没有打开的话，则打开或者建立这个文件，然后获得<code>MemoryBuffer</code>。值得注意的是，这个操作有可能不成功，从而返回错误。具体见下面的代码：</p>
-<div class="codehilite"><pre><span class="n">llvm</span><span class="o">::</span><span class="n">ErrorOr</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">llvm</span><span class="o">::</span><span class="n">MemoryBuffer</span><span class="o">&gt;&gt;</span>
+<div class="codehilite"><pre><span></span><span class="n">llvm</span><span class="o">::</span><span class="n">ErrorOr</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">llvm</span><span class="o">::</span><span class="n">MemoryBuffer</span><span class="o">&gt;&gt;</span>
 <span class="n">FileManager</span><span class="o">::</span><span class="n">getBufferForFile</span><span class="p">(</span><span class="k">const</span> <span class="n">FileEntry</span> <span class="o">*</span><span class="n">Entry</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">isVolatile</span><span class="p">,</span>
     <span class="kt">bool</span> <span class="n">ShouldCloseOpenFile</span><span class="p">)</span>
 <span class="p">{</span>
@@ -797,7 +797,7 @@
 
 <h2 id="2819f8">为File构建ContentCache</h2>
 <p>对于每个文件来说，其<code>ContentCache</code>就是其内容的内存镜像。我们不能把所有的文件直接装载进内存中，这样会爆内存的，所以需要延迟装载这个<code>ContentCache</code>。所以对于文件的<code>ContentCache</code>的引用需要考虑还没装载的情况，统一以下面这个函数来操作<code>getOrCreateContentCache</code>。</p>
-<div class="codehilite"><pre><span class="c1">/// getOrCreateContentCache - Create or return a cached ContentCache for the</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// getOrCreateContentCache - Create or return a cached ContentCache for the</span>
 <span class="c1">/// specified file.</span>
 <span class="k">const</span> <span class="n">ContentCache</span> <span class="o">*</span>
 <span class="n">SourceManager</span><span class="o">::</span><span class="n">getOrCreateContentCache</span><span class="p">(</span><span class="k">const</span> <span class="n">FileEntry</span> <span class="o">*</span><span class="n">FileEnt</span><span class="p">,</span>
@@ -841,7 +841,7 @@
 <h2 id="442ccb">生成新的FileID</h2>
 <p>对于<code>FileID</code>，通过以下两种方式生成，一个处理头文件引用，一个处理缓存映射。</p>
 <p>如果以头文件引用的形式生成，则需要调用一下函数：</p>
-<div class="codehilite"><pre><span class="c1">/// \brief Create a new FileID that represents the specified file</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// \brief Create a new FileID that represents the specified file</span>
 <span class="c1">/// being #included from the specified IncludePosition.</span>
 <span class="c1">///</span>
 <span class="c1">/// This translates NULL into standard input.</span>
@@ -860,7 +860,7 @@
 
 <p>首先获得其<code>FileEntry</code>对应的<code>ContentCache</code>，然后再调用具体的执行函数。</p>
 <p>如果我们是以一个内存缓冲区来建立一个新的<code>FileID</code>的话，则需要调用另外一个函数了：</p>
-<div class="codehilite"><pre><span class="c1">/// \brief Create a new FileID that represents the specified memory buffer.</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// \brief Create a new FileID that represents the specified memory buffer.</span>
 <span class="c1">///</span>
 <span class="c1">/// This does no caching of the buffer and takes ownership of the</span>
 <span class="c1">/// MemoryBuffer, so only pass a MemoryBuffer to this once.</span>
@@ -877,7 +877,7 @@
 
 <p>这里的逻辑也差不多，根据一个<code>MemoryBuffer</code>来生成一个<code>ContentCache</code>，基本只需要<code>move</code>就行了。</p>
 <p>这两种<code>FileID</code>的创建方式最后都需要调用<code>createFileID</code>这个函数：</p>
-<div class="codehilite"><pre><span class="c1">/// createFileID - Create a new FileID for the specified ContentCache and</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// createFileID - Create a new FileID for the specified ContentCache and</span>
 <span class="c1">/// include position.  This works regardless of whether the ContentCache</span>
 <span class="c1">/// corresponds to a file or some other input source.</span>
 <span class="n">FileID</span> <span class="n">SourceManager</span><span class="o">::</span><span class="n">createFileID</span><span class="p">(</span><span class="k">const</span> <span class="n">ContentCache</span> <span class="o">*</span><span class="n">File</span><span class="p">,</span>
@@ -888,7 +888,7 @@
 
 
 <p>这里的参数<code>LoadedID</code>其实就是<code>FileID</code>的编号。如果这个<code>ID</code>的值小于0，则他加载自外部模块，其值被限定为<code>LoadedSlocEntryTable.size()</code>内。此时的执行逻辑如下，这里还涉及到了延迟加载，所以会有一个<code>vector&lt;bool&gt;</code>来表明是否已经加载了，：</p>
-<div class="codehilite"><pre><span class="n">assert</span><span class="p">(</span><span class="n">LoadedID</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="s">&quot;Loading sentinel FileID&quot;</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><span class="n">assert</span><span class="p">(</span><span class="n">LoadedID</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="s">&quot;Loading sentinel FileID&quot;</span><span class="p">);</span>
 <span class="kt">unsigned</span> <span class="n">Index</span> <span class="o">=</span> <span class="kt">unsigned</span><span class="p">(</span><span class="o">-</span><span class="n">LoadedID</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">;</span>
 <span class="n">assert</span><span class="p">(</span><span class="n">Index</span> <span class="o">&lt;</span> <span class="n">LoadedSLocEntryTable</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="s">&quot;FileID out of range&quot;</span><span class="p">);</span>
 <span class="n">assert</span><span class="p">(</span><span class="o">!</span><span class="n">SLocEntryLoaded</span><span class="p">[</span><span class="n">Index</span><span class="p">]</span> <span class="o">&amp;&amp;</span> <span class="s">&quot;FileID already loaded&quot;</span><span class="p">);</span>
@@ -900,7 +900,7 @@
 
 
 <p>反之，其<code>ID</code>大于等于0，这是本模块内的<code>ID</code>，则直接加入到<code>LocalSlocEntryTable</code>中，并返回这个加入的索引：</p>
-<div class="codehilite"><pre><span class="n">LocalSLocEntryTable</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">SLocEntry</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="n">NextLocalOffset</span><span class="p">,</span>
+<div class="codehilite"><pre><span></span><span class="n">LocalSLocEntryTable</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">SLocEntry</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="n">NextLocalOffset</span><span class="p">,</span>
     <span class="n">FileInfo</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="n">IncludePos</span><span class="p">,</span> <span class="n">File</span><span class="p">,</span>
         <span class="n">FileCharacter</span><span class="p">)));</span>
 <span class="kt">unsigned</span> <span class="n">FileSize</span> <span class="o">=</span> <span class="n">File</span><span class="o">-&gt;</span><span class="n">getSize</span><span class="p">();</span>
@@ -920,7 +920,7 @@
 
 <h2 id="a16f55">为ContentCache生成行号索引</h2>
 <p><code>ContentCache</code>中的<code>SourceLineCache</code>是一个延迟填充的数据成员，只有在被使用时才初始化行号缓存，来指明这个文件中每一行的开始位置偏移。这个行号缓存的构建函数签名如下：</p>
-<div class="codehilite"><pre><span class="k">static</span> <span class="n">LLVM_ATTRIBUTE_NOINLINE</span> <span class="kt">void</span>
+<div class="codehilite"><pre><span></span><span class="k">static</span> <span class="n">LLVM_ATTRIBUTE_NOINLINE</span> <span class="kt">void</span>
 <span class="nf">ComputeLineNumbers</span><span class="p">(</span><span class="n">DiagnosticsEngine</span> <span class="o">&amp;</span><span class="n">Diag</span><span class="p">,</span> <span class="n">ContentCache</span> <span class="o">*</span><span class="n">FI</span><span class="p">,</span>
     <span class="n">llvm</span><span class="o">::</span><span class="n">BumpPtrAllocator</span> <span class="o">&amp;</span><span class="n">Alloc</span><span class="p">,</span>
     <span class="k">const</span> <span class="n">SourceManager</span> <span class="o">&amp;</span><span class="n">SM</span><span class="p">,</span> <span class="kt">bool</span> <span class="o">&amp;</span><span class="n">Invalid</span><span class="p">);</span>
@@ -928,14 +928,14 @@
 
 
 <p>这个是一个全局函数，而不是内部函数。其实现比较长，看到这一个条件开关简直虎躯一震：</p>
-<div class="codehilite"><pre><span class="cp">#ifdef __SSE2__</span>
-<span class="cp">#include &lt;emmintrin.h&gt;</span>
+<div class="codehilite"><pre><span></span><span class="cp">#ifdef __SSE2__</span>
+<span class="cp">#include</span> <span class="cpf">&lt;emmintrin.h&gt;</span><span class="cp"></span>
 <span class="cp">#endif</span>
 </pre></div>
 
 
 <p>其实他的逻辑很简单，就是对一个<code>ContentCache</code>进行一个线性扫描换行符，<code>SSE</code>指令很适合这种情况：</p>
-<div class="codehilite"><pre><span class="kr">__m128i</span> <span class="n">CRs</span> <span class="o">=</span> <span class="n">_mm_set1_epi8</span><span class="p">(</span><span class="sc">&#39;\r&#39;</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><span class="kr">__m128i</span> <span class="n">CRs</span> <span class="o">=</span> <span class="n">_mm_set1_epi8</span><span class="p">(</span><span class="sc">&#39;\r&#39;</span><span class="p">);</span>
 <span class="kr">__m128i</span> <span class="n">LFs</span> <span class="o">=</span> <span class="n">_mm_set1_epi8</span><span class="p">(</span><span class="sc">&#39;\n&#39;</span><span class="p">);</span>
 <span class="k">while</span> <span class="p">(</span><span class="n">NextBuf</span> <span class="o">+</span> <span class="mi">16</span> <span class="o">&lt;=</span> <span class="n">End</span><span class="p">)</span>
 <span class="p">{</span>
@@ -959,7 +959,7 @@
 <p>对于给定文件内<code>Offset</code>，寻找对应的行号则只需要在<code>SourceLineCache</code>中二分查找就可以了。</p>
 <h2 id="9fd146">Macro展开位置的建立</h2>
 <p>对于宏的展开分为了两种：宏调用展开和宏参数展开，宏调用展开包含了宏参数展开。这两个都是先生成一个<code>ExpansionInfo</code>，然后再调用最后执行该任务的函数。</p>
-<div class="codehilite"><pre><span class="n">SourceLocation</span>
+<div class="codehilite"><pre><span></span><span class="n">SourceLocation</span>
 <span class="n">SourceManager</span><span class="o">::</span><span class="n">createMacroArgExpansionLoc</span><span class="p">(</span><span class="n">SourceLocation</span> <span class="n">SpellingLoc</span><span class="p">,</span>
     <span class="n">SourceLocation</span> <span class="n">ExpansionLoc</span><span class="p">,</span>
     <span class="kt">unsigned</span> <span class="n">TokLength</span><span class="p">)</span>
@@ -986,7 +986,7 @@
 
 <p>上面的代码中<code>createForMacroArg</code>只需要一个<code>ExpansionLoc</code>，是因为宏参数只是一个<code>token</code>，第二个<code>SourceLocation</code>默认为无效的。</p>
 <p>具体执行函数的签名如下，有两个默认参数:</p>
-<div class="codehilite"><pre><span class="c1">/// \brief Return a new SourceLocation that encodes the fact</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// \brief Return a new SourceLocation that encodes the fact</span>
 <span class="c1">/// that a token from SpellingLoc should actually be referenced from</span>
 <span class="c1">/// ExpansionLoc.</span>
 <span class="n">SourceLocation</span> <span class="nf">createExpansionLoc</span><span class="p">(</span><span class="n">SourceLocation</span> <span class="n">Loc</span><span class="p">,</span>
@@ -999,7 +999,7 @@
 
 
 <p>该函数的执行逻辑与上面的<code>CreateFileID</code>的执行逻辑差不多，也是分为了外部模块和本地模块来讨论的。当处理的展开是外部模块时，执行以下代码：</p>
-<div class="codehilite"><pre><span class="k">if</span> <span class="p">(</span><span class="n">LoadedID</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">LoadedID</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">assert</span><span class="p">(</span><span class="n">LoadedID</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="s">&quot;Loading sentinel FileID&quot;</span><span class="p">);</span>
     <span class="kt">unsigned</span> <span class="n">Index</span> <span class="o">=</span> <span class="kt">unsigned</span><span class="p">(</span><span class="o">-</span><span class="n">LoadedID</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">;</span>
@@ -1013,7 +1013,7 @@
 
 
 <p>当处理的是本地模块的时候，执行以下代码：</p>
-<div class="codehilite"><pre><span class="n">LocalSLocEntryTable</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">SLocEntry</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="n">NextLocalOffset</span><span class="p">,</span> <span class="n">Info</span><span class="p">));</span>
+<div class="codehilite"><pre><span></span><span class="n">LocalSLocEntryTable</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">SLocEntry</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="n">NextLocalOffset</span><span class="p">,</span> <span class="n">Info</span><span class="p">));</span>
 <span class="n">assert</span><span class="p">(</span><span class="n">NextLocalOffset</span> <span class="o">+</span> <span class="n">TokLength</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&gt;</span> <span class="n">NextLocalOffset</span> <span class="o">&amp;&amp;</span>
     <span class="n">NextLocalOffset</span> <span class="o">+</span> <span class="n">TokLength</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">CurrentLoadedOffset</span> <span class="o">&amp;&amp;</span>
     <span class="s">&quot;Ran out of source locations!&quot;</span><span class="p">);</span>
@@ -1026,7 +1026,7 @@
 <p>从这些代码中可以看出，本地模块与外部模块最主要的差异就是：本地模块内需要更新 <code>NextLocalOffset</code>，而外部模块则不需要，但是外部模块中的 <code>FileID</code>很多是延迟加载的，处理的时候需要判断是否已经加载。</p>
 <h2 id="74d66d">为FileID建立宏参数映射</h2>
 <p>宏参数缓存全称为<code>MacroArgsMap</code>，<code>clang</code>中对于这个的解释还是不清楚：</p>
-<div class="codehilite"><pre><span class="c1">/// \brief Compute a map of macro argument chunks to their expanded source</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// \brief Compute a map of macro argument chunks to their expanded source</span>
 <span class="c1">/// location. Chunks that are not part of a macro argument will map to an</span>
 <span class="c1">/// invalid source location. e.g. if a file contains one macro argument at</span>
 <span class="c1">/// offset 100 with length 10, this is how the map will be formed:</span>
@@ -1039,7 +1039,7 @@
 <p>好像大意是：把源文件按照是否是宏参数切分为多个区间，对于是宏参数的区域，映射为该位置的<code>SourceLocation</code>，否则映射为无效的<code>SourceLocation</code>。</p>
 <p>对于一个特定的文件<code>FileID</code>，它可以引入多个新的<code>FileID</code>，有些是头文件引用，有些是宏展开。处理的时候我们需要明确一下<code>FileID</code>的分配规则，每处理一个新的头文件引入或者宏展开，这个全局的<code>FileID</code>会自增。同时会先处理这个新引入的头文件，然后再回到原始的位置，继续处理当前文件后面的头文件引入或者展开。当前文件后面的第一个<code>FileID</code>偏移值会等于上一个头文件所引入的新<code>FileID</code>个数。</p>
 <p>所以完整的逻辑是这样的。当前<code>FileID</code>自增，如果遇到头文件引入，首先判断这个头文件引入位置是否是当前文件，不是的话说明<code>FileID</code>已经越界不需要处理了，否则<code>FileID+ =NumCreatedFIDs</code>。如果遇到的是宏展开，也需要判断这个展开是否来自于当前文件，不是的话也表明<code>FileID</code>越界，不需要再处理，否则将这个加入到<code>MacroArgMap</code>里面做记录。完整的代码如下：</p>
-<div class="codehilite"><pre><span class="kt">int</span> <span class="n">ID</span> <span class="o">=</span> <span class="n">FID</span><span class="p">.</span><span class="n">ID</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="n">ID</span> <span class="o">=</span> <span class="n">FID</span><span class="p">.</span><span class="n">ID</span><span class="p">;</span>
 <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="o">++</span><span class="n">ID</span><span class="p">;</span>
@@ -1093,7 +1093,7 @@
 
 
 <p>最后的的记录函数是<code>associateFileChunkWithMacroArgExp</code>,需要考虑的是宏参数也是一个宏函数的时候。此时我们要把整个宏参数展开过程记录下来，所以要递归处理。</p>
-<div class="codehilite"><pre><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">SpellLoc</span><span class="p">.</span><span class="n">isFileID</span><span class="p">())</span>
+<div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">SpellLoc</span><span class="p">.</span><span class="n">isFileID</span><span class="p">())</span>
 <span class="p">{</span>
     <span class="kt">unsigned</span> <span class="n">SpellBeginOffs</span> <span class="o">=</span> <span class="n">SpellLoc</span><span class="p">.</span><span class="n">getOffset</span><span class="p">();</span>
     <span class="kt">unsigned</span> <span class="n">SpellEndOffs</span> <span class="o">=</span> <span class="n">SpellBeginOffs</span> <span class="o">+</span> <span class="n">ExpansionLength</span><span class="p">;</span>
@@ -1143,7 +1143,7 @@
 <h1 id="eb9b5b">查询访问</h1>
 <h2 id="05ec09">访问缓存管理与统计</h2>
 <p>这个结构体还给了很大的笔墨来记录一些最近的访问记录和一些统计信息：</p>
-<div class="codehilite"><pre><span class="c1">/// \brief A one-entry cache to speed up getFileID.</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// \brief A one-entry cache to speed up getFileID.</span>
 <span class="c1">///</span>
 <span class="c1">/// LastFileIDLookup records the last FileID looked up or created, because it</span>
 <span class="c1">/// is very common to look up many tokens from the same file.</span>
@@ -1168,7 +1168,7 @@
 
 <h2 id="87424a">根据SLocOffset查询FileID</h2>
 <p>在为<code>FileEntry</code>创建<code>ContentCache</code>的代码中，为了维护<code>NextLocalOffset</code>，有如下判断断言</p>
-<div class="codehilite"><pre><span class="n">assert</span><span class="p">(</span><span class="n">NextLocalOffset</span> <span class="o">+</span> <span class="n">FileSize</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&gt;</span> <span class="n">NextLocalOffset</span> <span class="o">&amp;&amp;</span>
+<div class="codehilite"><pre><span></span><span class="n">assert</span><span class="p">(</span><span class="n">NextLocalOffset</span> <span class="o">+</span> <span class="n">FileSize</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&gt;</span> <span class="n">NextLocalOffset</span> <span class="o">&amp;&amp;</span>
     <span class="n">NextLocalOffset</span> <span class="o">+</span> <span class="n">FileSize</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">CurrentLoadedOffset</span> <span class="o">&amp;&amp;</span>
     <span class="s">&quot;Ran out of source locations!&quot;</span><span class="p">);</span>
 </pre></div>
@@ -1176,7 +1176,7 @@
 
 <p>上面的代码中的<code>assert</code>是用来来判断这个 <code>NextLocalOffset</code>是否有效。第一个判断 <code>NextLocalOffset</code>是否可能溢出，第二个判断<code>NextLocalOffset</code>是否会干涉到<code>CurrentLoadedOffset</code>。这里之所以要与<code>CurrentLoadedOffset</code>做比较，是因为全局只有一个<code>SlocOffset</code>，<code>NextLocalOffset</code>与<code>CurrentLoadedOffset</code>共享一个地址空间，一个从0向上增长，一个从<span class="math">\(2^{32}-1\)</span>向下增长。</p>
 <p>给定一个<code>SlocOffset</code>判断他是<code>local</code>还是<code>loaded</code>就只需要与其中一个做大小比较就可以了。具体的见下面的代码：</p>
-<div class="codehilite"><pre><span class="n">FileID</span> <span class="n">SourceManager</span><span class="o">::</span><span class="n">getFileIDSlow</span><span class="p">(</span><span class="kt">unsigned</span> <span class="n">SLocOffset</span><span class="p">)</span> <span class="k">const</span>
+<div class="codehilite"><pre><span></span><span class="n">FileID</span> <span class="n">SourceManager</span><span class="o">::</span><span class="n">getFileIDSlow</span><span class="p">(</span><span class="kt">unsigned</span> <span class="n">SLocOffset</span><span class="p">)</span> <span class="k">const</span>
 <span class="p">{</span>
     <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">SLocOffset</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">FileID</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
@@ -1192,7 +1192,7 @@
 
 <p>对于<code>local</code>的处理，其代码比较长，所以我们分片介绍。</p>
 <p>首先判断这个<code>local</code>的<code>Offset</code>是否有效，直接与<code>NextLocalOffset</code>做比较。在有效的情况下，找到一个<code>Offset</code>比他大的<code>SlocEntry</code>，能用上一次查询的位点就用，<code>clang</code>说局部性很好。</p>
-<div class="codehilite"><pre><span class="k">const</span> <span class="n">SrcMgr</span><span class="o">::</span><span class="n">SLocEntry</span> <span class="o">*</span><span class="n">I</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><span class="k">const</span> <span class="n">SrcMgr</span><span class="o">::</span><span class="n">SLocEntry</span> <span class="o">*</span><span class="n">I</span><span class="p">;</span>
 
 <span class="k">if</span> <span class="p">(</span><span class="n">LastFileIDLookup</span><span class="p">.</span><span class="n">ID</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">||</span>
     <span class="n">LocalSLocEntryTable</span><span class="p">[</span><span class="n">LastFileIDLookup</span><span class="p">.</span><span class="n">ID</span><span class="p">].</span><span class="n">getOffset</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">SLocOffset</span><span class="p">)</span>
@@ -1209,7 +1209,7 @@
 
 
 <p>找到这个位点之后，逆向遍历，获得第一个比<code>Offset</code>小的<code>SLocEntry</code>，这个就是包含当前<code>Offset</code>的文件位点。这里的寻找策略也是非常诡异，首先线性查找8个单位，如果遇到结果则返回。</p>
-<div class="codehilite"><pre><span class="c1">// Find the FileID that contains this.  &quot;I&quot; is an iterator that points to a</span>
+<div class="codehilite"><pre><span></span><span class="c1">// Find the FileID that contains this.  &quot;I&quot; is an iterator that points to a</span>
 <span class="c1">// FileID whose offset is known to be larger than SLocOffset.</span>
 <span class="kt">unsigned</span> <span class="n">NumProbes</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
 <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span>
@@ -1240,7 +1240,7 @@
 
 
 <p>如果这8次探寻都没中，则开始二分查找：</p>
-<div class="codehilite"><pre><span class="kt">unsigned</span> <span class="n">LessIndex</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><span class="kt">unsigned</span> <span class="n">LessIndex</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
 <span class="n">NumProbes</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
 <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="p">{</span>
@@ -1283,7 +1283,7 @@
 
 <p>至于<code>loaded</code>的<code>FileID</code>的查找也是大同小异，唯一的不同是比较符号是反的，同时里面的文件可能木有<code>Load</code>进来。</p>
 <p>首先是线性扫描部分：</p>
-<div class="codehilite"><pre><span class="c1">// Sanity checking, otherwise a bug may lead to hanging in release build.</span>
+<div class="codehilite"><pre><span></span><span class="c1">// Sanity checking, otherwise a bug may lead to hanging in release build.</span>
 <span class="k">if</span> <span class="p">(</span><span class="n">SLocOffset</span> <span class="o">&lt;</span> <span class="n">CurrentLoadedOffset</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">assert</span><span class="p">(</span><span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="s">&quot;Invalid SLocOffset or bad function choice&quot;</span><span class="p">);</span>
@@ -1320,7 +1320,7 @@
 
 
 <p>然后是二分查找部分：</p>
-<div class="codehilite"><pre><span class="c1">// Linear scan failed. Do the binary search. Note the reverse sorting of the</span>
+<div class="codehilite"><pre><span></span><span class="c1">// Linear scan failed. Do the binary search. Note the reverse sorting of the</span>
 <span class="c1">// table: GreaterIndex is the one where the offset is greater, which is</span>
 <span class="c1">// actually a lower index!</span>
 <span class="kt">unsigned</span> <span class="n">GreaterIndex</span> <span class="o">=</span> <span class="n">I</span><span class="p">;</span>
@@ -1369,7 +1369,7 @@
 
 
 <p>至此，由一个<code>offset</code>寻找对应的<code>FileID</code>的功能就完成了，这个功能的主要调用者是下面这个函数，由<code>SpellingLoc</code>寻找对应的<code>FileID</code>，因为这个才需要跨文件寻找：</p>
-<div class="codehilite"><pre><span class="c1">/// This is a very hot method that is used for all SourceManager queries</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// This is a very hot method that is used for all SourceManager queries</span>
 <span class="c1">/// that start with a SourceLocation object.  It is responsible for finding</span>
 <span class="c1">/// the entry in SLocEntryTable which contains the specified location.</span>
 <span class="c1">///</span>
@@ -1381,14 +1381,14 @@
     <span class="k">if</span> <span class="p">(</span><span class="n">isOffsetInFileID</span><span class="p">(</span><span class="n">LastFileIDLookup</span><span class="p">,</span> <span class="n">SLocOffset</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">LastFileIDLookup</span><span class="p">;</span>
 
-    <span class="k">return</span> <span class="nf">getFileIDSlow</span><span class="p">(</span><span class="n">SLocOffset</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">getFileIDSlow</span><span class="p">(</span><span class="n">SLocOffset</span><span class="p">);</span>
 <span class="p">}</span>
 </pre></div>
 
 
 <p>注意第10行的处理，看来访问局部性还是很高啊。</p>
 <p>很多时候我们需要的是文件名和文件内偏移这个<code>pair</code>。在我们实现了由<code>SLocOffset</code>获得对应的文件<code>FileID</code>之后，这个功能其实很简单，直接相减即可以得到文件内偏移：</p>
-<div class="codehilite"><pre><span class="c1">/// \brief Decompose the specified location into a raw FileID + Offset pair.</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// \brief Decompose the specified location into a raw FileID + Offset pair.</span>
 <span class="c1">///</span>
 <span class="c1">/// The first element is the FileID, the second is the offset from the</span>
 <span class="c1">/// start of the buffer of the location.</span>
@@ -1406,7 +1406,7 @@
 
 <h2 id="5da256">根据FileEntry查询FileID</h2>
 <p>这个操作是由<code>translateFile</code>函数来完成的。根据<code>FileEntry</code>得到对应的<code>FileID</code>，看上去很简单的功能居然有140多行，分部分来讲。首先是函数签名：</p>
-<div class="codehilite"><pre><span class="c1">/// \brief Get the FileID for the given file.</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// \brief Get the FileID for the given file.</span>
 <span class="c1">///</span>
 <span class="c1">/// If the source file is included multiple times, the FileID will be the</span>
 <span class="c1">/// first inclusion.</span>
@@ -1416,7 +1416,7 @@
 
 <p>这里的注释说一个文件可能被<code>include</code>多次，我们返回第一次引入所生成的<code>FileID</code>。</p>
 <p>首先我们检查当前的翻译单元是否就是要找的<code>FileID</code></p>
-<div class="codehilite"><pre><span class="n">FileID</span> <span class="n">FirstFID</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><span class="n">FileID</span> <span class="n">FirstFID</span><span class="p">;</span>
 
 <span class="c1">// First, check the main file ID, since it is common to look for a</span>
 <span class="c1">// location in the main file.</span>
@@ -1453,7 +1453,7 @@
 
 
 <p>这么多<code>if</code>简直太恐怖了，其实流程上来说很简单，根据<code>MainFileID</code>获得对应的<code>SLocEntry</code>，然后再获得对应的<code>ContentCache</code>，比较里面存储的<code>OrigEntry</code>是否等价于当前的<code>FileEntry</code>。如果等价则直接返回，否则继续检查文件名是否相等，相等的情况下去检查文件系统里面的<code>ID</code>是否相等。</p>
-<div class="codehilite"><pre><span class="k">const</span> <span class="n">FileEntry</span> <span class="o">*</span><span class="n">MainFile</span> <span class="o">=</span> <span class="n">MainContentCache</span><span class="o">-&gt;</span><span class="n">OrigEntry</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><span class="k">const</span> <span class="n">FileEntry</span> <span class="o">*</span><span class="n">MainFile</span> <span class="o">=</span> <span class="n">MainContentCache</span><span class="o">-&gt;</span><span class="n">OrigEntry</span><span class="p">;</span>
 <span class="n">SourceFileName</span> <span class="o">=</span> <span class="n">llvm</span><span class="o">::</span><span class="n">sys</span><span class="o">::</span><span class="n">path</span><span class="o">::</span><span class="n">filename</span><span class="p">(</span><span class="n">SourceFile</span><span class="o">-&gt;</span><span class="n">getName</span><span class="p">());</span>
 <span class="k">if</span> <span class="p">(</span><span class="o">*</span><span class="n">SourceFileName</span> <span class="o">==</span> <span class="n">llvm</span><span class="o">::</span><span class="n">sys</span><span class="o">::</span><span class="n">path</span><span class="o">::</span><span class="n">filename</span><span class="p">(</span><span class="n">MainFile</span><span class="o">-&gt;</span><span class="n">getName</span><span class="p">()))</span>
 <span class="p">{</span>
@@ -1475,7 +1475,7 @@
 
 
 <p>如果各种检查都没有通过，则遍历整个<code>LocalSLocEntry</code>一一判断，好蠢：</p>
-<div class="codehilite"><pre><span class="c1">// The location we&#39;re looking for isn&#39;t in the main file; look</span>
+<div class="codehilite"><pre><span></span><span class="c1">// The location we&#39;re looking for isn&#39;t in the main file; look</span>
 <span class="c1">// through all of the local source locations.</span>
 <span class="k">for</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="n">I</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">N</span> <span class="o">=</span> <span class="n">local_sloc_entry_size</span><span class="p">();</span> <span class="n">I</span> <span class="o">!=</span> <span class="n">N</span><span class="p">;</span> <span class="o">++</span><span class="n">I</span><span class="p">)</span>
 <span class="p">{</span>
@@ -1496,7 +1496,7 @@
 
 
 <p>如果还是没找到，开始遍历外部的<code>LoadedSLocEntry</code>，也是一一比较，好蠢：</p>
-<div class="codehilite"><pre><span class="k">for</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="n">I</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">N</span> <span class="o">=</span> <span class="n">loaded_sloc_entry_size</span><span class="p">();</span> <span class="n">I</span> <span class="o">!=</span> <span class="n">N</span><span class="p">;</span> <span class="o">++</span><span class="n">I</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="k">for</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="n">I</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">N</span> <span class="o">=</span> <span class="n">loaded_sloc_entry_size</span><span class="p">();</span> <span class="n">I</span> <span class="o">!=</span> <span class="n">N</span><span class="p">;</span> <span class="o">++</span><span class="n">I</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">const</span> <span class="n">SLocEntry</span> <span class="o">&amp;</span><span class="n">SLoc</span> <span class="o">=</span> <span class="n">getLoadedSLocEntry</span><span class="p">(</span><span class="n">I</span><span class="p">);</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">SLoc</span><span class="p">.</span><span class="n">isFile</span><span class="p">()</span> <span class="o">&amp;&amp;</span>
@@ -1514,14 +1514,14 @@
 <p>话说为什么会这么麻烦，建立一个映射表不就完事了么？居然需要遍历，而且还是两次！</p>
 <h2 id="4a45d7">Macro展开位置的查询</h2>
 <p>对于一个给定的<code>SourceLocation</code>，我们有些时候需要找出对应宏展开的起始位点，这是一个递归的过程，因为宏展开是一个递归的过程。</p>
-<div class="codehilite"><pre><span class="c1">/// \brief Given a SourceLocation object \p Loc, return the expansion</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// \brief Given a SourceLocation object \p Loc, return the expansion</span>
 <span class="c1">/// location referenced by the ID.</span>
-<span class="n">SourceLocation</span> <span class="n">getExpansionLoc</span><span class="p">(</span><span class="n">SourceLocation</span> <span class="n">Loc</span><span class="p">)</span> <span class="k">const</span>
+<span class="n">SourceLocation</span> <span class="nf">getExpansionLoc</span><span class="p">(</span><span class="n">SourceLocation</span> <span class="n">Loc</span><span class="p">)</span> <span class="k">const</span>
 <span class="p">{</span>
     <span class="c1">// Handle the non-mapped case inline, defer to out of line code to handle</span>
     <span class="c1">// expansions.</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">Loc</span><span class="p">.</span><span class="n">isFileID</span><span class="p">())</span> <span class="k">return</span> <span class="n">Loc</span><span class="p">;</span>
-    <span class="k">return</span> <span class="nf">getExpansionLocSlowCase</span><span class="p">(</span><span class="n">Loc</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">getExpansionLocSlowCase</span><span class="p">(</span><span class="n">Loc</span><span class="p">);</span>
 <span class="p">}</span>
 <span class="n">SourceLocation</span> <span class="n">SourceManager</span><span class="o">::</span>
 <span class="n">getExpansionLocSlowCase</span><span class="p">(</span><span class="n">SourceLocation</span> <span class="n">Loc</span><span class="p">)</span> <span class="k">const</span>
@@ -1545,7 +1545,7 @@
 
 <p>只要中间的查询结果还是<code>Expansion</code>相关的<code>SourceLocation</code>，就一直递归查询。</p>
 <p>类似的，寻找<code>SpellingLoc</code>也是递归查询的，直到查询到一个真正的<code>FileID</code></p>
-<div class="codehilite"><pre><span class="n">SourceLocation</span> <span class="n">SourceManager</span><span class="o">::</span><span class="n">getSpellingLocSlowCase</span><span class="p">(</span><span class="n">SourceLocation</span> <span class="n">Loc</span><span class="p">)</span> <span class="k">const</span>
+<div class="codehilite"><pre><span></span><span class="n">SourceLocation</span> <span class="n">SourceManager</span><span class="o">::</span><span class="n">getSpellingLocSlowCase</span><span class="p">(</span><span class="n">SourceLocation</span> <span class="n">Loc</span><span class="p">)</span> <span class="k">const</span>
 <span class="p">{</span>
     <span class="k">do</span>
     <span class="p">{</span>
@@ -1560,7 +1560,7 @@
 
 
 <p>这里的代码依赖于<code>LocInfo.second</code>的值是2的倍数，这样就不会影响<code>Loc</code>的最低位。是否是2的倍数依赖于<code>getDecomposedLoc</code>的实现：</p>
-<div class="codehilite"><pre><span class="c1">/// \brief Decompose the specified location into a raw FileID + Offset pair.</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// \brief Decompose the specified location into a raw FileID + Offset pair.</span>
 <span class="c1">///</span>
 <span class="c1">/// The first element is the FileID, the second is the offset from the</span>
 <span class="c1">/// start of the buffer of the location.</span>
@@ -1578,7 +1578,7 @@
 
 <p>由于<code>getOffset</code>这个函数返回的是已经经过位修正的<code>offset</code>，所以2的倍数得到了满足。</p>
 <p>这个函数只是处理了宏展开相关的开始位点，我们很多时候还需要开始与结束位点，即完整的展开区间。相关的函数有两个，一个只处理一次展开，一个处理完整的展开链：</p>
-<div class="codehilite"><pre><span class="c1">/// \brief Return the start/end of the expansion information for an</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// \brief Return the start/end of the expansion information for an</span>
 <span class="c1">/// expansion location.</span>
 <span class="c1">///</span>
 <span class="c1">/// \pre \p Loc is required to be an expansion location.</span>
@@ -1592,7 +1592,7 @@
 
 
 <p>直接展开很好解决，直接返回存储的展开区间就可以了：</p>
-<div class="codehilite"><pre><span class="c1">/// getImmediateExpansionRange - Loc is required to be an expansion location.</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// getImmediateExpansionRange - Loc is required to be an expansion location.</span>
 <span class="c1">/// Return the start/end of the expansion information.</span>
 <span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">SourceLocation</span><span class="p">,</span> <span class="n">SourceLocation</span><span class="o">&gt;</span>
 <span class="n">SourceManager</span><span class="o">::</span><span class="n">getImmediateExpansionRange</span><span class="p">(</span><span class="n">SourceLocation</span> <span class="n">Loc</span><span class="p">)</span> <span class="k">const</span>
@@ -1605,7 +1605,7 @@
 
 
 <p>而对于完整的宏展开来说，就不能这样做了，又需要递归处理，对于上面这个函数所获得的值，递归查询：</p>
-<div class="codehilite"><pre><span class="c1">/// getExpansionRange - Given a SourceLocation object, return the range of</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// getExpansionRange - Given a SourceLocation object, return the range of</span>
 <span class="c1">/// tokens covered by the expansion in the ultimate file.</span>
 <span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">SourceLocation</span><span class="p">,</span> <span class="n">SourceLocation</span><span class="o">&gt;</span>
 <span class="n">SourceManager</span><span class="o">::</span><span class="n">getExpansionRange</span><span class="p">(</span><span class="n">SourceLocation</span> <span class="n">Loc</span><span class="p">)</span> <span class="k">const</span>
@@ -1628,7 +1628,7 @@
 <p>最后还剩下两个有趣的函数，一个是判断当前位置是不是直接宏展开的头部，一个是判断当前位置是不是直接宏展开的尾部。这两个函数的执行逻辑都是类似的，首先判断位置有效性：是不是宏展开位置，是不是文件头或者文件尾。然后再得到该展开区域的<code>Range</code>,继续判断。</p>
 <h2 id="348256">BeforeInTUCache</h2>
 <p>目前还不是很懂这个词的意思，好像处理的是两个<code>SourceLocation</code>在转换单元中的处理顺序。</p>
-<div class="codehilite"><pre><span class="c1">/// The key value into the IsBeforeInTUCache table.</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// The key value into the IsBeforeInTUCache table.</span>
 <span class="k">typedef</span> <span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">FileID</span><span class="p">,</span> <span class="n">FileID</span><span class="o">&gt;</span> <span class="n">IsBeforeInTUCacheKey</span><span class="p">;</span>
 
 <span class="c1">/// The IsBeforeInTranslationUnitCache is a mapping from FileID pairs</span>
@@ -1649,7 +1649,7 @@
 <h2 id="6be805">行列号管理</h2>
 <h3 id="187da1">列号查询</h3>
 <p>注释里面说列号比行号好处理的多，因此我们就先以列号来说吧。使用时是通过文件标识符和偏移位置来计算的，其函数签名如下:</p>
-<div class="codehilite"><pre><span class="c1">/// getColumnNumber - Return the column # for the specified file position.</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// getColumnNumber - Return the column # for the specified file position.</span>
 <span class="c1">/// this is significantly cheaper to compute than the line number.</span>
 <span class="kt">unsigned</span> <span class="n">SourceManager</span><span class="o">::</span><span class="n">getColumnNumber</span><span class="p">(</span><span class="n">FileID</span> <span class="n">FID</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="n">FilePos</span><span class="p">,</span>
     <span class="kt">bool</span> <span class="o">*</span><span class="n">Invalid</span><span class="p">)</span> <span class="k">const</span>
@@ -1657,7 +1657,7 @@
 
 
 <p>具体执行流程是首先判断该文件是否有对应的<code>MemoryBuffer</code>，没有则直接返回无效值。如果偏移量大于缓冲大小也直接返回无效值。</p>
-<div class="codehilite"><pre><span class="kt">bool</span> <span class="n">MyInvalid</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><span class="kt">bool</span> <span class="n">MyInvalid</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
 <span class="n">llvm</span><span class="o">::</span><span class="n">MemoryBuffer</span> <span class="o">*</span><span class="n">MemBuf</span> <span class="o">=</span> <span class="n">getBuffer</span><span class="p">(</span><span class="n">FID</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">MyInvalid</span><span class="p">);</span>
 <span class="k">if</span> <span class="p">(</span><span class="n">Invalid</span><span class="p">)</span>
     <span class="o">*</span><span class="n">Invalid</span> <span class="o">=</span> <span class="n">MyInvalid</span><span class="p">;</span>
@@ -1676,7 +1676,7 @@
 
 
 <p>然后再利用<code>SourceManager</code>中存储的最近查询记录，如果该位置在最近查询的行内，则直接计算列偏移。</p>
-<div class="codehilite"><pre><span class="c1">// See if we just calculated the line number for this FilePos and can use</span>
+<div class="codehilite"><pre><span></span><span class="c1">// See if we just calculated the line number for this FilePos and can use</span>
 <span class="c1">// that to lookup the start of the line instead of searching for it.</span>
 <span class="k">if</span> <span class="p">(</span><span class="n">LastLineNoFileIDQuery</span> <span class="o">==</span> <span class="n">FID</span> <span class="o">&amp;&amp;</span>
     <span class="n">LastLineNoContentCache</span><span class="o">-&gt;</span><span class="n">SourceLineCache</span> <span class="o">!=</span> <span class="k">nullptr</span> <span class="o">&amp;&amp;</span>
@@ -1692,7 +1692,7 @@
 
 
 <p>否则的话，就一直回退到换行符<code>\textbackslash r\textbackslash n</code>，记录后退了多少步，直接返回。</p>
-<div class="codehilite"><pre><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">Buf</span> <span class="o">=</span> <span class="n">MemBuf</span><span class="o">-&gt;</span><span class="n">getBufferStart</span><span class="p">();</span>
+<div class="codehilite"><pre><span></span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">Buf</span> <span class="o">=</span> <span class="n">MemBuf</span><span class="o">-&gt;</span><span class="n">getBufferStart</span><span class="p">();</span>
 <span class="kt">unsigned</span> <span class="n">LineStart</span> <span class="o">=</span> <span class="n">FilePos</span><span class="p">;</span>
 <span class="k">while</span> <span class="p">(</span><span class="n">LineStart</span> <span class="o">&amp;&amp;</span> <span class="n">Buf</span><span class="p">[</span><span class="n">LineStart</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="sc">&#39;\n&#39;</span> <span class="o">&amp;&amp;</span> <span class="n">Buf</span><span class="p">[</span><span class="n">LineStart</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="sc">&#39;\r&#39;</span><span class="p">)</span>
     <span class="o">--</span><span class="n">LineStart</span><span class="p">;</span>
@@ -1702,13 +1702,13 @@
 
 <h3 id="ac17d7">行号查询</h3>
 <p>对于行号的计算就没有这么爽了，<code>SourceManager</code>内有一个函数来执行寻找行号这个操作，其函数签名如下：</p>
-<div class="codehilite"><pre><span class="kt">unsigned</span> <span class="n">SourceManager</span><span class="o">::</span><span class="n">getLineNumber</span><span class="p">(</span><span class="n">FileID</span> <span class="n">FID</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="n">FilePos</span><span class="p">,</span>
+<div class="codehilite"><pre><span></span><span class="kt">unsigned</span> <span class="n">SourceManager</span><span class="o">::</span><span class="n">getLineNumber</span><span class="p">(</span><span class="n">FileID</span> <span class="n">FID</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="n">FilePos</span><span class="p">,</span>
     <span class="kt">bool</span> <span class="o">*</span><span class="n">Invalid</span><span class="p">)</span> <span class="k">const</span>
 </pre></div>
 
 
 <p>这个函数也比较复杂，所以分部分说明。首先找到这个文件的<code>ContentCache</code>，这里可以利用缓存。</p>
-<div class="codehilite"><pre><span class="n">ContentCache</span> <span class="o">*</span><span class="n">Content</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><span class="n">ContentCache</span> <span class="o">*</span><span class="n">Content</span><span class="p">;</span>
 <span class="k">if</span> <span class="p">(</span><span class="n">LastLineNoFileIDQuery</span> <span class="o">==</span> <span class="n">FID</span><span class="p">)</span>
     <span class="n">Content</span> <span class="o">=</span> <span class="n">LastLineNoContentCache</span><span class="p">;</span>
 <span class="k">else</span>
@@ -1728,7 +1728,7 @@
 
 
 <p>获得这个<code>ContentCache</code>之后，在获得其<code>SourceLineCache</code>，如果没有的话则需要调用前面的<code>ComputeLineNumbers</code>函数来建立：</p>
-<div class="codehilite"><pre><span class="c1">// If this is the first use of line information for this buffer, compute the</span>
+<div class="codehilite"><pre><span></span><span class="c1">// If this is the first use of line information for this buffer, compute the</span>
 <span class="c1">/// SourceLineCache for it on demand.</span>
 <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">Content</span><span class="o">-&gt;</span><span class="n">SourceLineCache</span><span class="p">)</span>
 <span class="p">{</span>
@@ -1745,7 +1745,7 @@
 
 
 <p>之后就是二分查找的过程，但是这里又搞了一些复杂的事来寻找一个比较好的上界.如果上次的查询的是同一个文件，则当前查询的位点应该离上次查询的位点不远，何必呢！：</p>
-<div class="codehilite"><pre><span class="k">if</span> <span class="p">(</span><span class="n">LastLineNoFileIDQuery</span> <span class="o">==</span> <span class="n">FID</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">LastLineNoFileIDQuery</span> <span class="o">==</span> <span class="n">FID</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">QueriedFilePos</span> <span class="o">&gt;=</span> <span class="n">LastLineNoFilePos</span><span class="p">)</span>
     <span class="p">{</span>
@@ -1782,7 +1782,7 @@
 
 
 <p>现在我们才可以调用二分查找过程了，并同时填好最近访问记录：</p>
-<div class="codehilite"><pre><span class="kt">unsigned</span> <span class="o">*</span><span class="n">Pos</span>
+<div class="codehilite"><pre><span></span><span class="kt">unsigned</span> <span class="o">*</span><span class="n">Pos</span>
     <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">lower_bound</span><span class="p">(</span><span class="n">SourceLineCache</span><span class="p">,</span> <span class="n">SourceLineCacheEnd</span><span class="p">,</span> <span class="n">QueriedFilePos</span><span class="p">);</span>
 <span class="kt">unsigned</span> <span class="n">LineNo</span> <span class="o">=</span> <span class="n">Pos</span> <span class="o">-</span> <span class="n">SourceLineCacheStart</span><span class="p">;</span>
 
@@ -1795,7 +1795,7 @@
 
 
 <p>在做了这么多的铺垫之后，上级函数实现起来就非常简单了：</p>
-<div class="codehilite"><pre><span class="kt">unsigned</span> <span class="n">SourceManager</span><span class="o">::</span><span class="n">getSpellingLineNumber</span><span class="p">(</span><span class="n">SourceLocation</span> <span class="n">Loc</span><span class="p">,</span>
+<div class="codehilite"><pre><span></span><span class="kt">unsigned</span> <span class="n">SourceManager</span><span class="o">::</span><span class="n">getSpellingLineNumber</span><span class="p">(</span><span class="n">SourceLocation</span> <span class="n">Loc</span><span class="p">,</span>
     <span class="kt">bool</span> <span class="o">*</span><span class="n">Invalid</span><span class="p">)</span> <span class="k">const</span>
 <span class="p">{</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">isInvalid</span><span class="p">(</span><span class="n">Loc</span><span class="p">,</span> <span class="n">Invalid</span><span class="p">))</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
@@ -1814,7 +1814,7 @@
 
 <h3 id="46e5f5">Presumed行号查询</h3>
 <p><code>SpellingLineNumber</code>和<code>ExpansionLineNumber</code>可以比较直接利用前面的函数进行处理，但是对于<code>PresumedLineNumber</code>来说，就没这么简单了。</p>
-<div class="codehilite"><pre><span class="kt">unsigned</span> <span class="n">SourceManager</span><span class="o">::</span><span class="n">getPresumedLineNumber</span><span class="p">(</span><span class="n">SourceLocation</span> <span class="n">Loc</span><span class="p">,</span>
+<div class="codehilite"><pre><span></span><span class="kt">unsigned</span> <span class="n">SourceManager</span><span class="o">::</span><span class="n">getPresumedLineNumber</span><span class="p">(</span><span class="n">SourceLocation</span> <span class="n">Loc</span><span class="p">,</span>
     <span class="kt">bool</span> <span class="o">*</span><span class="n">Invalid</span><span class="p">)</span> <span class="k">const</span>
 <span class="p">{</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">isInvalid</span><span class="p">(</span><span class="n">Loc</span><span class="p">,</span> <span class="n">Invalid</span><span class="p">))</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
@@ -1824,7 +1824,7 @@
 
 
 <p>这里依赖于<code>getPresumeLoc</code>的行为，比较特殊，我们需要进行分析，其函数签名如下：</p>
-<div class="codehilite"><pre><span class="c1">/// getPresumedLoc - This method returns the &quot;presumed&quot; location of a</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// getPresumedLoc - This method returns the &quot;presumed&quot; location of a</span>
 <span class="c1">/// SourceLocation specifies.  A &quot;presumed location&quot; can be modified by #line</span>
 <span class="c1">/// or GNU line marker directives.  This provides a view on the data that a</span>
 <span class="c1">/// user should see in diagnostics, for example.</span>
@@ -1837,7 +1837,7 @@
 
 
 <p>首先需要得到这个<code>loc</code>的展开开始位置来明确行号：</p>
-<div class="codehilite"><pre><span class="k">if</span> <span class="p">(</span><span class="n">Loc</span><span class="p">.</span><span class="n">isInvalid</span><span class="p">())</span> <span class="k">return</span> <span class="n">PresumedLoc</span><span class="p">();</span>
+<div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">Loc</span><span class="p">.</span><span class="n">isInvalid</span><span class="p">())</span> <span class="k">return</span> <span class="n">PresumedLoc</span><span class="p">();</span>
 
 <span class="c1">// Presumed locations are always for expansion points.</span>
 <span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">FileID</span><span class="p">,</span> <span class="kt">unsigned</span><span class="o">&gt;</span> <span class="n">LocInfo</span> <span class="o">=</span> <span class="n">getDecomposedExpansionLoc</span><span class="p">(</span><span class="n">Loc</span><span class="p">);</span>
@@ -1868,7 +1868,7 @@
 
 
 <p>得到这个展开开始区域之后，寻找最近的导言行，然后调整差值并返回：</p>
-<div class="codehilite"><pre><span class="c1">// If we have #line directives in this file, update and overwrite the physical</span>
+<div class="codehilite"><pre><span></span><span class="c1">// If we have #line directives in this file, update and overwrite the physical</span>
 <span class="c1">// location info if appropriate.</span>
 <span class="k">if</span> <span class="p">(</span><span class="n">UseLineDirectives</span> <span class="o">&amp;&amp;</span> <span class="n">FI</span><span class="p">.</span><span class="n">hasLineDirectives</span><span class="p">())</span>
 <span class="p">{</span>
@@ -1905,7 +1905,7 @@
 
 <h3 id="369b38">由行列号生成SourceLocation</h3>
 <p>这个就相当于之前操作的逆函数，在已知文件名和行列号的情况下，得到对应的<code>SourceLocation</code>需要调用下面的函数：</p>
-<div class="codehilite"><pre><span class="c1">/// \brief Get the source location for the given file:line:col triplet.</span>
+<div class="codehilite"><pre><span></span><span class="c1">/// \brief Get the source location for the given file:line:col triplet.</span>
 <span class="c1">///</span>
 <span class="c1">/// If the source file is included multiple times, the source location will</span>
 <span class="c1">/// be based upon an arbitrary inclusion.</span>
@@ -1923,7 +1923,7 @@
 
 
 <p>然而这里又需要调用两个底层函数，<code>translateFile</code>这个已经在前面说过了，现在我们需要考虑的是<code>translateLineCol</code>。其实流程上也比较简单，由<code>FileID</code>获得<code>SlocEntry</code>，进而得到<code>ContentCache</code>。然后按需建立<code>SourceLineCache</code></p>
-<div class="codehilite"><pre><span class="c1">// If this is the first use of line information for this buffer, compute the</span>
+<div class="codehilite"><pre><span></span><span class="c1">// If this is the first use of line information for this buffer, compute the</span>
 <span class="c1">// SourceLineCache for it on demand.</span>
 <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">Content</span><span class="o">-&gt;</span><span class="n">SourceLineCache</span><span class="p">)</span>
 <span class="p">{</span>
@@ -1936,7 +1936,7 @@
 
 
 <p>如果行号越界，直接返回最后一个位置。。。其实我觉得返回无效位置比较好。</p>
-<div class="codehilite"><pre><span class="k">if</span> <span class="p">(</span><span class="n">Line</span> <span class="o">&gt;</span> <span class="n">Content</span><span class="o">-&gt;</span><span class="n">NumLines</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">Line</span> <span class="o">&gt;</span> <span class="n">Content</span><span class="o">-&gt;</span><span class="n">NumLines</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="kt">unsigned</span> <span class="n">Size</span> <span class="o">=</span> <span class="n">Content</span><span class="o">-&gt;</span><span class="n">getBuffer</span><span class="p">(</span><span class="n">Diag</span><span class="p">,</span> <span class="o">*</span><span class="k">this</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">getBufferSize</span><span class="p">();</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">Size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
@@ -1947,7 +1947,7 @@
 
 
 <p>后面就是针对列号和行号的加减，如果列号越界了，则返回本行最后一列。</p>
-<div class="codehilite"><pre><span class="n">llvm</span><span class="o">::</span><span class="n">MemoryBuffer</span> <span class="o">*</span><span class="n">Buffer</span> <span class="o">=</span> <span class="n">Content</span><span class="o">-&gt;</span><span class="n">getBuffer</span><span class="p">(</span><span class="n">Diag</span><span class="p">,</span> <span class="o">*</span><span class="k">this</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><span class="n">llvm</span><span class="o">::</span><span class="n">MemoryBuffer</span> <span class="o">*</span><span class="n">Buffer</span> <span class="o">=</span> <span class="n">Content</span><span class="o">-&gt;</span><span class="n">getBuffer</span><span class="p">(</span><span class="n">Diag</span><span class="p">,</span> <span class="o">*</span><span class="k">this</span><span class="p">);</span>
 <span class="kt">unsigned</span> <span class="n">FilePos</span> <span class="o">=</span> <span class="n">Content</span><span class="o">-&gt;</span><span class="n">SourceLineCache</span><span class="p">[</span><span class="n">Line</span> <span class="o">-</span> <span class="mi">1</span><span class="p">];</span>
 <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">Buf</span> <span class="o">=</span> <span class="n">Buffer</span><span class="o">-&gt;</span><span class="n">getBufferStart</span><span class="p">()</span> <span class="o">+</span> <span class="n">FilePos</span><span class="p">;</span>
 <span class="kt">unsigned</span> <span class="n">BufLength</span> <span class="o">=</span> <span class="n">Buffer</span><span class="o">-&gt;</span><span class="n">getBufferSize</span><span class="p">()</span> <span class="o">-</span> <span class="n">FilePos</span><span class="p">;</span>
@@ -2020,7 +2020,7 @@
  
             <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/compiler.html">Compiler</a><sup>2</sup></div>
             <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/clang.html">Clang</a><sup>2</sup></div>
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/cpp.html">CPP</a><sup>10</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/cpp.html">CPP</a><sup>11</sup></div>
     </div>
 
     <div id="niu2-sidebar-toc" class="niu2-sidebar" data-status="closed">
@@ -2046,7 +2046,7 @@
 </p>
 <p>
     ©
-            2014-2015
+            2014-2016
     <a class="niu2-footer-link" href="http://spiritsaway.info">Huiliang Huang</a>
 </p>
 <p class="niu2-icons">

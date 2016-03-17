@@ -62,7 +62,7 @@
                       (2)</a></li>
                <li><a href="http://spiritsaway.info/cpp/index.html">
                    <i class="icon-folder-close"></i>CPP
-                      (7)</a></li>
+                      (8)</a></li>
                <li><a href="http://spiritsaway.info/math/index.html">
                    <i class="icon-folder-close"></i>Math
                       (4)</a></li>
@@ -97,7 +97,7 @@ The following functions are currently supported</p>
 <p>where  <span class="math">\(I(.)\)</span>  is the indicator function, taking on the value 0 if the condition is satisfied and infinity otherwise.</p>
 <h1 id="bb96e3">util.h</h1>
 <p>The content of <code>util.h</code> is mainly about some <code>ASSERT</code> macro,like <code>LEQ,LT,NEQ,GT,GEQ,EQ_EPS</code>. Beside the common c++ macro, some CUDA specific macro is here as well:</p>
-<div class="codehilite"><pre><span class="cp">#ifdef __CUDACC__</span>
+<div class="codehilite"><pre><span></span><span class="cp">#ifdef __CUDACC__</span>
 <span class="cp">#define CUDA_CHECK_ERR() \</span>
 <span class="cp">  do { \</span>
 <span class="cp">    cudaError_t err = cudaGetLastError(); \</span>
@@ -115,7 +115,7 @@ The following functions are currently supported</p>
 
 <h1 id="adc0c1">prox_lib.h</h1>
 <p>In this file , all kinds of loss function are defined. Currently pogs support 16 functions.</p>
-<div class="codehilite"><pre><span class="k">enum</span> <span class="n">Function</span>
+<div class="codehilite"><pre><span></span><span class="k">enum</span> <span class="n">Function</span>
 <span class="p">{</span>
     <span class="n">kAbs</span><span class="p">,</span>       <span class="c1">// f(x) = |x|</span>
     <span class="n">kExp</span><span class="p">,</span>       <span class="c1">// f(x) = e^x</span>
@@ -141,7 +141,7 @@ The following functions are currently supported</p>
 <p>The optimization functions in pogs are in this form</p>
 <div class="math">$$c * f(a * x - b) + d * x+e*x^2$$</div>
 <p>. The enum stands for the<span class="math">\(f\)</span>. Parameters <span class="math">\(a,c,e\)</span> default to 1, while b and d default to 0. This optimization function is warpped in a <code>FunctionObj</code></p>
-<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
 <span class="k">struct</span> <span class="n">FunctionObj</span>
 <span class="p">{</span>
     <span class="n">Function</span> <span class="n">h</span><span class="p">;</span>
@@ -166,7 +166,7 @@ The following functions are currently supported</p>
 
 
 <p>Then here comes some simple warpper of math functions,like</p>
-<div class="codehilite"><pre><span class="n">__DEVICE__</span> <span class="kr">inline</span> <span class="kt">double</span> <span class="nf">Abs</span><span class="p">(</span><span class="kt">double</span> <span class="n">x</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="n">__DEVICE__</span> <span class="kr">inline</span> <span class="kt">double</span> <span class="nf">Abs</span><span class="p">(</span><span class="kt">double</span> <span class="n">x</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">return</span> <span class="n">fabs</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
 <span class="p">}</span>
@@ -182,7 +182,7 @@ The following functions are currently supported</p>
 <p><br />
  These two functions are used later.</p>
 <p>Then all math functions' evaluation is warpped into a <code>FuncEval</code></p>
-<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
 <span class="n">__DEVICE__</span> <span class="kr">inline</span> <span class="n">T</span> <span class="n">FuncEval</span><span class="p">(</span><span class="k">const</span> <span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">f_obj</span><span class="p">,</span> <span class="n">T</span> <span class="n">x</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">T</span> <span class="n">dx</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">d</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span>
@@ -207,14 +207,14 @@ The following functions are currently supported</p>
 <div class="math">$$Prox\{c * f(a * x - b) + d * x + e * x^2\}$$</div>
 <p> where <span class="math">\(a,b,c,d,e\)</span> are parameters. For every function enum, there is a corresponding proximal operator function whoes signature is the concatenation of <code>Prox</code> prefix and function enum name. The rational behind  these 16 functions is that we can solve these functions analytically. These proximal operator is the result function of corresponding optimization problems.</p>
 <p>The <code>cubic root</code> is used in <code>reciprocal</code> and the <code>lambert</code> is used in <code>expotional</code>. The only exception is <code>logistic</code> , it's implemented in  iteration :</p>
-<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
 <span class="n">__DEVICE__</span> <span class="kr">inline</span> <span class="n">T</span> <span class="n">ProxLogistic</span><span class="p">(</span><span class="n">T</span> <span class="n">v</span><span class="p">,</span> <span class="n">T</span> <span class="n">rho</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="c1">// Initial guess based on piecewise approximation.</span>
     <span class="n">T</span> <span class="n">x</span><span class="p">;</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">v</span> <span class="o">&lt;</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="o">-</span><span class="mf">2.5</span><span class="p">))</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span>
-    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">v</span> <span class="o">&gt;</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">2.5</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">rho</span><span class="p">)</span>
+    <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">v</span> <span class="o">&gt;</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">2.5</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">rho</span><span class="p">)</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">v</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">rho</span><span class="p">;</span>
     <span class="k">else</span>
         <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">rho</span> <span class="o">*</span> <span class="n">v</span> <span class="o">-</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">0.5</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">0.2</span><span class="p">)</span> <span class="o">+</span> <span class="n">rho</span><span class="p">);</span>
@@ -269,7 +269,7 @@ So the penalty proximal operator problem can be refractored to another proximal 
 <div class="math">\begin{equation}c*(f(y)+\frac{e+\rho}{ca^2}(y-a*(v*\rho-d)/(e+\rho)-b)+k)\end{equation}</div>
 <p><br />
 where the <span class="math">\(k\)</span> is a const value, so we can neglect it. The cpp code implemention is just what we have analyzed.</p>
-<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
 <span class="n">__DEVICE__</span> <span class="kr">inline</span> <span class="n">T</span> <span class="n">ProxEval</span><span class="p">(</span><span class="k">const</span> <span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">f_obj</span><span class="p">,</span> <span class="n">T</span> <span class="n">v</span><span class="p">,</span> <span class="n">T</span> <span class="n">rho</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">const</span> <span class="n">T</span> <span class="n">a</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">b</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">c</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">d</span><span class="p">,</span> <span class="n">e</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">e</span><span class="p">;</span>
@@ -292,7 +292,7 @@ where the <span class="math">\(k\)</span> is a const value, so we can neglect it
 
 
 <p>As well as the derivation of these functions,in pogs they are called subgradient. The derivation function signature is concatenation of ProjSubgrad and function enum name. The common evaluation warpper is the same as <code>FuncEval</code></p>
-<div class="codehilite"><pre><span class="n">emplate</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="n">emplate</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
 <span class="n">__DEVICE__</span> <span class="kr">inline</span> <span class="n">T</span> <span class="n">ProjSubgradEval</span><span class="p">(</span><span class="k">const</span> <span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">f_obj</span><span class="p">,</span> <span class="n">T</span> <span class="n">v</span><span class="p">,</span> <span class="n">T</span> <span class="n">x</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">const</span> <span class="n">T</span> <span class="n">a</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">b</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">c</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">d</span><span class="p">,</span> <span class="n">e</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">e</span><span class="p">;</span>
@@ -315,7 +315,7 @@ where the <span class="math">\(k\)</span> is a const value, so we can neglect it
 
 
 <p>After layers and layers warpper, this file finally defines some interface function to evaluate these functions parallelly. Yet another OPENMP/CUDA warpper. Here are some examples:</p>
-<div class="codehilite"><pre><span class="c1">// CPU version</span>
+<div class="codehilite"><pre><span></span><span class="c1">// CPU version</span>
 <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
 <span class="kt">void</span> <span class="n">ProxEval</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">f_obj</span><span class="p">,</span> <span class="n">T</span> <span class="n">rho</span><span class="p">,</span> <span class="k">const</span> <span class="n">T</span> <span class="o">*</span><span class="n">x_in</span><span class="p">,</span>
         <span class="n">T</span> <span class="o">*</span><span class="n">x_out</span><span class="p">)</span>
@@ -353,7 +353,7 @@ where the <span class="math">\(k\)</span> is a const value, so we can neglect it
 
 <p>These implemetations are very interesting. Need more attention here.<br />
 This file also defines the <code>eps</code></p>
-<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
 <span class="n">__DEVICE__</span> <span class="kr">inline</span> <span class="n">T</span> <span class="n">Epsilon</span><span class="p">();</span>
 <span class="k">template</span><span class="o">&lt;&gt;</span>
 <span class="n">__DEVICE__</span> <span class="kr">inline</span> <span class="kt">double</span> <span class="n">Epsilon</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">()</span>
@@ -370,7 +370,7 @@ This file also defines the <code>eps</code></p>
 
 <h1 id="e464b9">pogs.h</h1>
 <p>The pogs.h defines some control variables and instructions:</p>
-<div class="codehilite"><pre><span class="k">const</span> <span class="kt">double</span> <span class="n">kAbsTol</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><span class="k">const</span> <span class="kt">double</span> <span class="n">kAbsTol</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">;</span>
 <span class="k">const</span> <span class="kt">double</span> <span class="n">kRelTol</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">;</span>
 <span class="k">const</span> <span class="kt">double</span> <span class="n">kRhoInit</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">;</span>
 <span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">kVerbose</span> <span class="o">=</span> <span class="mi">2u</span><span class="p">;</span>   <span class="c1">// 0...4</span>
@@ -382,7 +382,7 @@ This file also defines the <code>eps</code></p>
 
 
 <p>Apparently the name schema is subject to Google C++ style. Aside from these const values, some enum status are defined as well.</p>
-<div class="codehilite"><pre><span class="k">enum</span> <span class="n">PogsStatus</span>
+<div class="codehilite"><pre><span></span><span class="k">enum</span> <span class="n">PogsStatus</span>
 <span class="p">{</span>
     <span class="n">POGS_SUCCESS</span><span class="p">,</span>    <span class="c1">// Converged succesfully.</span>
     <span class="n">POGS_INFEASIBLE</span><span class="p">,</span> <span class="c1">// Problem likely infeasible.</span>
@@ -395,7 +395,7 @@ This file also defines the <code>eps</code></p>
 
 
 <p>Then there comes the problem warpper <code>Pogs</code></p>
-<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">M</span><span class="p">,</span> <span class="k">typename</span> <span class="n">P</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">M</span><span class="p">,</span> <span class="k">typename</span> <span class="n">P</span><span class="o">&gt;</span>
 <span class="k">class</span> <span class="nc">Pogs</span>
 <span class="p">{</span>
     <span class="k">private</span><span class="o">:</span>
@@ -420,7 +420,7 @@ This file also defines the <code>eps</code></p>
 
 
 <p>When we use <code>Pogs</code>, we just use a warpper of it <code>PogsDirect</code> or <code>PogsIndirect</code></p>
-<div class="codehilite"><pre><span class="cp">#ifndef __CUDACC__</span>
+<div class="codehilite"><pre><span></span><span class="cp">#ifndef __CUDACC__</span>
     <span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">M</span><span class="o">&gt;</span>
     <span class="k">using</span> <span class="n">PogsDirect</span> <span class="o">=</span> <span class="n">Pogs</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">ProjectorDirect</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">M</span><span class="o">&gt;</span> <span class="o">&gt;</span><span class="p">;</span>
 
@@ -432,7 +432,7 @@ This file also defines the <code>eps</code></p>
 
 <h1 id="923c14">pogs.cpp</h1>
 <p>Firstly, it defines a<code>ApplyOp</code> in a anonymous namespace, yet another function warpper:</p>
-<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Op</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Op</span><span class="o">&gt;</span>
 <span class="k">struct</span> <span class="nl">ApplyOp</span><span class="p">:</span> <span class="n">std</span><span class="o">::</span><span class="n">binary_function</span><span class="o">&lt;</span><span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">T</span><span class="o">&gt;</span>
 <span class="p">{</span>
         <span class="n">Op</span> <span class="n">binary_op</span><span class="p">;</span>
@@ -453,7 +453,7 @@ This file also defines the <code>eps</code></p>
 
 <p>Well , I have no idea why we need it.</p>
 <p>Then here is the default pogs constructor:</p>
-<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">M</span><span class="p">,</span> <span class="k">typename</span> <span class="n">P</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">M</span><span class="p">,</span> <span class="k">typename</span> <span class="n">P</span><span class="o">&gt;</span>
 <span class="n">Pogs</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">P</span><span class="o">&gt;::</span><span class="n">Pogs</span><span class="p">(</span><span class="k">const</span> <span class="n">M</span> <span class="o">&amp;</span><span class="n">A</span><span class="p">)</span> <span class="o">:</span>
         <span class="n">_A</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> <span class="n">_P</span><span class="p">(</span><span class="n">_A</span><span class="p">),</span> <span class="n">_de</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">_z</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">_zt</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">_rho</span><span class="p">(</span>
                 <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">kRhoInit</span><span class="p">)),</span> <span class="n">_done_init</span><span class="p">(</span><span class="nb">false</span><span class="p">),</span> <span class="n">_x</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">_y</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">_mu</span><span class="p">(</span>
@@ -472,7 +472,7 @@ This file also defines the <code>eps</code></p>
 
 
 <p>The constructor list is insane! After the contruction, we call <code>pogs::init</code> to do some check and memory allocation.</p>
-<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">M</span><span class="p">,</span> <span class="k">typename</span> <span class="n">P</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">M</span><span class="p">,</span> <span class="k">typename</span> <span class="n">P</span><span class="o">&gt;</span>
 <span class="kt">int</span> <span class="n">Pogs</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">P</span><span class="o">&gt;::</span><span class="n">_Init</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="n">DEBUG_EXPECT</span><span class="p">(</span><span class="o">!</span><span class="n">_done_init</span><span class="p">);</span>
@@ -503,13 +503,13 @@ This file also defines the <code>eps</code></p>
 
 
 <p>After all the preparation, we call <code>pogs::solve</code> to get everything done. The signature of such function is:</p>
-<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">M</span><span class="p">,</span> <span class="k">typename</span> <span class="n">P</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">M</span><span class="p">,</span> <span class="k">typename</span> <span class="n">P</span><span class="o">&gt;</span>
 <span class="n">PogsStatus</span> <span class="n">Pogs</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">P</span><span class="o">&gt;::</span><span class="n">Solve</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">f</span><span class="p">,</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">g</span><span class="p">)</span>
 </pre></div>
 
 
 <p>At the beginning of this function, it sets some const vars and memory allocation.</p>
-<div class="codehilite"><pre><span class="kt">double</span> <span class="n">t0</span> <span class="o">=</span> <span class="n">timer</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">();</span>
+<div class="codehilite"><pre><span></span><span class="kt">double</span> <span class="n">t0</span> <span class="o">=</span> <span class="n">timer</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">();</span>
 <span class="c1">// Constants for adaptive-rho and over-relaxation.</span>
 <span class="k">const</span> <span class="n">T</span> <span class="n">kDeltaMin</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1.05</span><span class="p">);</span>
 <span class="k">const</span> <span class="n">T</span> <span class="n">kGamma</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1.01</span><span class="p">);</span>
@@ -559,7 +559,7 @@ And the vars' correspondance to the vars in paper is </p>
 <div class="math">\begin{equation}\begin{aligned}z_{prev}&amp;=z^{k}\\z_{t}&amp;=\hat{z}^k\\z&amp;=z^{k+1}\\z_{12}&amp;=z^{k+1/2}\\\end{aligned}\end{equation}</div>
 <p><br />
 Some more attention should be payed to the scale.</p>
-<div class="codehilite"><pre><span class="c1">// Scale f and g to account for diagonal scaling e and d.</span>
+<div class="codehilite"><pre><span></span><span class="c1">// Scale f and g to account for diagonal scaling e and d.</span>
 <span class="n">std</span><span class="o">::</span><span class="n">transform</span><span class="p">(</span><span class="n">f_cpu</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">f_cpu</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">d</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">f_cpu</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span>
         <span class="n">ApplyOp</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">divides</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">divides</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">()));</span>
 <span class="n">std</span><span class="o">::</span><span class="n">transform</span><span class="p">(</span><span class="n">g_cpu</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">g_cpu</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">e</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">g_cpu</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span>
@@ -568,7 +568,7 @@ Some more attention should be payed to the scale.</p>
 
 
 <p>If we have already run the solver before and gotten some results, we can resume the solver by filling <span class="math">\(x,lambda\)</span> by reusing these results.</p>
-<div class="codehilite"><pre><span class="k">if</span> <span class="p">(</span><span class="n">_init_x</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">_init_x</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">gsl</span><span class="o">::</span><span class="n">vector_memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">xtemp</span><span class="p">,</span> <span class="n">_x</span><span class="p">);</span>
     <span class="n">gsl</span><span class="o">::</span><span class="n">vector_div</span><span class="p">(</span><span class="o">&amp;</span><span class="n">xtemp</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">e</span><span class="p">);</span>
@@ -587,7 +587,7 @@ Some more attention should be payed to the scale.</p>
 
 
 <p>Otherwise, we make a initial guess for these two vars</p>
-<div class="codehilite"><pre><span class="k">if</span> <span class="p">(</span><span class="n">_init_x</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">_init_lambda</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">_init_x</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">_init_lambda</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="c1">// Alternating projections to satisfy </span>
     <span class="c1">//   1. \lambda \in \partial f(y), \mu \in \partial g(x)</span>
@@ -615,7 +615,7 @@ Some more attention should be payed to the scale.</p>
 
 
 <p>Then it defines the stop criteria.</p>
-<div class="codehilite"><pre><span class="n">T</span> <span class="n">sqrtn_atol</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">sqrt</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">n</span><span class="p">))</span> <span class="o">*</span> <span class="n">_abs_tol</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><span class="n">T</span> <span class="n">sqrtn_atol</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">sqrt</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">n</span><span class="p">))</span> <span class="o">*</span> <span class="n">_abs_tol</span><span class="p">;</span>
 <span class="n">T</span> <span class="n">sqrtm_atol</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">sqrt</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">m</span><span class="p">))</span> <span class="o">*</span> <span class="n">_abs_tol</span><span class="p">;</span>
 <span class="n">T</span> <span class="n">sqrtmn_atol</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">sqrt</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">m</span> <span class="o">+</span> <span class="n">n</span><span class="p">))</span> <span class="o">*</span> <span class="n">_abs_tol</span><span class="p">;</span>
 <span class="n">T</span> <span class="n">delta</span> <span class="o">=</span> <span class="n">kDeltaMin</span><span class="p">,</span> <span class="n">xi</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1.0</span><span class="p">);</span>
@@ -626,7 +626,7 @@ Some more attention should be payed to the scale.</p>
 
 
 <p>Finally, here is the big iteration loop. I'm going to examine it step by step.</p>
-<div class="codehilite"><pre><span class="n">gsl</span><span class="o">::</span><span class="n">vector_memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">zprev</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><span class="n">gsl</span><span class="o">::</span><span class="n">vector_memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">zprev</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z</span><span class="p">);</span>
 <span class="c1">// Evaluate Proximal Operators</span>
 <span class="n">gsl</span><span class="o">::</span><span class="n">blas_axpy</span><span class="p">(</span><span class="o">-</span><span class="n">kOne</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zt</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z</span><span class="p">);</span>
 <span class="n">ProxEval</span><span class="p">(</span><span class="n">g_cpu</span><span class="p">,</span> <span class="n">_rho</span><span class="p">,</span> <span class="n">x</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">x12</span><span class="p">.</span><span class="n">data</span><span class="p">);</span>
@@ -638,7 +638,7 @@ Some more attention should be payed to the scale.</p>
 <div class="math">\begin{equation}\begin{aligned}z_{prev}&amp;=z\\z&amp;=z-z_t\\x_{12}&amp;=\textbf{prox} (g,x,\rho)\\y_{12}&amp;=\textbf{prox}(f,y,\rho)\\\end{aligned}\end{equation}</div>
 <p><br />
 The <code>prox</code> is proximal operator. After the new value of <span class="math">\(x,y\)</span> are computed, we calculate the gap,optimal value and tolerance to decide if the stop criterion is meet.</p>
-<div class="codehilite"><pre><span class="n">gsl</span><span class="o">::</span><span class="n">blas_axpy</span><span class="p">(</span><span class="o">-</span><span class="n">kOne</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z12</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><span class="n">gsl</span><span class="o">::</span><span class="n">blas_axpy</span><span class="p">(</span><span class="o">-</span><span class="n">kOne</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z12</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z</span><span class="p">);</span>
 <span class="n">gsl</span><span class="o">::</span><span class="n">blas_dot</span><span class="p">(</span><span class="o">&amp;</span><span class="n">z</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z12</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">gap</span><span class="p">);</span>
 <span class="n">gap</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">abs</span><span class="p">(</span><span class="n">gap</span><span class="p">);</span>
 <span class="n">eps_gap</span> <span class="o">=</span> <span class="n">sqrtmn_atol</span><span class="o">+</span> <span class="n">_rel_tol</span> <span class="o">*</span> <span class="n">gsl</span><span class="o">::</span><span class="n">blas_nrm2</span><span class="p">(</span><span class="o">&amp;</span><span class="n">z</span><span class="p">)</span> <span class="o">*</span> <span class="n">gsl</span><span class="o">::</span><span class="n">blas_nrm2</span><span class="p">(</span><span class="o">&amp;</span><span class="n">z12</span><span class="p">);</span>
@@ -649,7 +649,7 @@ The <code>prox</code> is proximal operator. After the new value of <span class="
 
 <p>The math procedure is</p>
 <div class="math">\begin{equation}\begin{aligned}z&amp;=z-z_{12}\\gap&amp;=\vert z*z_{12}\vert \\\epsilon ^{gap}&amp;=\sqrt{m+n} +\epsilon ^{rel} * \Vert z\Vert_2^2 *\Vert z_{12}\Vert_2^2\\\epsilon ^{pri}&amp;=\sqrt{m} +\epsilon ^{rel} * \Vert y_{12}\Vert_2^2\\\epsilon ^{dual}&amp;=\sqrt{n} +\epsilon ^{rel} *\Vert x_{12}\Vert_2^2\\\end{aligned}\end{equation}</div>
-<div class="codehilite"><pre><span class="c1">// Apply over relaxation.</span>
+<div class="codehilite"><pre><span></span><span class="c1">// Apply over relaxation.</span>
 <span class="n">gsl</span><span class="o">::</span><span class="n">vector_memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ztemp</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zt</span><span class="p">);</span>
 <span class="n">gsl</span><span class="o">::</span><span class="n">blas_axpy</span><span class="p">(</span><span class="n">kAlpha</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z12</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ztemp</span><span class="p">);</span>
 <span class="n">gsl</span><span class="o">::</span><span class="n">blas_axpy</span><span class="p">(</span><span class="n">kOne</span> <span class="o">-</span> <span class="n">kAlpha</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zprev</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ztemp</span><span class="p">);</span>
@@ -667,7 +667,7 @@ The <code>prox</code> is proximal operator. After the new value of <span class="
 <p><br />
 The projector function is not fully discussed. We will dive into its details later.</p>
 <p>Now we calculate the residual :</p>
-<div class="codehilite"><pre><span class="c1">// Calculate residuals.</span>
+<div class="codehilite"><pre><span></span><span class="c1">// Calculate residuals.</span>
 <span class="n">gsl</span><span class="o">::</span><span class="n">vector_memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ztemp</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zprev</span><span class="p">);</span>
 <span class="n">gsl</span><span class="o">::</span><span class="n">blas_axpy</span><span class="p">(</span><span class="o">-</span><span class="n">kOne</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ztemp</span><span class="p">);</span>
 <span class="n">nrm_s</span> <span class="o">=</span> <span class="n">_rho</span> <span class="o">*</span> <span class="n">gsl</span><span class="o">::</span><span class="n">blas_nrm2</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ztemp</span><span class="p">);</span>
@@ -682,7 +682,7 @@ The projector function is not fully discussed. We will dive into its details lat
 <div class="math">\begin{equation}\begin{aligned}\Vert s^k \Vert_2^2&amp;=\rho *\Vert z_{prev}-z\Vert _2^2\\\Vert r^k \Vert_2^2&amp;=\Vert z_{12}-z\Vert _2^2\\\end{aligned}\end{equation}</div>
 <p><br />
 Then the solver decide if it calculate the exact residual by comparing current rough residual to the eps</p>
-<div class="codehilite"><pre><span class="c1">// Calculate exact residuals only if necessary.</span>
+<div class="codehilite"><pre><span></span><span class="c1">// Calculate exact residuals only if necessary.</span>
 <span class="kt">bool</span> <span class="n">exact</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
 <span class="k">if</span> <span class="p">((</span><span class="n">nrm_r</span> <span class="o">&lt;</span> <span class="n">eps_pri</span> <span class="o">&amp;&amp;</span> <span class="n">nrm_s</span> <span class="o">&lt;</span> <span class="n">eps_dua</span><span class="p">)</span> <span class="o">||</span> <span class="n">use_exact_stop</span><span class="p">)</span>
 <span class="p">{</span>
@@ -704,13 +704,13 @@ Then the solver decide if it calculate the exact residual by comparing current r
 
 <p>Frankly,I don't know where the exact residual come from!!!!</p>
 <p>Finally we come to the stopping criterial</p>
-<div class="codehilite"><pre><span class="n">converged</span> <span class="o">=</span> <span class="n">exact</span> <span class="o">&amp;&amp;</span> <span class="n">nrm_r</span> <span class="o">&lt;</span> <span class="n">eps_pri</span> <span class="o">&amp;&amp;</span> <span class="n">nrm_s</span> <span class="o">&lt;</span> <span class="n">eps_dua</span><span class="o">&amp;&amp;</span> <span class="p">(</span><span class="o">!</span><span class="n">_gap_stop</span> <span class="o">||</span> <span class="n">gap</span> <span class="o">&lt;</span> <span class="n">eps_gap</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><span class="n">converged</span> <span class="o">=</span> <span class="n">exact</span> <span class="o">&amp;&amp;</span> <span class="n">nrm_r</span> <span class="o">&lt;</span> <span class="n">eps_pri</span> <span class="o">&amp;&amp;</span> <span class="n">nrm_s</span> <span class="o">&lt;</span> <span class="n">eps_dua</span><span class="o">&amp;&amp;</span> <span class="p">(</span><span class="o">!</span><span class="n">_gap_stop</span> <span class="o">||</span> <span class="n">gap</span> <span class="o">&lt;</span> <span class="n">eps_gap</span><span class="p">);</span>
 <span class="k">if</span> <span class="p">(</span><span class="n">converged</span> <span class="o">||</span> <span class="n">k</span> <span class="o">==</span> <span class="n">_max_iter</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="k">break</span><span class="p">;</span>
 </pre></div>
 
 
 <p>If not converged yet, we should update the dual variable</p>
-<div class="codehilite"><pre><span class="c1">// Update dual variable.</span>
+<div class="codehilite"><pre><span></span><span class="c1">// Update dual variable.</span>
 <span class="n">gsl</span><span class="o">::</span><span class="n">blas_axpy</span><span class="p">(</span><span class="n">kAlpha</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z12</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zt</span><span class="p">);</span>
 <span class="n">gsl</span><span class="o">::</span><span class="n">blas_axpy</span><span class="p">(</span><span class="n">kOne</span> <span class="o">-</span> <span class="n">kAlpha</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zprev</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zt</span><span class="p">);</span>
 <span class="n">gsl</span><span class="o">::</span><span class="n">blas_axpy</span><span class="p">(</span><span class="o">-</span><span class="n">kOne</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zt</span><span class="p">);</span>
@@ -726,7 +726,7 @@ Sometimes the <span class="math">\(\rho\)</span> is dynamic , we would update th
 <p><br />
 The <span class="math">\(\prod\)</span> denotes projection onto <span class="math">\(\{(x,y)| y=Ax\}\)</span>.</p>
 <p>The solver body is completed, and we instantiate some template at the end of this cpp file:</p>
-<div class="codehilite"><pre><span class="c1">// Explicit template instantiation.</span>
+<div class="codehilite"><pre><span></span><span class="c1">// Explicit template instantiation.</span>
 <span class="c1">// Dense direct.</span>
 <span class="k">template</span> <span class="k">class</span> <span class="nc">Pogs</span><span class="o">&lt;</span><span class="kt">double</span><span class="p">,</span> <span class="n">MatrixDense</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">,</span>
         <span class="n">ProjectorDirect</span><span class="o">&lt;</span><span class="kt">double</span><span class="p">,</span> <span class="n">MatrixDense</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&gt;</span> <span class="p">;</span>
@@ -766,7 +766,7 @@ That's a least square projection problem. If we solve the <span class="math">\(x
 <div class="math">\begin{equation}x=(A^TA)^{-1}Ab\end{equation}</div>
 <p><br />
 The code is straight forward. Here is the preparation work.</p>
-<div class="codehilite"><pre><span class="kt">size_t</span> <span class="n">min_dim</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">min</span><span class="p">(</span><span class="n">_A</span><span class="p">.</span><span class="n">Rows</span><span class="p">(),</span> <span class="n">_A</span><span class="p">.</span><span class="n">Cols</span><span class="p">());</span>
+<div class="codehilite"><pre><span></span><span class="kt">size_t</span> <span class="n">min_dim</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">min</span><span class="p">(</span><span class="n">_A</span><span class="p">.</span><span class="n">Rows</span><span class="p">(),</span> <span class="n">_A</span><span class="p">.</span><span class="n">Cols</span><span class="p">());</span>
 
 <span class="n">info</span><span class="o">-&gt;</span><span class="n">AA</span> <span class="o">=</span> <span class="k">new</span> <span class="n">T</span><span class="p">[</span><span class="n">min_dim</span> <span class="o">*</span> <span class="n">min_dim</span><span class="p">];</span>
 <span class="n">ASSERT</span><span class="p">(</span><span class="n">info</span><span class="o">-&gt;</span><span class="n">AA</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">);</span>
@@ -792,7 +792,7 @@ The code is straight forward. Here is the preparation work.</p>
 
 
 <p>In short, the pogs consider <span class="math">\(A\)</span> is <span class="math">\(m*n\)</span> ,while<span class="math">\(m\ge n\)</span>. If the input is not in that form, we would transpose <span class="math">\(A\)</span>(not transpose it in memory but logically). The<code>min_dim</code> is <span class="math">\(less(m,n)\)</span>. And the <span class="math">\(A^TA\)</span> is computed by a <code>syrk</code> call. </p>
-<div class="codehilite"><pre><span class="k">const</span> <span class="n">gsl</span><span class="o">::</span><span class="n">matrix</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">CblasRowMajor</span><span class="o">&gt;</span> <span class="n">A</span> <span class="o">=</span>
+<div class="codehilite"><pre><span></span><span class="k">const</span> <span class="n">gsl</span><span class="o">::</span><span class="n">matrix</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">CblasRowMajor</span><span class="o">&gt;</span> <span class="n">A</span> <span class="o">=</span>
     <span class="n">gsl</span><span class="o">::</span><span class="n">matrix_view_array</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">CblasRowMajor</span><span class="o">&gt;</span>
     <span class="p">(</span><span class="n">_A</span><span class="p">.</span><span class="n">Data</span><span class="p">(),</span> <span class="n">_A</span><span class="p">.</span><span class="n">Rows</span><span class="p">(),</span> <span class="n">_A</span><span class="p">.</span><span class="n">Cols</span><span class="p">());</span>
 <span class="n">gsl</span><span class="o">::</span><span class="n">matrix</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">CblasRowMajor</span><span class="o">&gt;</span> <span class="n">AA</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">matrix_view_array</span> <span class="o">&lt;</span> <span class="n">T</span><span class="p">,</span> <span class="n">CblasRowMajor</span> <span class="o">&gt;</span>
@@ -901,7 +901,7 @@ The code is straight forward. Here is the preparation work.</p>
 </p>
 <p>
     ©
-            2014-2015
+            2014-2016
     <a class="niu2-footer-link" href="http://spiritsaway.info">Huiliang Huang</a>
 </p>
 <p class="niu2-icons">

@@ -62,7 +62,7 @@
                       (2)</a></li>
                <li><a href="http://spiritsaway.info/cpp/index.html">
                    <i class="icon-folder-close"></i>CPP
-                      (7)</a></li>
+                      (8)</a></li>
                <li><a href="http://spiritsaway.info/math/index.html">
                    <i class="icon-folder-close"></i>Math
                       (4)</a></li>
@@ -89,13 +89,13 @@
 C++的类型系统为静态弱类型。虽说静态类型的优点是变量的类型明确，但是碰到这种声明<code>char (*(*X())[])()</code>，在没有cdecl类似工具的辅助下一般人也很难看出变量的意义是什么。上面的例子属于C语言的范畴，C++在其基础上增加了更加复杂的模板类型推导和自动类型推导。在这些因素的影响下，如何读懂C++的类型便成为了一个很大的问题。本文便以弄懂C++的类型为出发点，剖析<code>template&lt;T&gt; ,auto ,decltype</code>这三种语法下的类型推导。相关内容都是自己从internet及相关书籍总结而来，如有错误欢迎指出。</p>
 <h1 id="6d90f6">理解template类型推导</h1>
 <p>模板(template)被引入C++主要是用来处理泛型容器和通用算法问题。在被证明了是图灵完全之后，模板的使用场景便百花齐放，无所不用其极。看过boost库中spirit等类似库之后，很多人自此都换上了尖括号恐惧症。如果你经历过编译器报模板相关错误，那么你应该能理解我所说的。本文并不想去谈论模板元编程（我也没有资格去谈，水平不够），只讨论一下模板类型推导的问题。由于函数模板类型推导与类模板类型推导原理一样，下文只讨论函数模板推导。简单来说，函数模板声明有如下形式：</p>
-<div class="codehilite"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="n">ParamType</span> <span class="n">param</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="n">ParamType</span> <span class="n">param</span><span class="p">);</span>
 </pre></div>
 
 
 <p>其中的<code>ParamType</code>可以是<code>T,T\&amp;,T*,T\&amp;\&amp;,T**</code>等简单类型，也可以是一个类似于<code>vector&lt;T&gt;</code>的模板类型。此外，<code>const,volatile</code>等类型修饰符也可以在<code>ParamType</code>中进行使用。</p>
 <p>函数模板以如下形式进行调用:</p>
-<div class="codehilite"><pre><span class="n">f</span><span class="p">(</span><span class="n">expr</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><span class="n">f</span><span class="p">(</span><span class="n">expr</span><span class="p">);</span>
 </pre></div>
 
 
@@ -114,7 +114,7 @@ C++的类型系统为静态弱类型。虽说静态类型的优点是变量的�
 <p>接下来我们根据上面所说的三种形式来进行分别讨论。</p>
 <h1 id="2a8bc2">paramType既不是指针也不是引用</h1>
 <p>此时，函数模板的形式如下。</p>
-<div class="codehilite"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="n">T</span> <span class="n">param</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="n">T</span> <span class="n">param</span><span class="p">);</span>
 </pre></div>
 
 
@@ -128,7 +128,7 @@ C++的类型系统为静态弱类型。虽说静态类型的优点是变量的�
 </li>
 </ul>
 <p>最后得到的类型就是<code>T</code>的类型，例子如下。</p>
-<div class="codehilite"><pre><span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">27</span><span class="p">;</span>              <span class="c1">// as before</span>
+<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">27</span><span class="p">;</span>              <span class="c1">// as before</span>
 <span class="k">const</span> <span class="kt">int</span> <span class="n">cx</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>        <span class="c1">// as before</span>
 <span class="k">const</span> <span class="kt">int</span><span class="o">&amp;</span> <span class="n">rx</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>       <span class="c1">// as before</span>
 <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>                    <span class="c1">// T&#39;s and param&#39;s types are both int</span>
@@ -139,7 +139,7 @@ C++的类型系统为静态弱类型。虽说静态类型的优点是变量的�
 
 <h1 id="fd934e">ParamType是一个指针或者引用，但不是全局引用</h1>
 <p>此时<code>ParamType</code>有<code>T*,T\&amp;</code>这两种形式，这两种形式的推导是一样的。这里以引用形式来说明，此时函数模板的声明如下：</p>
-<div class="codehilite"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">param</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">param</span><span class="p">);</span>
 </pre></div>
 
 
@@ -153,14 +153,14 @@ C++的类型系统为静态弱类型。虽说静态类型的优点是变量的�
 </li>
 </ul>
 <p>以例子来说，如果我们有下面三个变量声明:</p>
-<div class="codehilite"><pre><span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">27</span><span class="p">;</span>           <span class="c1">// x is an int</span>
+<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">27</span><span class="p">;</span>           <span class="c1">// x is an int</span>
 <span class="k">const</span> <span class="kt">int</span> <span class="n">cx</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>     <span class="c1">// cx is a const int</span>
 <span class="k">const</span> <span class="kt">int</span><span class="o">&amp;</span> <span class="n">rx</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>    <span class="c1">// rx is a reference to x as a const int</span>
 </pre></div>
 
 
 <p>则以这些变量作为实参带入<code>f(expr)</code>，会有如下结果：</p>
-<div class="codehilite"><pre><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>     <span class="c1">// T is int, param&#39;s type is int&amp;</span>
+<div class="codehilite"><pre><span></span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>     <span class="c1">// T is int, param&#39;s type is int&amp;</span>
 <span class="n">f</span><span class="p">(</span><span class="n">cx</span><span class="p">);</span>    <span class="c1">// T is const int, param&#39;s type is const int&amp;</span>
 <span class="n">f</span><span class="p">(</span><span class="n">rx</span><span class="p">);</span>    <span class="c1">// T is const int, param&#39;s type is const int&amp;</span>
 </pre></div>
@@ -169,7 +169,7 @@ C++的类型系统为静态弱类型。虽说静态类型的优点是变量的�
 <p>首先，除去引用部分。第三个调用中,<code>rx</code>的类型是<code>const int \&amp;</code>，在除去引用之后，变为<code>const int</code>。在经过除去引用之后，这三个参数的类型分别为<code>int,const int,const int</code>。</p>
 <p>对于后两个调用，我们传入的实参<code>cx,rx</code>都是<code>const</code>的，则<code>T</code>会被展开为<code>const T</code>。在形参为引用类型时，<code>const</code>是会传染的，对于其他的类型修饰符<code>volatile</code>也是如。之后，类型推导剩余部分，即<code>int</code>部分，直接匹配。所以最后我们得到的<code>T</code>的类型为<code>int ,const int,const int</code>，对应的<code>ParamType</code>为<code>int\&amp;,const int \&amp; ,const int \&amp;</code>。</p>
 <p>如果 <code>ParamType</code>中已经含有了<code>const,volatile</code>等修饰符，则我们不需要去考虑实参是否有这些修饰符，在推导<code>ParamType</code>的时候统一加上就行了，而<code>T</code>则不需要再去考虑<code>const,volatile</code>。例子如下：</p>
-<div class="codehilite"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
 <span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="k">const</span> <span class="n">T</span><span class="o">&amp;</span> <span class="n">param</span><span class="p">);</span>    <span class="c1">// param is now ref-to-const</span>
 <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">27</span><span class="p">;</span>                <span class="c1">// as before</span>
 <span class="k">const</span> <span class="kt">int</span> <span class="n">cx</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>          <span class="c1">// as before</span>
@@ -181,7 +181,7 @@ C++的类型系统为静态弱类型。虽说静态类型的优点是变量的�
 
 
 <p>对于指针类型，也是同理：</p>
-<div class="codehilite"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
 <span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="n">T</span><span class="o">*</span> <span class="n">param</span><span class="p">);</span>          <span class="c1">// param is now a pointer</span>
 <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">27</span><span class="p">;</span>                <span class="c1">// as before</span>
 <span class="k">const</span> <span class="kt">int</span> <span class="o">*</span><span class="n">px</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">x</span><span class="p">;</span>        <span class="c1">// px is a ptr to x as a const int</span>
@@ -202,7 +202,7 @@ C++的类型系统为静态弱类型。虽说静态类型的优点是变量的�
 </ul>
 <p>简而言之，假设<code>expr</code>的类型为<code>X</code>,<code>T</code>的类型总是<code>remove\_reference&lt;X&gt;::type</code>；而<code>ParamType</code>的类型只有在<code>X=A\&amp;\&amp;</code>的时候才是右值引用，其他情况都是左值引用。</p>
 <p>使用上述规则的例子如下：</p>
-<div class="codehilite"><pre><span class="n">tempalte</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="n">tempalte</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
 <span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">param</span><span class="p">);</span>        <span class="c1">// param is now a universal reference</span>
 <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">27</span><span class="p">;</span>               <span class="c1">// as before</span>
 <span class="k">const</span> <span class="kt">int</span> <span class="n">cx</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>         <span class="c1">// as before</span>
@@ -217,13 +217,13 @@ C++的类型系统为静态弱类型。虽说静态类型的优点是变量的�
 <p>事实上现在讨论的推导规则都在C++引用折叠规则之内，但是为了解释引用折叠规则就会牵扯到移动语义和完美转发，比较麻烦，因此这里就先不提了。</p>
 <h1 id="b159a9">数组类型参数</h1>
 <p>需要注意的是：数组类型在形参不是引用的时候会退化为指针,即下面两个函数的声明是等价的。</p>
-<div class="codehilite"><pre><span class="kt">void</span> <span class="nf">myFunc</span><span class="p">(</span><span class="kt">int</span> <span class="n">param</span><span class="p">[]);</span>
+<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="nf">myFunc</span><span class="p">(</span><span class="kt">int</span> <span class="n">param</span><span class="p">[]);</span>
 <span class="kt">void</span> <span class="nf">myFunc</span><span class="p">(</span><span class="kt">int</span><span class="o">*</span> <span class="n">param</span><span class="p">);</span>
 </pre></div>
 
 
 <p>而在形参为引用（包括左值引用和全局引用）的时候则会推导出数组的类型，不会退化为指针。例子如下：</p>
-<div class="codehilite"><pre><span class="k">const</span> <span class="kt">char</span> <span class="n">name</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&quot;J.P.Briggs&quot;</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><span class="k">const</span> <span class="kt">char</span> <span class="n">name</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&quot;J.P.Briggs&quot;</span><span class="p">;</span>
 <span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">f1</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">param</span><span class="p">);</span> 
  <span class="n">f1</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>  <span class="c1">// T&#39;s type and param&#39;s type are const char(&amp;)[13]</span>
 
@@ -234,7 +234,7 @@ C++的类型系统为静态弱类型。虽说静态类型的优点是变量的�
 
 <h1 id="6b34be">auto类型推导</h1>
 <p><code>auto</code>关键字首次出现是在c++11，广大人民群众拍手称快欢迎此关键字。<code>auto</code>的类型推导与模板除了在初始化列表类型有差异外，几乎相同。所以这里只提差异之处，看下例：</p>
-<div class="codehilite"><pre><span class="k">auto</span> <span class="n">x1</span> <span class="o">=</span> <span class="mi">27</span><span class="p">;</span>        <span class="c1">// type is int, value is 27</span>
+<div class="codehilite"><pre><span></span><span class="k">auto</span> <span class="n">x1</span> <span class="o">=</span> <span class="mi">27</span><span class="p">;</span>        <span class="c1">// type is int, value is 27</span>
 <span class="k">auto</span> <span class="nf">x2</span><span class="p">(</span><span class="mi">27</span><span class="p">);</span>         <span class="c1">// ditto</span>
 <span class="k">auto</span> <span class="n">x3</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">27</span> <span class="p">};</span>    <span class="c1">// type is std::initializier_list&lt;int&gt;, value is { 27 }</span>
 <span class="k">auto</span> <span class="n">x4</span><span class="p">{</span> <span class="mi">27</span> <span class="p">};</span>       <span class="c1">// ditto</span>
@@ -242,18 +242,18 @@ C++的类型系统为静态弱类型。虽说静态类型的优点是变量的�
 
 
 <p>当推导一个以大括号初始化的类型变量的时候，<code>auto</code>并不会直接推导出变量的最终类型，而是保留初始化列表类型，即<code>std::initializer\_list&lt;T&gt;</code>类型。如果初始化列表中的值类型并不完全相同，则无法完成对于<code>T</code>的推导，导致报错。即使用<code>auto</code>来推导初始化列表时，不允许隐式转换，如下例：</p>
-<div class="codehilite"><pre><span class="k">auto</span> <span class="n">x5</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">3.0</span> <span class="p">};</span>    <span class="c1">// error! can&#39;t deduce T for std::initializer_list&lt;int&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">auto</span> <span class="n">x5</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">3.0</span> <span class="p">};</span>    <span class="c1">// error! can&#39;t deduce T for std::initializer_list&lt;int&gt;</span>
 </pre></div>
 
 
 <p>此外，当初始化列表使用在函数模板时，其类型推导也会产生错误。</p>
-<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="n">T</span> <span class="n">param</span><span class="p">);</span>         <span class="c1">// template with parameter declaration equivalent to x&#39;s</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="n">T</span> <span class="n">param</span><span class="p">);</span>         <span class="c1">// template with parameter declaration equivalent to x&#39;s</span>
 <span class="n">f</span><span class="p">({</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">9</span><span class="p">});</span>         <span class="c1">// error! can&#39;t deduce type for T</span>
 </pre></div>
 
 
 <p>如果想让初始化列表也能参与到模板类型推导，则需要修改函数模板的声明。</p>
-<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">initializer_list</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">initList</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">initializer_list</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">initList</span><span class="p">);</span>
 <span class="n">f</span><span class="p">({</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">9</span> <span class="p">});</span>    <span class="c1">// T deduce as int, and initList&#39;s type is std::initializer_list&lt;int&gt;</span>
 </pre></div>
 
@@ -261,7 +261,7 @@ C++的类型系统为静态弱类型。虽说静态类型的优点是变量的�
 <p>至于为什么会出现这些稀奇古怪的规则，我不清楚，Scott Meyers也不清楚。唯一的建议是不要让编译器去推导初始化列表的类型，否则就等着报模板错误吧。</p>
 <h1 id="6d26f4">decltype类型推导</h1>
 <p><code>decltype</code>关键字在很早的时候就进入了C++语言中，但是之前有很多限制用处不是很大，能使用的地方现在也基本被<code>auto</code>代替了。在C++ 11中，他唯一的作用就是声明一个返回类型依赖于模板参数的模板函数，这个功能在使用<code>auto</code>时会出错。如下例，我们来构造一个类似于数组操作符的函数:</p>
-<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">Container</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Index</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">Container</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Index</span><span class="o">&gt;</span>
 <span class="k">auto</span> <span class="n">access</span><span class="p">(</span><span class="n">Container</span><span class="o">&amp;</span> <span class="n">c</span><span class="p">,</span> <span class="n">Index</span> <span class="n">i</span><span class="p">)</span>    <span class="c1">// </span>
 <span class="p">{</span>
   <span class="k">return</span> <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>            <span class="c1">// return type deduced from c[i]</span>
@@ -271,7 +271,7 @@ C++的类型系统为静态弱类型。虽说静态类型的优点是变量的�
 
 <p>C++语言中操作符<code>[]</code>的返回值默认是<code>A\&amp;</code>的，而不是直接返回值，因为要处理<code>a[i]=c</code>的情况。所以上文中<code>c[i]</code>的类型是引用类型。但是，<code>auto</code>的推导规则是类似于模板的推导规则的，即引用类型会被转换为非引用类型。在这个规则的作用下，会造成<code>access[i]=c</code>无法通过编译。</p>
 <p>为了达到所期望的要求，需要对原程序进行修改。在C++11中，引入了后置返回类型<code>trailing return type</code>，实现所期望的功能需要修改为如下代码：</p>
-<div class="codehilite"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">Container</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Index</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">Container</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Index</span><span class="o">&gt;</span>
 <span class="k">auto</span> <span class="n">access</span><span class="p">(</span><span class="n">Container</span><span class="o">&amp;</span> <span class="n">c</span><span class="p">,</span> <span class="n">Index</span> <span class="n">i</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="k">decltype</span><span class="p">(</span><span class="k">auto</span><span class="p">)</span>  
 <span class="p">{</span>
   <span class="k">return</span> <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
@@ -295,7 +295,7 @@ C++的类型系统为静态弱类型。虽说静态类型的优点是变量的�
 </li>
 </ul>
 <p>下面的代码便是上述规则的一些实例：</p>
-<div class="codehilite"><pre><span class="k">const</span> <span class="kt">int</span><span class="o">&amp;&amp;</span> <span class="n">foo</span><span class="p">();</span>
+<div class="codehilite"><pre><span></span><span class="k">const</span> <span class="kt">int</span><span class="o">&amp;&amp;</span> <span class="n">foo</span><span class="p">();</span>
 <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
 <span class="k">struct</span> <span class="n">A</span> <span class="p">{</span> <span class="kt">double</span> <span class="n">x</span><span class="p">;</span> <span class="p">};</span>
 <span class="k">const</span> <span class="n">A</span><span class="o">*</span> <span class="n">a</span> <span class="o">=</span> <span class="k">new</span> <span class="n">A</span><span class="p">();</span>
@@ -307,7 +307,7 @@ C++的类型系统为静态弱类型。虽说静态类型的优点是变量的�
 
 
 <p>注意最后的两个声明,可以看出对于左值来说有没有加括号是有很大差别的。对于<code>decltype(a-&gt;x)</code>，得到的是<code>A::x</code>的类型，所以是<code>double</code>。而对于<code>decltype((a-&gt;x))</code>来说，返回的是<code>(a-&gt;x)</code>的类型。由于<code>a</code>的类型为<code>const A*</code>，又因为<code>(a-&gt;x)</code>是一个左值表达式，所以最后返回的是<code>const double\&amp;</code>。类似的例子还有：</p>
-<div class="codehilite"><pre><span class="k">decltype</span><span class="p">(</span><span class="k">auto</span><span class="p">)</span> <span class="n">f1</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><span class="k">decltype</span><span class="p">(</span><span class="k">auto</span><span class="p">)</span> <span class="n">f1</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
 <span class="c1">// ...</span>
@@ -324,7 +324,7 @@ C++的类型系统为静态弱类型。虽说静态类型的优点是变量的�
 
 <p>在寻找相关资料的过程中，还看到了<code>decltype(a,b)</code>这样的用法，这时的类型等价于<code>decltype(b)</code>。总而言之，就是一个坑。</p>
 <p>要不是<code>auto</code>在返回值推导时无法得到正确结果，这个关键字早就废了。虽说能够正确运行了，广大人民群众对于上面的函数声明还是不满意：为什么要写后面那一大串，编译期不会自己写么。于是在C++14，之前的函数定义代码又升级了，引入了<code>decltype(auto)</code>。原有的代码变成了这样的最终形态：</p>
-<div class="codehilite"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">Container</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Index</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">Container</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Index</span><span class="o">&gt;</span>
 <span class="k">decltype</span><span class="p">(</span><span class="k">auto</span><span class="p">)</span> <span class="n">access</span><span class="p">(</span><span class="n">Container</span><span class="o">&amp;&amp;</span> <span class="n">c</span><span class="p">,</span> <span class="n">Index</span> <span class="n">i</span><span class="p">)</span>  <span class="c1">// final C++14 version</span>
 <span class="p">{</span>
     <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">Container</span><span class="o">&gt;</span><span class="p">(</span><span class="n">c</span><span class="p">)[</span><span class="n">i</span><span class="p">];</span>
@@ -333,7 +333,7 @@ C++的类型系统为静态弱类型。虽说静态类型的优点是变量的�
 
 
 <p>类似的，变量声明也可以使用<code>decltype(auto)</code>，如下所示：</p>
-<div class="codehilite"><pre><span class="n">Widget</span> <span class="n">w</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><span class="n">Widget</span> <span class="n">w</span><span class="p">;</span>
 <span class="k">const</span> <span class="n">Widget</span><span class="o">&amp;</span> <span class="n">cw</span> <span class="o">=</span> <span class="n">w</span><span class="p">;</span>
 <span class="k">auto</span> <span class="n">myWiget1</span> <span class="o">=</span> <span class="n">cw</span><span class="p">;</span>    <span class="c1">// auto type deduction:</span>
 <span class="c1">// myWidget1&#39;s type is Widget</span>
@@ -376,7 +376,7 @@ C++的类型系统为静态弱类型。虽说静态类型的优点是变量的�
         <div class="niu2-sidebar-label"><i class="icon-tag"></i>标签:</div>
  
             <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/type.html">Type</a><sup>1</sup></div>
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/cpp.html">CPP</a><sup>10</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/cpp.html">CPP</a><sup>11</sup></div>
     </div>
 
     <div id="niu2-sidebar-toc" class="niu2-sidebar" data-status="closed">
@@ -402,7 +402,7 @@ C++的类型系统为静态弱类型。虽说静态类型的优点是变量的�
 </p>
 <p>
     ©
-            2014-2015
+            2014-2016
     <a class="niu2-footer-link" href="http://spiritsaway.info">Huiliang Huang</a>
 </p>
 <p class="niu2-icons">

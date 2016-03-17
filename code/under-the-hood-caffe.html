@@ -62,7 +62,7 @@
                       (2)</a></li>
                <li><a href="http://spiritsaway.info/cpp/index.html">
                    <i class="icon-folder-close"></i>CPP
-                      (7)</a></li>
+                      (8)</a></li>
                <li><a href="http://spiritsaway.info/math/index.html">
                    <i class="icon-folder-close"></i>Math
                       (4)</a></li>
@@ -115,7 +115,7 @@
 </li>
 </ul>
 <p>Aside from these CHECK macro, it introduce a CUDA_KERNEL_LOOP macro:</p>
-<div class="codehilite"><pre><span class="cp">#define CUDA_KERNEL_LOOP(i, n) \</span>
+<div class="codehilite"><pre><span></span><span class="cp">#define CUDA_KERNEL_LOOP(i, n) \</span>
 <span class="cp">  for (int i = blockIdx.x * blockDim.x + threadIdx.x; \</span>
 <span class="cp">       i &lt; (n); \</span>
 <span class="cp">       i += blockDim.x * gridDim.x)</span>
@@ -123,7 +123,7 @@
 
 
 <p>At the end of this file, it defines a block dispatch function which determines how many blocks every thread would consume:</p>
-<div class="codehilite"><pre><span class="kr">inline</span> <span class="kt">int</span> <span class="nf">CAFFE_GET_BLOCKS</span><span class="p">(</span><span class="k">const</span> <span class="kt">int</span> <span class="n">N</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="kr">inline</span> <span class="kt">int</span> <span class="nf">CAFFE_GET_BLOCKS</span><span class="p">(</span><span class="k">const</span> <span class="kt">int</span> <span class="n">N</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">N</span> <span class="o">+</span> <span class="n">CAFFE_CUDA_NUM_THREADS</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">CAFFE_CUDA_NUM_THREADS</span><span class="p">;</span>
 <span class="p">}</span>
@@ -137,7 +137,7 @@
 <p>This header defines two functions, one called caffe_rng which return a rng_seed(boost::mt19937),the other one is a template shuffle functions. Actually these two functions just make no sense, why not just use c++11.</p>
 <h1 id="ad7c65">util/mkl_alternate.h</h1>
 <p>This header file works just like device_alternate.hpp, it diffrentiate MKL and other BLAS librarys. If we compile caffe with mkl, then there is nothing to do because MKL already define all the functions we need. Otherwise, we define some functions with macro. The macro works as below:</p>
-<div class="codehilite"><pre><span class="cp">#define DEFINE_VSL_UNARY_FUNC(name, operation) \</span>
+<div class="codehilite"><pre><span></span><span class="cp">#define DEFINE_VSL_UNARY_FUNC(name, operation) \</span>
 <span class="cp">  template&lt;typename Dtype&gt; \</span>
 <span class="cp">  void v##name(const int n, const Dtype* a, Dtype* y) { \</span>
 <span class="cp">    CHECK_GT(n, 0); CHECK(a); CHECK(y); \</span>
@@ -155,14 +155,14 @@
 
 
 <p>It introduce a template then instantiate the template with <code>float</code> and <code>double</code>, where vs stands for float vector and vd stands for double vector. After the macro definition, this file predefine some simple unary functions:</p>
-<div class="codehilite"><pre><span class="n">DEFINE_VSL_UNARY_FUNC</span><span class="p">(</span><span class="n">Sqr</span><span class="p">,</span> <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+<div class="codehilite"><pre><span></span><span class="n">DEFINE_VSL_UNARY_FUNC</span><span class="p">(</span><span class="n">Sqr</span><span class="p">,</span> <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
 <span class="n">DEFINE_VSL_UNARY_FUNC</span><span class="p">(</span><span class="n">Exp</span><span class="p">,</span> <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]));</span>
 <span class="n">DEFINE_VSL_UNARY_FUNC</span><span class="p">(</span><span class="n">Abs</span><span class="p">,</span> <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">fabs</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]));</span>
 </pre></div>
 
 
 <p>Aside from the vector transform template, this file also introduce a template which transform vector with additional parameter and atemplate of binary function:</p>
-<div class="codehilite"><pre><span class="cp">#define DEFINE_VSL_UNARY_FUNC_WITH_PARAM(name, operation) \</span>
+<div class="codehilite"><pre><span></span><span class="cp">#define DEFINE_VSL_UNARY_FUNC_WITH_PARAM(name, operation) \</span>
 <span class="cp">  template&lt;typename Dtype&gt; \</span>
 <span class="cp">  void v##name(const int n, const Dtype* a, const Dtype b, Dtype* y) { \</span>
 <span class="cp">    CHECK_GT(n, 0); CHECK(a); CHECK(y); \</span>
@@ -178,7 +178,7 @@
 
 
 <p>And then instantiate these template with some simple functions,like:</p>
-<div class="codehilite"><pre><span class="n">DEFINE_VSL_BINARY_FUNC</span><span class="p">(</span><span class="n">Add</span><span class="p">,</span> <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+<div class="codehilite"><pre><span></span><span class="n">DEFINE_VSL_BINARY_FUNC</span><span class="p">(</span><span class="n">Add</span><span class="p">,</span> <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
 <span class="p">;</span>
 <span class="n">DEFINE_VSL_BINARY_FUNC</span><span class="p">(</span><span class="n">Sub</span><span class="p">,</span> <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
 <span class="p">;</span>
@@ -190,7 +190,7 @@
 
 
 <p>In addition, MKL comes with an additional function axpby that is not present in standard blas. caffe  simply use a two-step (inefficient, of course) way to mimic that.</p>
-<div class="codehilite"><pre><span class="kr">inline</span> <span class="kt">void</span> <span class="nf">cblas_saxpby</span><span class="p">(</span><span class="k">const</span> <span class="kt">int</span> <span class="n">N</span><span class="p">,</span> <span class="k">const</span> <span class="kt">float</span> <span class="n">alpha</span><span class="p">,</span> <span class="k">const</span> <span class="kt">float</span><span class="o">*</span> <span class="n">X</span><span class="p">,</span>
+<div class="codehilite"><pre><span></span><span class="kr">inline</span> <span class="kt">void</span> <span class="nf">cblas_saxpby</span><span class="p">(</span><span class="k">const</span> <span class="kt">int</span> <span class="n">N</span><span class="p">,</span> <span class="k">const</span> <span class="kt">float</span> <span class="n">alpha</span><span class="p">,</span> <span class="k">const</span> <span class="kt">float</span><span class="o">*</span> <span class="n">X</span><span class="p">,</span>
         <span class="k">const</span> <span class="kt">int</span> <span class="n">incX</span><span class="p">,</span> <span class="k">const</span> <span class="kt">float</span> <span class="n">beta</span><span class="p">,</span> <span class="kt">float</span><span class="o">*</span> <span class="n">Y</span><span class="p">,</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">incY</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">cblas_sscal</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">incY</span><span class="p">);</span>
@@ -206,7 +206,7 @@
 
 
 <p>where cblas_sscal, cblas_saxpy may  defined as such:</p>
-<div class="codehilite"><pre><span class="kt">void</span> <span class="nf">cblas_sscal</span><span class="p">(</span><span class="kt">int</span> <span class="n">N</span><span class="p">,</span> <span class="kt">float</span> <span class="n">beta</span><span class="p">,</span><span class="kt">float</span><span class="o">*</span> <span class="n">Y</span><span class="p">,</span> <span class="kt">int</span> <span class="n">incY</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="nf">cblas_sscal</span><span class="p">(</span><span class="kt">int</span> <span class="n">N</span><span class="p">,</span> <span class="kt">float</span> <span class="n">beta</span><span class="p">,</span><span class="kt">float</span><span class="o">*</span> <span class="n">Y</span><span class="p">,</span> <span class="kt">int</span> <span class="n">incY</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span><span class="n">i</span><span class="o">++</span><span class="p">)</span>
     <span class="p">{</span>
@@ -252,7 +252,7 @@
 <p>These function would call respective cblas or cuda_blas. So these declarations are just encapsulation.  Aside from these blas functions, some random generator(gaussian and uniform) and simple math function (like div,sub )are declared.All the definition details are in the math_functions.cu and math_functions.cpp.</p>
 <h1 id="16cd7a">common.hpp</h1>
 <p>This header file defines some common macro and the caffe class. The caffe class is a singleton class which ia accessed by the <code>get</code> fucntion.</p>
-<div class="codehilite"><pre><span class="kr">inline</span> <span class="k">static</span> <span class="n">Caffe</span><span class="o">&amp;</span> <span class="n">Get</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><span class="kr">inline</span> <span class="k">static</span> <span class="n">Caffe</span><span class="o">&amp;</span> <span class="n">Get</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">singleton_</span><span class="p">.</span><span class="n">get</span><span class="p">())</span>
     <span class="p">{</span>
@@ -264,7 +264,7 @@
 
 
 <p>Personally I don't like this singleton implenmentation, we can just use static to achieve the same while keep the shared_ptr away.</p>
-<div class="codehilite"><pre><span class="k">static</span> <span class="n">Caffe</span><span class="o">&amp;</span> <span class="n">get</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><span class="k">static</span> <span class="n">Caffe</span><span class="o">&amp;</span> <span class="n">get</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="k">static</span> <span class="n">Caffe</span> <span class="n">instance</span><span class="p">;</span>
     <span class="k">return</span> <span class="n">instance</span><span class="p">;</span>
@@ -275,7 +275,7 @@
 <p>There is a rng class declared in caffe to generate random numbers.</p>
 <h1 id="552c74">syncedmem.hpp</h1>
 <p>This header file wraps the CPU/GPU memory malloc/free function and the synchronization between GPU memory and CPU memory. The class which wraps the sync-memory is declared as such:</p>
-<div class="codehilite"><pre><span class="k">class</span> <span class="nc">SyncedMemory</span>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">SyncedMemory</span>
 <span class="p">{</span>
     <span class="k">private</span><span class="o">:</span>
         <span class="kt">void</span> <span class="n">to_cpu</span><span class="p">();</span>
@@ -292,7 +292,7 @@
 
 <p>For a sync-memory, there has to be two blocks of memory, <code>cpu_ptr</code> malloced on CPU and <code>gpu_ptr</code> the other malloced on GPU, both have the size <code>size_</code>. The <code>to_cpu</code> and <code>to_gpu</code> function do the synchonization work.</p>
 <p>The SyncdHead is a enum that indicates which block has the updated value, it is defined as such:</p>
-<div class="codehilite"><pre><span class="k">enum</span> <span class="n">SyncedHead</span>
+<div class="codehilite"><pre><span></span><span class="k">enum</span> <span class="n">SyncedHead</span>
 <span class="p">{</span>
     <span class="n">UNINITIALIZED</span><span class="p">,</span> <span class="n">HEAD_AT_CPU</span><span class="p">,</span> <span class="n">HEAD_AT_GPU</span><span class="p">,</span> <span class="n">SYNCED</span>
 <span class="p">};</span>
@@ -336,13 +336,13 @@
 </ul>
 <p>Caffe stores and communicates data in 4-dimensional arrays called blobs. Blobs provide a unified memory interface, holding data e.g. batches of images, model parameters, and derivatives for optimization.The conventional blob dimensions for data are number N x channel K x height H x width W. Blob memory is row-major in layout so the last / rightmost dimension changes fastest. For example, the value at index (n, k, h, w) is physically located at index ((n * K + k) * H + h) * W + w. </p>
 <p>Blob stores two chunks of memories, data and diff. The former is the normal data that we pass along, and the latter is the gradient computed by the network. The two chunks of memories is declared as such:</p>
-<div class="codehilite"><pre><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">SyncedMemory</span><span class="o">&gt;</span> <span class="n">data_</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">SyncedMemory</span><span class="o">&gt;</span> <span class="n">data_</span><span class="p">;</span>
 <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">SyncedMemory</span><span class="o">&gt;</span> <span class="n">diff_</span><span class="p">;</span>
 </pre></div>
 
 
 <p>The memories is allocated as such:</p>
-<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">Dtype</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">Dtype</span><span class="o">&gt;</span>
 <span class="kt">void</span> <span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;::</span><span class="n">Reshape</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&amp;</span> <span class="n">shape</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">CHECK_LE</span><span class="p">(</span><span class="n">shape</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="n">kMaxBlobAxes</span><span class="p">);</span>
@@ -365,7 +365,7 @@
 
 
 <p>In the blob.cpp implementation details, the most important function is <code>Update</code>. If the newest data is on GPU side, the <code>Update</code> function calls the <code>caffe_gpu_axpy</code>, otherwise calls the <code>caffe_axpy</code>.here is the definition of <code>Update</code>:</p>
-<div class="codehilite"><pre><span class="kt">void</span> <span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;::</span><span class="n">Update</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;::</span><span class="n">Update</span><span class="p">()</span>
 <span class="p">{</span>
 <span class="c1">// We will perform update based on where the data is located.</span>
 <span class="k">switch</span> <span class="p">(</span><span class="n">data_</span><span class="o">-&gt;</span><span class="n">head</span><span class="p">())</span>
@@ -414,7 +414,7 @@
 </li>
 </ul>
 <p>There is a factory function to generate specific filler class from protobuf txt file:</p>
-<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">Dtype</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">Dtype</span><span class="o">&gt;</span>
 <span class="n">Filler</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*</span> <span class="n">GetFiller</span><span class="p">(</span><span class="k">const</span> <span class="n">FillerParameter</span><span class="o">&amp;</span> <span class="n">param</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">type</span> <span class="o">=</span> <span class="n">param</span><span class="p">.</span><span class="n">type</span><span class="p">();</span>
@@ -464,7 +464,7 @@
 <p>More specifically, there will be two Forward and Backward functions implemented, one for CPU and one for GPU. If you do not implement a GPU version, the layer will fall back to the CPU functions as a backup option. This may come handy if you would like to do quick experiments, although it may come with additional data transfer cost (its inputs will be copied from GPU to CPU, and its outputs will be copied back from CPU to GPU).</p>
 <p>Layers have two key responsibilities for the operation of the network as a whole: a forward pass that takes the inputs and produces the outputs, and a backward pass that takes the gradient with respect to the output, and computes the gradients with respect to the parameters and to the inputs, which are in turn back-propagated to earlier layers. These passes are simply the composition of each layer’s forward and backward.</p>
 <p>Layers are constructed from prototxt serialization fromat.The layer constructor take the <code>LayerParameter</code> and initiate.</p>
-<div class="codehilite"><pre><span class="k">explicit</span> <span class="nf">Layer</span><span class="p">(</span><span class="k">const</span> <span class="n">LayerParameter</span><span class="o">&amp;</span> <span class="n">param</span><span class="p">)</span> <span class="o">:</span>
+<div class="codehilite"><pre><span></span><span class="k">explicit</span> <span class="nf">Layer</span><span class="p">(</span><span class="k">const</span> <span class="n">LayerParameter</span><span class="o">&amp;</span> <span class="n">param</span><span class="p">)</span> <span class="o">:</span>
         <span class="n">layer_param_</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="c1">// Set phase and copy blobs (if there are any).</span>
@@ -483,7 +483,7 @@
 
 
 <p>But the so-called construtor doesn't really construct the connections. It just do the blob memory allocation job. To initiate the connections, we should call the <code>virtual void LayerSetUp</code> function, whoes implemention details rely on the specific type of Layer. The layer class offer an entrance for <code>LayerSetUp</code>:</p>
-<div class="codehilite"><pre><span class="kt">void</span> <span class="nf">SetUp</span><span class="p">(</span><span class="k">const</span> <span class="n">vector</span><span class="o">&lt;</span><span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*&gt;&amp;</span> <span class="n">bottom</span><span class="p">,</span>
+<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="nf">SetUp</span><span class="p">(</span><span class="k">const</span> <span class="n">vector</span><span class="o">&lt;</span><span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*&gt;&amp;</span> <span class="n">bottom</span><span class="p">,</span>
             <span class="k">const</span> <span class="n">vector</span><span class="o">&lt;</span><span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*&gt;&amp;</span> <span class="n">top</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">CheckBlobCounts</span><span class="p">(</span><span class="n">bottom</span><span class="p">,</span> <span class="n">top</span><span class="p">);</span><span class="c1">//check if the batch size equals</span>
@@ -521,7 +521,7 @@
 <p>The net is defined as a set of layers and their connections in a plaintext modeling language.The models are defined in plaintext protocol buffer schema (prototxt) while the learned models are serialized as binary protocol buffer (binaryproto) .caffemodel files.</p>
 <p>Model initialization is handled by <code>Net::Init()</code>. The initialization mainly does two things: scaffolding the overall DAG by creating the blobs and layers (all resource holded by <code>shared_ptr)</code>, and calls the layers’ <code>SetUp()</code> function. It also does a set of other bookkeeping things, such as validating the correctness of the overall network architecture. Also, during initialization the Net explains its initialization by logging to INFO with the help of <code>glog</code>.</p>
 <p>In the net.hpp file, a set of train/test functions are defined:</p>
-<div class="codehilite"><pre><span class="n">Dtype</span> <span class="nf">ForwardFromTo</span><span class="p">(</span><span class="kt">int</span> <span class="n">start</span><span class="p">,</span> <span class="kt">int</span> <span class="n">end</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><span class="n">Dtype</span> <span class="nf">ForwardFromTo</span><span class="p">(</span><span class="kt">int</span> <span class="n">start</span><span class="p">,</span> <span class="kt">int</span> <span class="n">end</span><span class="p">);</span>
 <span class="n">Dtype</span> <span class="nf">ForwardFrom</span><span class="p">(</span><span class="kt">int</span> <span class="n">start</span><span class="p">);</span>
 <span class="n">Dtype</span> <span class="nf">ForwardTo</span><span class="p">(</span><span class="kt">int</span> <span class="n">end</span><span class="p">);</span>
 <span class="k">const</span> <span class="n">vector</span><span class="o">&lt;</span><span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*&gt;&amp;</span> <span class="n">Forward</span><span class="p">(</span><span class="k">const</span> <span class="n">vector</span><span class="o">&lt;</span><span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*&gt;&amp;</span> <span class="n">bottom</span><span class="p">,</span>
@@ -544,7 +544,7 @@
 <p>The solver orchestrates model optimization by coordinating the network’s forward inference and backward gradients to form parameter updates that attempt to improve the loss. The responsibilities of learning are divided between the Solver for overseeing the optimization and generating parameter updates and the Net for yielding loss and gradients.</p>
 <p>The Caffe solvers are Stochastic Gradient Descent (SGD), Adaptive Gradient (ADAGRAD), and Nesterov’s Accelerated Gradient (NESTEROV).<br />
 As usually, there is a factory function to generate all kinds of solver:</p>
-<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">Dtype</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">Dtype</span><span class="o">&gt;</span>
 <span class="n">Solver</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*</span> <span class="n">GetSolver</span><span class="p">(</span><span class="k">const</span> <span class="n">caffe</span><span class="o">::</span><span class="n">SolverParameter</span><span class="o">&amp;</span> <span class="n">param</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">caffe</span><span class="o">::</span><span class="n">SolverParameter_SolverType</span> <span class="n">type</span> <span class="o">=</span> <span class="n">param</span><span class="p">.</span><span class="n">solver_type</span><span class="p">();</span>
@@ -621,7 +621,7 @@ What distinguishes the method from SGD is the weight setting <span class="math">
 <h1 id="767efa">The workflow of caffe</h1>
 <h1 id="cc2808">network initiation</h1>
 <p>Firstly, we construct all the network structure(which is essentially a <code>solver</code>) from a ptototxt file.</p>
-<div class="codehilite"><pre><span class="n">Solver</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;::</span><span class="n">Solver</span><span class="p">(</span><span class="k">const</span> <span class="n">string</span><span class="o">&amp;</span> <span class="n">param_file</span><span class="p">)</span> <span class="o">:</span>
+<div class="codehilite"><pre><span></span><span class="n">Solver</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;::</span><span class="n">Solver</span><span class="p">(</span><span class="k">const</span> <span class="n">string</span><span class="o">&amp;</span> <span class="n">param_file</span><span class="p">)</span> <span class="o">:</span>
         <span class="n">net_</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="n">SolverParameter</span> <span class="n">param</span><span class="p">;</span>
@@ -632,13 +632,13 @@ What distinguishes the method from SGD is the weight setting <span class="math">
 
 
 <p>The <code>ReadProtoFromTextFileOrDie</code> is a wrapper of protobuf, it would eventually execute</p>
-<div class="codehilite"><pre><span class="kt">bool</span> <span class="n">success</span> <span class="o">=</span> <span class="n">google</span><span class="o">::</span><span class="n">protobuf</span><span class="o">::</span><span class="n">TextFormat</span><span class="o">::</span><span class="n">Parse</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">proto</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><span class="kt">bool</span> <span class="n">success</span> <span class="o">=</span> <span class="n">google</span><span class="o">::</span><span class="n">protobuf</span><span class="o">::</span><span class="n">TextFormat</span><span class="o">::</span><span class="n">Parse</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">proto</span><span class="p">);</span>
 </pre></div>
 
 
 <p>So , don't bother yourself to dive into the mess of protobuf.</p>
 <p>After we get all the parameters, we construct the nets,as such:</p>
-<div class="codehilite"><pre><span class="kt">void</span> <span class="n">Solver</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;::</span><span class="n">Init</span><span class="p">(</span><span class="k">const</span> <span class="n">SolverParameter</span><span class="o">&amp;</span> <span class="n">param</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="n">Solver</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;::</span><span class="n">Init</span><span class="p">(</span><span class="k">const</span> <span class="n">SolverParameter</span><span class="o">&amp;</span> <span class="n">param</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span><span class="o">&lt;&lt;</span> <span class="s">&quot;Initializing solver from parameters: &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span>
     <span class="o">&lt;&lt;</span> <span class="n">param</span><span class="p">.</span><span class="n">DebugString</span><span class="p">();</span>
@@ -659,7 +659,7 @@ What distinguishes the method from SGD is the weight setting <span class="math">
 
 
 <p>In the <code>Init</code>, it calls two initiation functions <code>InitTrainNet</code> and <code>InitTrainNet</code>. Because the nets can be created by network parameter or a already-existed  network file(which has all the weights as well as network structure). So the <code>Init*Net</code> must differentiate these cases. Here is the <code>InitTrainNet</code> definition.</p>
-<div class="codehilite"><pre><span class="kt">void</span> <span class="n">Solver</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;::</span><span class="n">InitTrainNet</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="n">Solver</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;::</span><span class="n">InitTrainNet</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="k">const</span> <span class="kt">int</span> <span class="n">num_train_nets</span> <span class="o">=</span> <span class="n">param_</span><span class="p">.</span><span class="n">has_net</span><span class="p">()</span> <span class="o">+</span> <span class="n">param_</span><span class="p">.</span><span class="n">has_net_param</span><span class="p">()</span>
             <span class="o">+</span> <span class="n">param_</span><span class="p">.</span><span class="n">has_train_net</span><span class="p">()</span> <span class="o">+</span> <span class="n">param_</span><span class="p">.</span><span class="n">has_train_net_param</span><span class="p">();</span>
@@ -707,7 +707,7 @@ What distinguishes the method from SGD is the weight setting <span class="math">
 <p>In the definition body, all jobs are done by protobuf.</p>
 <h1 id="fa9de3">network trainning</h1>
 <p>The network trainning is a nondetermistic procedure, because the trainning phase would run forever. To choose the right time to end the trainning phase. Usually, there is one simple principle :we set a stop_iter that we can tolerate  to limit the iteration times. So in the <code>Solve</code> function, which is the caffe execution body, it sets the iteration limit then calls the step function to do the real work. </p>
-<div class="codehilite"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">Dtype</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">Dtype</span><span class="o">&gt;</span>
 <span class="kt">void</span> <span class="n">Solver</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;::</span><span class="n">Step</span><span class="p">(</span><span class="kt">int</span> <span class="n">iters</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">vector</span><span class="o">&lt;</span><span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*&gt;</span> <span class="n">bottom_vec</span><span class="p">;</span>
@@ -830,7 +830,7 @@ What distinguishes the method from SGD is the weight setting <span class="math">
  
             <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/nn.html">NN</a><sup>2</sup></div>
             <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/code.html">Code</a><sup>3</sup></div>
-            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/cpp.html">Cpp</a><sup>10</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="http://spiritsaway.info/tag/cpp.html">Cpp</a><sup>11</sup></div>
     </div>
 
     <div id="niu2-sidebar-toc" class="niu2-sidebar" data-status="closed">
@@ -856,7 +856,7 @@ What distinguishes the method from SGD is the weight setting <span class="math">
 </p>
 <p>
     ©
-            2014-2015
+            2014-2016
     <a class="niu2-footer-link" href="http://spiritsaway.info">Huiliang Huang</a>
 </p>
 <p class="niu2-icons">
