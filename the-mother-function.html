@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="chinese (simplified)">
+<head>
+        <meta charset="utf-8" />
+        <title>The Mother Function</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">SpiritsAway </a></h1>
+                <nav><ul>
+                    <li><a href="/pages/about.html">about</a></li>
+                    <li><a href="/category/ai.html">AI</a></li>
+                    <li><a href="/category/algorithm.html">Algorithm</a></li>
+                    <li><a href="/category/code.html">Code</a></li>
+                    <li><a href="/category/compiler.html">Compiler</a></li>
+                    <li><a href="/category/cpp.html">CPP</a></li>
+                    <li class="active"><a href="/category/math.html">Math</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/the-mother-function.html" rel="bookmark"
+           title="Permalink to The Mother Function">The Mother Function</a></h1>
+    </header>
+
+    <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2015-04-28T19:37:00+08:00">
+                Published: 周二 28 四月 2015
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
+        </address>
+<p>In <a href="/category/math.html">Math</a>.</p>
+<p>tags: <a href="/tag/mother-function.html">Mother Function</a> <a href="/tag/math.html">Math</a> <a href="/tag/algorithm.html">Algorithm</a> </p>
+</footer><!-- /.post-info -->      <p>生成函数(mother function)是一种非常诡异的求数列通项的方法。核心思想是把数列$a$的第$n$项当作某个某个位置函数$A(x)$的$x^n$系数系数。我们通过递推式来求得$A(x)$，然后将$A(x)$展开来得到$x^n$的系数既是数列的通项：</p>
+<p>\begin{equation}A(x)=\sum_{i=0}{a_i*x^i}\end{equation}
+下面我们就以几个循序渐进的例子来讲解这个生成函数方法的使用。</p>
+<h1>线性递推</h1>
+<p>线性递推式是数列递推式中最简单的递推式，其形式如下：</p>
+<p>\begin{equation}a_{n+1}=p*a_n+q\end{equation}
+其中$p,q$为常数。这里为了简单起见，我们以$p=2,q=1,a_0=0$为例来说明生成函数方法的使用。假设该数列的生成函数为$A(x)=\sum_{i=0}{a_ix^i}$,则我们可以得到</p>
+<p>\begin{equation}\begin{aligned}A(x)&amp;=\sum_{i=0}{a_ix^i}\&amp;=a_0 +\sum_{i=0}{a_{i+1}x^{i+1}}\&amp;=a_0+\sum_{i=0}{(2<em>a_i+1)x^{i+1}}\&amp;=a_0+x</em>(2<em>\sum_{i=0}{a_ix^i}+\sum_{i=0}{x^i})\&amp;=a_0+x</em>(2<em>A(x)+\sum_{i=0}{x^i})\&amp;=a_0+2x</em>A(x)+\frac{x}{1-x}\&amp;=2x*A(x)+\frac{x}{1-x}\end{aligned}\end{equation}
+由此我们可以得到：</p>
+<p>\begin{equation}\begin{aligned}A(x)&amp;=\frac{x}{(1-x)(1-2x)}\&amp;=x\left{\frac{2}{1-2x}-\frac{1}{1-x}\right}\&amp;={2x+(2x)^2+(2x)^3+\cdots}-{x+x^2+x^3+\cdots}\&amp;=\sum_{i=1}{(2^i-1)x^i}\end{aligned}\end{equation}
+所以，通过这么长的递推,我们终于得到了$a_i=2^i-1$，虽然说这个递推高一水平的人就可以做出来。但是我们总是会经历一个从这TM也需要证到这TM也能证的过程吧。</p>
+<h1>伪线性递推</h1>
+<p>所谓伪线性递推是我生造的一个词，其递推结构与之前的一样，只不过$q,p$可能为$i$的线性表示。下面以例子来说明：</p>
+<p>\begin{equation}a_{i+1}=2a_i+i \quad a_0=1\end{equation}
+这里重复之前的推导过程，我们可以得到:</p>
+<p>\begin{equation}\frac{A(x)-1}=2x*A(x)+x\sum_{i=1}{ix^i}\end{equation}
+此时我们需要利用微积分的知识：</p>
+<p>\begin{equation}\sum_{i=1}{ix^i}=\sum_{i=1}{x(\frac{d(x^n)}{dx})}=x(\frac{d}{dx})\sum_{i=1}{x^i}=x(\frac{d}{dx})\frac{1}{1-x})=\frac{x}{(1-x)^2}\end{equation}
+所以，我们将上式带入到之前，可以得到：</p>
+<p>\begin{equation}A(x)=\frac{1-2x+2x^2}{(1-x)^2(1-2x)}=\frac{-1}{(1-x)^2}+\frac{2}{1-2x}\end{equation}
+又因为</p>
+<p>\begin{equation}\frac{1}{(1-x)^2}=\sum_{i=0}{(i+1)x^i}\end{equation}
+所以</p>
+<p>\begin{equation}a_i=2^{i+1}-i-1\end{equation}</p>
+<h1>斐波那契数列</h1>
+<p>斐波那契数列作为数列里面最经典的例子，本文自然不能放过。其数列递推式如下:</p>
+<p>\begin{equation}F_{n+2}=F_{n+1}+F_n \quad  w.r.t. \quad F_0=0,F_1=1\end{equation}
+同样 ，设其生成函数为$A(x)$ ，我们可以得到</p>
+<p>\begin{equation}\begin{aligned}A(x)&amp;=x+x(F_2x+F_3x^2+F_4x^3+\cdots)\&amp;=x+x\left{{F_1x+F_2x^2+F_3x^3+\cdots}+{F_0x+F_1x^2+F_2x^3+\cdots}\right}\&amp;=x+x(A(x)+xA(x))\end{aligned}\end{equation}
+所以</p>
+<p>\begin{equation}A(x)=\frac{x}{1-x-x^2}=\frac{1}{\sqrt{5}}\left{\frac{1}{(1-(1+\sqrt{5})x/2}-\frac{1}{1-(1-\sqrt{5})x/2}\right}\end{equation}
+然后经过一些稀里糊涂的中间步骤，我们可以得到</p>
+<p>\begin{equation}F_i=\frac{1}{\sqrt{5}}\big((\frac{1+\sqrt{5}}{2})^i-(\frac{1+\sqrt{5}}{2})^i\big)\end{equation}</p>
+<h1>双索引递推</h1>
+<p>在上文中我们只涉及到了一个变量$x$，此时对应只有一个索引的数列的情况。对于有两个不同索引的数列递推式，单一变量的生成函数不再适用，我们需要添加另外的一个变量$y$来构造双变量的生成函数$B(x,y)$。这种情况。在排列组合问题中，双索引的数列是非常常见的。例如，给定非负整数$n,k$且$0\le k\le n$，我们能从${1,2,\cdots , n}$中得到多少个不同的$k$子集。</p>
+<p>此时我们假设$f(n,k)$是该问题的解，我们可以非常容易的得到下面的递推式</p>
+<p>\begin{equation}\label{二项式}f(n,k)=f(n-1,k)+f(n-1,k-1) \quad w.r.t. f(n,0)=1\end{equation}
+此时我们定义一个新的生成函数</p>
+<p>\begin{equation}B_n(x)=\sum_{k\ge0}{f(n,k)x^k}\end{equation}
+根据原来的递推公式\ref{二项式}，我们可以得到</p>
+<p>\begin{equation}\begin{aligned}&amp; B_n(x)-1=(B_{n-1}(x)-1)+xB_{n-1}(x)\\Rightarrow &amp; B_n(x)=(1+x)B_{n-1}(x)\\Rightarrow &amp; B_n(x)=(1+x)^n\\Rightarrow &amp; f(n,k)=\binom{n}{k}\end{aligned}\end{equation}</p>
+<h1>双变量生成函数</h1>
+<p>对付一些简单的双索引递推公式，我们很多时候用单变量的生成函数即可处理。然而，不是所有的双索引递推都是这么简单的。考虑下面的一个排列组合的例子：将一个大小为$n$的集合分割为$k$个不为空的子集。例如$n=4,k=2$时，其不同划分有如下几种：</p>
+<p>\begin{equation}    (12),(34);(13),(24);(14),(23);(123),(4);(124),(3);(134),(2);(234)(1)    \end{equation}
+我们用$f(n,k)$来代表其不同的子集划分数。根据${n}$这个元素是否单独作为一个集合，我们可以把原来的问题分为两种情况：</p>
+<ul>
+<li>
+<p>是单独集合，原问题规约到了将$n-1$个元素划分为$k-1$子集的问题，此时的子集划分个数为$f(n-1,k-1)$;</p>
+</li>
+<li>
+<p>不是单独集合，此时对于任意的一个$n-1$元素的$k$划分，元素$n$可以插入到这$k$个划分的任意一个集合中，此时的子集划分个数为$f(n-1,k)*k$。</p>
+</li>
+</ul>
+<p>所以，我们有如下的递推式：</p>
+<p>\begin{equation}    f(n,k)=f(n-1,k-1)+kf(n-1,k) \quad w.r.t.\quad n\ge k\ge 0\end{equation}
+此时，我们设</p>
+<p>\begin{equation}    B_k(x)=\sum_{n}{f(n,k)x^n}\end{equation}
+由此定义我们可以得到：</p>
+<p>\begin{equation}\begin{aligned}B_k(x)&amp;=\sum_{n}{f(n,k)x^n}\&amp;=\sum_{n}{(f(n-1,k-1)x^n+kf(n-1,k)x^n}\&amp;=x\sum_{n}{f(n-1,k-1)x^{n-1}}+kx\sum_{n}{f(n-1,k)x^{n-1}}\&amp;=xB_{k-1}(x)+kxB_k(x)\end{aligned}\end{equation}
+所以，我们可以得到$B_k(x)$的解析式为</p>
+<p>\begin{equation}B_k(x)=\frac{x}{1-kx}B_{k-1}(x)=\frac{x^k}{(1-x)(1-2x)(1-3x)\cdots(1-kx)}\end{equation}
+现在我们的问题就在于如何求出后面的展开式。为此，我们定义一个记号$[x^n]B(x)$为函数$B(x)$展开式中$x^n$的系数。此时</p>
+<p>\begin{equation}\begin{aligned}f(n,k)&amp;=[x^n]\left{\frac{x^k}{(1-x)(1-2x)(1-3x)\cdots(1-kx)}\right}\&amp;=[x^{n-k}]\left{\frac{1}{(1-x)(1-2x)(1-3x)\cdots(1-kx)}\right}\&amp;=[x^{n-k}]\sum_{r=1}^{k}{\frac{{\alpha}<em r="1">r}{1-rx}} \&amp;=\sum</em>^{k}{{\alpha}<em r="1">r[x^{n-k}]\frac{1}{1-rx}}\&amp;=\sum</em>^{k}{{\alpha}_r r^{n-k}}\end{aligned}\end{equation}
+在这里我们得到了一个看上去非常美的结果，但是其实目前还没啥用，因为我们还没有求出满足下式的常数${\alpha}_r$。</p>
+<p>\begin{equation}\frac{x^k}{(1-x)(1-2x)(1-3x)\cdots(1-kx)}=\sum_{i=1}^{k}{\frac{{\alpha}_i}{1-ix}}\end{equation}
+为了得到${\alpha}_r$,我们又需要利用一些诡异的技巧。首先在上式两边都乘以$1-rx$，然后令$x=1/r$。此时右边就只剩下${\alpha}_r$了。所以</p>
+<p>\begin{equation}\begin{aligned}{\alpha}_r&amp;=\frac{1}{(1-1/r)(1-2/r)\cdots (1-(r-1)/r)(1-(r+1)/r)\cdots (1-k/r)}\&amp;={(-1)}^{k-r}\frac{r^{k-1}}{(r-1)!(k-r)!}\end{aligned}\end{equation}
+将此式带入之前的式子，可得</p>
+<p>\begin{equation}f(n,k)=\sum_{r=1}^{k}{(-1)^{k-r}}{\frac{r^n}{r!(k-r)!}}\end{equation}
+现在是不是感觉很爽! </p>
+<p>其实写本篇文章的动机是为了求解这个递推式</p>
+<p>\begin{equation}f(m,n)=m*(f(m-1,n-1)+f(m,n-1))\quad n \geq m \quad  f(m,m)=m! \, f(1,n)=1\end{equation}
+该递推式的背景是一道微软的面试题，具体的内容忘记了。这是一个写代码的题，主要考察点是DP优化。但是正如前面所说的，我们可以直接求出其通项公式。其求解过程跟之前的基本一样.此时，我们设</p>
+<p>\begin{equation}    B_k(x)=\sum_{n}{f(n,k)x^n}\end{equation}
+由此定义我们可以得到：</p>
+<p>\begin{equation}\begin{aligned}B_k(x)&amp;=\sum_{n}{f(n,k)x^n}\&amp;=k\sum_{n}{(f(n-1,k-1)x^n+f(n-1,k)x^n}\&amp;=kx\sum_{n}{f(n-1,k-1)x^{n-1}}+kx\sum_{n}{f(n-1,k)x^{n-1}}\&amp;=kx(B_{k-1}(x)+B_k(x))\end{aligned}\end{equation}
+所以，我们可以得到$B_k(x)$的解析式为</p>
+<p>\begin{equation}B_k(x)=\frac{kx}{1-kx}B_{k-1}(x)=\frac{x^kk!}{(1-x)(1-2x)(1-3x)\cdots(1-kx)}\end{equation}
+由此可得</p>
+<p>\begin{equation}\begin{aligned}f(n,k)&amp;=k![x^n]\left{\frac{x^k}{(1-x)(1-2x)(1-3x)\cdots(1-kx)}\right}\&amp;=k![x^{n-k}]\left{\frac{1}{(1-x)(1-2x)(1-3x)\cdots(1-kx)}\right}\&amp;=k![x^{n-k}]\sum_{r=1}^{k}{\frac{{\alpha}<em r="1">r}{1-rx}} \&amp;=k!\sum</em>^{k}{{\alpha}<em r="1">r[x^{n-k}]\frac{1}{1-rx}}\&amp;=k!\sum</em>^{k}{{\alpha}<em r="1">r r^{n-k}}\&amp;=k!\sum</em>^{k}{(-1)^{k-r}}{\frac{r^n}{r!(k-r)!}}\end{aligned}\end{equation}</p>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>links</h2>
+                        <ul>
+                            <li><a href="http://getpelican.com/">Pelican</a></li>
+                            <li><a href="http://python.org/">Python.org</a></li>
+                            <li><a href="http://jinja.pocoo.org/">Jinja2</a></li>
+                            <li><a href="#">You can modify those links in your config file</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+
+                            <li><a href="#">You can add links in your config file</a></li>
+                            <li><a href="#">Another social link</a></li>
+                        </ul>
+                </div><!-- /.social -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="http://getpelican.com/">Pelican</a>, which takes great advantage of <a href="http://python.org">Python</a>.
+                </address><!-- /#about -->
+
+                <p>The theme is by <a href="http://coding.smashingmagazine.com/2009/08/04/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>

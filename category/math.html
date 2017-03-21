@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="chinese (simplified)">
+<head>
+        <meta charset="utf-8" />
+        <title>SpiritsAway - Math</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">SpiritsAway </a></h1>
+                <nav><ul>
+                    <li><a href="/pages/about.html">about</a></li>
+                    <li><a href="/category/ai.html">AI</a></li>
+                    <li><a href="/category/algorithm.html">Algorithm</a></li>
+                    <li><a href="/category/code.html">Code</a></li>
+                    <li><a href="/category/compiler.html">Compiler</a></li>
+                    <li><a href="/category/cpp.html">CPP</a></li>
+                    <li class="active"><a href="/category/math.html">Math</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+
+            <aside id="featured" class="body">
+                <article>
+                    <h1 class="entry-title"><a href="/the-stochastic-gradient-descent.html">The Stochastic Gradient Descent</a></h1>
+<footer class="post-info">
+        <abbr class="published" title="2015-04-28T20:10:00+08:00">
+                Published: 周二 28 四月 2015
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
+        </address>
+<p>In <a href="/category/math.html">Math</a>.</p>
+<p>tags: <a href="/tag/gradient.html">Gradient</a> <a href="/tag/ai.html">AI</a> <a href="/tag/converge.html">Converge</a> <a href="/tag/math.html">Math</a> </p>
+</footer><!-- /.post-info --><p>随机梯度下降(Stochastic Gradient Descent)是在处理大规模优化问题的折衷手段。本来对于优化问题的普适解法是梯度下降(Gradient Descent)，通过每次对目标函数在负梯度上进行迭代下降从而渐进的得到最优解。简单而又直观的来说：假设目标函数为$\boldsymbol{f(w)}$，且该函数是凸函数(convex function)，则梯度下降有如下形式</p>
+<p>\begin{equation}{w}_{t+1} = {w}_t - \eta_t \nabla f({w}_t)\end{equation}
+即每次在${w}$处，在负梯度$-\nabla f({w}_t)$方向上行进$\eta _t$个单位。在合理设置步长$\eta _t$时，可以得到一个收敛的序列${f({w}_1), \ldots, f({w}_t), \ldots }$，以任意精度逼近最优解$\boldsymbol{f({w}^*)}$。</p>
+<p>梯度下降最重要的部分就是计算梯度$\nabla f({w}_t)$，但是该梯度的计算在大数据量的情况下是不可行的：计算梯度所依赖的内存太大，计算梯度的复杂度太高。例如下面的目标函数：</p>
+<p>\begin{equation}f({w}) = \sum_{i=1}^n L({w}, \boldsymbol{x}_i)\end{equation}
+为了计算该函数的梯度，我们需要计算下面的式子：</p>
+<p>\begin{equation}\nabla f({w}) = \sum_{i=1}^n\nabla L({w}, \boldsymbol{x}_i)\end{equation}
+当$n$的数量级非常大时，就会造成内存无法存储所有数据的情况，同时一次完整的计算代价太大。因此，只能选取随机梯度下降的方法。</p>
+<p>所谓随机梯度，就是以随机采样到的单个数据来当作全体数据，进行梯度计算。即以下面的方式来迭代：</p>
+<p>\begin{equation}{w}_{t+1} = {w}_t - \eta_t g({w}_t)\end{equation}
+其中$g({w})$是单个数据点计算而来的随机梯度，该随机梯度是全局梯度的无偏估计：</p>
+<p>\begin{equation}\mathbb{E} [ g({w}_t) \ | \ {w}_t] = \nabla f({w}_t)\end{equation}
+但是，在随机下降方法上所得到的搜索序列${f({w}_1), \ldots, f({w}_t), \ldots }$会跟梯度下降一样收敛到最优值$f^*({w})$么？</p>
+<p>既然你诚心诚意的问了，那我就发发慈悲告诉你们吧。会，但是有一些前提条件：</p>
+<p>\begin{equation}\eta_t \geq 0, \ \sum_{t=1}^\infty \eta_t^2 = ||\boldsymbol{\eta}||<em t="1">2^2 &lt; \infty, \ \sum</em>^\infty \eta_t = \infty\end{equation}
+同时，对于任意的$t$，我们还要求存在常数$G,R$，使得：</p>
+<p>\begin{equation}\mathbb{E}[||{w}_1 - {w}^<em>||<em best>2^2] \leq R^2 \quad \mathbb{E}[||g({w}_t)||_2^2] \leq G^2\end{equation}
+此时，我们可以证明序列$f</em>(t) = \min {f({w}_1), \ldots, f({w}_t)}$会依概率收敛到$f({w}^</em>)$：</p>
+<p>\begin{equation}P(f_{best}(t) - f({w}^*) \geq \epsilon) \rightarrow 0\end{equation}</p>
+<p>依照期望的性质，我们可以得到下面的等式：</p>
+<p>\begin{equation}\begin{split}&amp;\mathbb{E}[{\Vert w_{t+1}-w^<em>\Vert}_2^2|w_t]\=&amp;\mathbb{E}[{\Vert w_t-\eta_tg(w_t)-w^</em>\Vert}_2^2|w_t]\=&amp;\mathbb{E}[{\Vert w_t-w^<em>\Vert}_2^2|w_t]-2\eta_t\mathbb{E}[g(w_t)^T(w_t-w^</em>)|w_t]+\eta_t^2\mathbb{E}[g(w_t)^2|w_t]\=&amp;\Vert w_t -w^<em>\Vert_2^2-2\eta_t\mathbb{E}<a href="w_t-w^*">g(w_t)^T|w_t</a>+\eta_t^2\mathbb{E}[g(w_t)^2|w_t]\=&amp;\Vert w_t -w^</em>\Vert_2^2-2\eta_t\nabla f(w_t)(w_t-w^*)+\eta_t^2\mathbb{E}[g(w_t)^2|w_t]\\end{split}\end{equation}
+此时，根据凸函数的性质，我们有：</p>
+<p>\begin{equation}f(a)-f(b)\geq\nabla f(b)(a-b)\Rightarrow f(w^<em>)-f(w_t)\geq\nabla f(w_t)(w^</em>-w_t)\end{equation}
+所以</p>
+<p>\begin{equation}\mathbb{E}[{\Vert w_{t+1}-w^<em>\Vert}_2^2|w_t]\leq \Vert w_t -w^</em>\Vert_2^2-2\eta_t (f(w_t)-f(w^*))+\eta_t^2\mathbb{E}[g(w_t)^2|w_t]\end{equation}
+上式的两边同时对$w_t$取期望，可以得到：</p>
+<p>\begin{equation}\mathbb{E}[{\Vert w_{t+1}-w^<em>\Vert}_2^2]\leq \mathbb{E}[{\Vert w_t-w^</em>\Vert}_2^2]-2\eta_t (f(w_t)-f(w^*))+\eta_t^2G^2\end{equation}
+可以看出，上面的公式有一个递归部分。我们对这个递归部分重复利用，可以得到：</p>
+<p>\begin{equation}\mathbb{E}[{\Vert w_{t+1}-w^<em>\Vert}_2^2]\leq \mathbb{E}[{\Vert w_1-w^</em>\Vert}<em j="1">2^2]-2\sum</em>^t{\eta_j (f(w_j)-f(w^*))}+G^2\sum_{j=1}^t{\eta_j^2}\end{equation}
+此时，利用之前给的限定条件，可以得到：</p>
+<p>\begin{equation}2\sum_{j=1}^t{\eta_j (f(w_j)-f(w^*))}\leq R^2+G^2\Vert \boldsymbol{\eta}\Vert_2^2\end{equation}
+又因为我们之前的定义$\mathbb{E}[f_{best}(t)] \leq \mathbb{E}[f({w}_j)]$，所以：</p>
+<p>\begin{equation}E[f_{best}(t)] - f(w^*) \leq \frac{R^2 + G^2 ||\boldsymbol{\eta}||<em j="1">2^2}{2 \sum</em>^t \eta_j}\end{equation}
+根据我们之前的前提假设$\sum_{t=1}^\infty \eta_t = \infty$，可以得到：</p>
+<p>\begin{equation}E[f_{best}(t)] \rightarrow f({w}^*)\end{equation}
+此时，我们可以利用Markov不等式：</p>
+<p>\begin{equation}P(f_{best}(t) - f({w}^<em>) \geq \epsilon) \leq \frac{E[f_{best}(t) - f({w}^</em>)]}{\epsilon} \leq \frac{R^2 + G^2 ||{\eta}||<em j="1">2^2}{2 \epsilon \sum</em>^t \eta_j}\end{equation}
+所以，当$t\rightarrow\infty$时：</p>
+<p>\begin{equation}P(f_{best}(t) - f({w}^*) \geq \epsilon) \rightarrow 0\end{equation}</p>                </article>
+            </aside><!-- /#featured -->
+                <section id="content" class="body">
+                    <h1>Other articles</h1>
+                    <hr />
+                    <ol id="posts-list" class="hfeed">
+
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/the-mother-function.html" rel="bookmark"
+                           title="Permalink to The Mother Function">The Mother Function</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2015-04-28T19:37:00+08:00">
+                Published: 周二 28 四月 2015
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
+        </address>
+<p>In <a href="/category/math.html">Math</a>.</p>
+<p>tags: <a href="/tag/mother-function.html">Mother Function</a> <a href="/tag/math.html">Math</a> <a href="/tag/algorithm.html">Algorithm</a> </p>
+</footer><!-- /.post-info -->                <p>生成函数(mother function)是一种非常诡异的求数列通项的方法。核心思想是把数列$a$的第$n$项当作某个某个位置函数$A(x)$的$x^n$系数系数。我们通过递推式来求得$A(x)$，然后将$A(x)$展开来得到$x^n$的系数既是数列的通项：</p>
+<p>\begin{equation}A(x)=\sum_{i=0}{a_i*x^i}\end{equation}
+下面我们就以几个循序渐进的例子来讲解这个生成函数方法的使用。</p>
+<h1>线性递推</h1>
+<p>线性递推式是数列递推式中最简单的递推式，其形式如下：</p>
+<p>\begin{equation}a_{n+1}=p*a_n+q\end …</p>
+                <a class="readmore" href="/the-mother-function.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
+
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/the-chernoff-bound.html" rel="bookmark"
+                           title="Permalink to The Chernoff Bound">The Chernoff Bound</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2015-04-17T21:33:00+08:00">
+                Published: 周五 17 四月 2015
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
+        </address>
+<p>In <a href="/category/math.html">Math</a>.</p>
+<p>tags: <a href="/tag/chernoff.html">Chernoff</a> <a href="/tag/ai.html">AI</a> <a href="/tag/converge.html">Converge</a> <a href="/tag/math.html">Math</a> </p>
+</footer><!-- /.post-info -->                <p>本文主要介绍一下chernoff bound的证明，以及一些在统计学习理论中的涉及到的一些不等式,首先来几个简单的。</p>
+<p>Jensen 不等X为随机变量，$f:X\rightarrow\mathbb{R}$为凸函数,则下面的不等式成立</p>
+<p>\begin{equation}f(\mathbb{E}[X])\leq \mathbb{E}[f(x)] \end{equation}
+这个就是凸函数的性质，这里并不给出证明了，想知道为什么的看一下《凸优化》的前几章就行了。</p>
+<p>接下来是Markov不等式，这里终于牵涉到概率了。假设X为非负的随机变量，且$t&gt;0$，则下式成立。</p>
+<p>\begin{equation}P(X&gt;t)\leq\frac{\mathbb{E}[X]}{t} \end …</p>
+                <a class="readmore" href="/the-chernoff-bound.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
+
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/normal-distribution.html" rel="bookmark"
+                           title="Permalink to Normal Distribution">Normal Distribution</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2014-07-17T20:31:00+08:00">
+                Published: 周四 17 七月 2014
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
+        </address>
+<p>In <a href="/category/math.html">Math</a>.</p>
+<p>tags: <a href="/tag/math.html">Math</a> <a href="/tag/probability.html">Probability</a> </p>
+</footer><!-- /.post-info -->                <h1>正态分布介绍</h1>
+<p>神说，要有正态分布，就有了正态分布。</p>
+<p>神看正态分布是好的，就让随机误差就服从了正态分布.
+然而，对正太分布推动最大的是中心极限定理.设随机变量 $X_n(n=1,2,\cdots)$ 服从参数为 $p$ 的二项分布，则对任意的 $x$, 恒有</p>
+<p>\begin{equation}\lim_{n\rightarrow\infty}P{ \frac{X_n – np}{\sqrt{np(1-p)}} \le x }=\int_{-\infty}^x \frac{1}{\sqrt{2\pi}} e^{\frac{-t^2}{2}}dt\end …</p>
+                <a class="readmore" href="/normal-distribution.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
+                </ol><!-- /#posts-list -->
+                </section><!-- /#content -->
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>links</h2>
+                        <ul>
+                            <li><a href="http://getpelican.com/">Pelican</a></li>
+                            <li><a href="http://python.org/">Python.org</a></li>
+                            <li><a href="http://jinja.pocoo.org/">Jinja2</a></li>
+                            <li><a href="#">You can modify those links in your config file</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+
+                            <li><a href="#">You can add links in your config file</a></li>
+                            <li><a href="#">Another social link</a></li>
+                        </ul>
+                </div><!-- /.social -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="http://getpelican.com/">Pelican</a>, which takes great advantage of <a href="http://python.org">Python</a>.
+                </address><!-- /#about -->
+
+                <p>The theme is by <a href="http://coding.smashingmagazine.com/2009/08/04/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="chinese (simplified)">
+<head>
+        <meta charset="utf-8" />
+        <title>SpiritsAway - SpiritsAway</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">SpiritsAway </a></h1>
+                <nav><ul>
+                    <li><a href="/pages/about.html">about</a></li>
+                    <li><a href="/category/ai.html">AI</a></li>
+                    <li><a href="/category/algorithm.html">Algorithm</a></li>
+                    <li><a href="/category/code.html">Code</a></li>
+                    <li><a href="/category/compiler.html">Compiler</a></li>
+                    <li><a href="/category/cpp.html">CPP</a></li>
+                    <li><a href="/category/math.html">Math</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+
+                <section id="content" class="body">
+                    <ol id="posts-list" class="hfeed" start="9">
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/submodual.html" rel="bookmark"
+                           title="Permalink to Submodual">Submodual</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2014-06-23T20:31:00+08:00">
+                Published: 周一 23 六月 2014
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
+        </address>
+<p>In <a href="/category/algorithm.html">Algorithm</a>.</p>
+<p>tags: <a href="/tag/algorithm.html">Algorithm</a> <a href="/tag/greedy.html">Greedy</a> </p>
+</footer><!-- /.post-info -->                <h1>子模态定义</h1>
+<p>子模态是集合函数的一种性质。一个集合函数$f(x)$的定义要满足下面这个性质</p>
+<p>\begin{equation}f: 2^{\Omega}\rightarrow \mathbb{R}\end{equation}
+即$f(x)$的定义域为集合$Ω$的任何一个子集，值域为实数集。而这个集合函数如果要满足子模态性质的话，还需要满足下面三个等价条件中的任何一个。</p>
+<ul>
+<li>
+<p>对于任何一个$X,Y\subset Ω$且$X\subset Y$，以及对任何一个$x\in Ω \ Y$，下面的式子一定成立。$$f(X\cup {x})-f(X)\geq f(Y\cup …</p></li></ul>
+                <a class="readmore" href="/submodual.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
+
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/hopcroft-karp-algorithm.html" rel="bookmark"
+                           title="Permalink to Hopcroft Karp Algorithm">Hopcroft Karp Algorithm</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2014-04-17T17:31:00+08:00">
+                Published: 周四 17 四月 2014
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
+        </address>
+<p>In <a href="/category/algorithm.html">Algorithm</a>.</p>
+<p>tags: <a href="/tag/algorithm.html">Algorithm</a> </p>
+</footer><!-- /.post-info -->                <h1>hopcroft-karp算法介绍</h1>
+<p>二分图最大匹配除了匈牙利算法还有一个Hopcroft-Karp算法，匈牙利算法的复杂的为$O(ne)$，而Hopcroft-Karp算法的复杂度为$O(e\sqrt{n})$。本文主要是对hopcroft与karp发表于1972年的二分匹配算法进行翻译，同时对此算法进行理解。</p>
+<h1>术语及约定</h1>
+<p>关于二分图的定义:二分图是这样的一个无向图，这个图中的所有的节点可以划分为两个子集，使得这个图中所有的边的两端节点都不可能在同一个子集里面。验证一个图是不是二分图是很简单的，就是一次深度优先遍历。首先任取一个点作为初始点，并给他标号为0，然后进行深度优先遍历。在遍历时，对对于所有经过的节点，如果没有标号的话，就1、0交替的标号；如果遇到已经标过号的点，检查这个节点应该标的号与这个节点已经标的号。如果相同则继续其他的深搜，如果不同则表示有冲突直接退出深搜，表示不可能是二分图。在整个深度优先遍历结束后，则可以断定这个图是二分图。</p>
+<p>关于匹配的定义(match):一个匹配就是在图中的一些节点不重复的边的集合，或者说是不相邻的边的集合。一个匹配的大小就是这个匹配的边集的大小。对于任何一个图，他的匹配的大小总是有一个上确界，即最大匹配。二分图的匹配问题就是求给定的二分图的最大匹配问题。</p>
+<p>增广路径(augmenting path)：增广路径是在匹配之上定义的。对于图$G=(V …</p>
+                <a class="readmore" href="/hopcroft-karp-algorithm.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
+                </ol><!-- /#posts-list -->
+<p class="paginator">
+        <a href="/author/spiritsaway2.html">&laquo;</a>
+    Page 3 / 3
+</p>
+                </section><!-- /#content -->
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>links</h2>
+                        <ul>
+                            <li><a href="http://getpelican.com/">Pelican</a></li>
+                            <li><a href="http://python.org/">Python.org</a></li>
+                            <li><a href="http://jinja.pocoo.org/">Jinja2</a></li>
+                            <li><a href="#">You can modify those links in your config file</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+
+                            <li><a href="#">You can add links in your config file</a></li>
+                            <li><a href="#">Another social link</a></li>
+                        </ul>
+                </div><!-- /.social -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="http://getpelican.com/">Pelican</a>, which takes great advantage of <a href="http://python.org">Python</a>.
+                </address><!-- /#about -->
+
+                <p>The theme is by <a href="http://coding.smashingmagazine.com/2009/08/04/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>

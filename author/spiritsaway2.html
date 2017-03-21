@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="chinese (simplified)">
+<head>
+        <meta charset="utf-8" />
+        <title>SpiritsAway - SpiritsAway</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">SpiritsAway </a></h1>
+                <nav><ul>
+                    <li><a href="/pages/about.html">about</a></li>
+                    <li><a href="/category/ai.html">AI</a></li>
+                    <li><a href="/category/algorithm.html">Algorithm</a></li>
+                    <li><a href="/category/code.html">Code</a></li>
+                    <li><a href="/category/compiler.html">Compiler</a></li>
+                    <li><a href="/category/cpp.html">CPP</a></li>
+                    <li><a href="/category/math.html">Math</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+
+                <section id="content" class="body">
+                    <ol id="posts-list" class="hfeed" start="9">
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/the-stochastic-gradient-descent.html" rel="bookmark"
+                           title="Permalink to The Stochastic Gradient Descent">The Stochastic Gradient Descent</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2015-04-28T20:10:00+08:00">
+                Published: 周二 28 四月 2015
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
+        </address>
+<p>In <a href="/category/math.html">Math</a>.</p>
+<p>tags: <a href="/tag/gradient.html">Gradient</a> <a href="/tag/ai.html">AI</a> <a href="/tag/converge.html">Converge</a> <a href="/tag/math.html">Math</a> </p>
+</footer><!-- /.post-info -->                <p>随机梯度下降(Stochastic Gradient Descent)是在处理大规模优化问题的折衷手段。本来对于优化问题的普适解法是梯度下降(Gradient Descent)，通过每次对目标函数在负梯度上进行迭代下降从而渐进的得到最优解。简单而又直观的来说：假设目标函数为$\boldsymbol{f(w)}$，且该函数是凸函数(convex function)，则梯度下降有如下形式</p>
+<p>\begin{equation}{w}_{t+1} = {w}_t - \eta_t \nabla f({w}_t)\end{equation}
+即每次在${w}$处，在负梯度$-\nabla f({w}_t)$方向上行进$\eta _t$个单位。在合理设置步长$\eta _t$时，可以得到一个收敛的序列 …</p>
+                <a class="readmore" href="/the-stochastic-gradient-descent.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
+
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/smo.html" rel="bookmark"
+                           title="Permalink to SMO">SMO</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2015-04-28T20:09:00+08:00">
+                Published: 周二 28 四月 2015
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
+        </address>
+<p>In <a href="/category/ai.html">AI</a>.</p>
+<p>tags: <a href="/tag/svm.html">SVM</a> <a href="/tag/ai.html">AI</a> <a href="/tag/math.html">Math</a> <a href="/tag/converge.html">Converge</a> </p>
+</footer><!-- /.post-info -->                <h1>SVM基础</h1>
+<p>SVM是vapnik发明的线性分类器，处理的是标签为{-1,1}的数据，其理论支持为经验风险最小化。经验风险最小化就是VC维最小化，在SVM中的体现为最大化分类间隔，因为线性分类器的VC维与最大分类间隔的平方成反比。具体的VC维表示为下公式</p>
+<p>\begin{equation}VC-dimension\leq min{\frac{R^2}{M^2},n}+1\end{equation}
+其中，R为包围所有数据点的最小球半径，M为分类间隔的一半，n为样本数目大小。下图就比较形象的说明了SVM是干什么用的。</p>
+<p><img alt="SVM目标" src="{attach}image\SVM\svm分类间隔.png"></p>
+<p>最终SVM得到的线性分类器的公式如下</p>
+<p>\begin{equation}u=w^Tx-b\end{equation}
+而参数$w,b$所遵循的条件为</p>
+<p>\begin{equation}\forall i \, y_i(w^Tx_i-b)\geq …</p>
+                <a class="readmore" href="/smo.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
+
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/cpp-sfinae.html" rel="bookmark"
+                           title="Permalink to CPP SFINAE">CPP SFINAE</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2015-04-28T20:05:00+08:00">
+                Published: 周二 28 四月 2015
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
+        </address>
+<p>In <a href="/category/cpp.html">CPP</a>.</p>
+<p>tags: <a href="/tag/cpp.html">CPP</a> <a href="/tag/template.html">Template</a> </p>
+</footer><!-- /.post-info -->                <p>SFINAE是C++里面的术语，确切名称叫做<code>Substitution failure is not an error</code> 。其实准确的来说还应该加入一个前缀<code>template</code>，其意义从其名称中就可以看出来：模板参数替代失败并非错误。SFINAE是一种编程技巧，利用了函数模板的重载决议(<code>overload resolution</code>)：当有多个同名模板函数可用时，单独的一个模板函数匹配失败并不意味着错误，只有当所有的匹配都失败的时候才是错误。只用文字描述的话，SFINAE不是很好理解，后面将给出具体事例及代码说明。</p>
+<h1>利用SFINAE实现内部类型判断</h1>
+<p>下面给出利用SFINAE实现编译期内部类型判断的最简单的例子：</p>
+<div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
+<span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="k">struct</span> <span class="n">Test</span>
+<span class="p">{</span>
+    <span class="k">typedef</span> <span class="kt">int</span> <span class="n">foo</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="k">typename</span> <span class="n">T</span><span class="o">::</span><span class="n">foo</span> <span class="n">a</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;with T::foo&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span> <span class="c1">// Definition …</span></pre></div>
+                <a class="readmore" href="/cpp-sfinae.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
+
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/the-mother-function.html" rel="bookmark"
+                           title="Permalink to The Mother Function">The Mother Function</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2015-04-28T19:37:00+08:00">
+                Published: 周二 28 四月 2015
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
+        </address>
+<p>In <a href="/category/math.html">Math</a>.</p>
+<p>tags: <a href="/tag/mother-function.html">Mother Function</a> <a href="/tag/math.html">Math</a> <a href="/tag/algorithm.html">Algorithm</a> </p>
+</footer><!-- /.post-info -->                <p>生成函数(mother function)是一种非常诡异的求数列通项的方法。核心思想是把数列$a$的第$n$项当作某个某个位置函数$A(x)$的$x^n$系数系数。我们通过递推式来求得$A(x)$，然后将$A(x)$展开来得到$x^n$的系数既是数列的通项：</p>
+<p>\begin{equation}A(x)=\sum_{i=0}{a_i*x^i}\end{equation}
+下面我们就以几个循序渐进的例子来讲解这个生成函数方法的使用。</p>
+<h1>线性递推</h1>
+<p>线性递推式是数列递推式中最简单的递推式，其形式如下：</p>
+<p>\begin{equation}a_{n+1}=p*a_n+q\end …</p>
+                <a class="readmore" href="/the-mother-function.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
+
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/under-the-hood-parallel-caffe.html" rel="bookmark"
+                           title="Permalink to Under the Hood : parallel caffe">Under the Hood : parallel caffe</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2015-04-21T21:31:00+08:00">
+                Published: 周二 21 四月 2015
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
+        </address>
+<p>In <a href="/category/code.html">Code</a>.</p>
+<p>tags: <a href="/tag/nn.html">NN</a> <a href="/tag/caffe.html">caffe</a> <a href="/tag/code.html">Code</a> </p>
+</footer><!-- /.post-info -->                <h1>parallel caffe</h1>
+<p>The parallel caffe is contributed by Inspur Ltd. They claim that get a 10.49x boost from 8-Gpu instance. The parallel caffe origins from caffe with some modification:</p>
+<ul>
+<li>
+<p>framework</p>
+</li>
+<li>
+<p>used MPI to data-parallelism  </p>
+</li>
+<li>
+<p>each MPI process run one solve  </p>
+</li>
+<li>
+<p>training code is also mostly untouched  </p>
+</li>
+<li>
+<p>use a parameter …</p></li></ul>
+                <a class="readmore" href="/under-the-hood-parallel-caffe.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
+
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/under-the-hood-caffe.html" rel="bookmark"
+                           title="Permalink to Under the Hood : Caffe">Under the Hood : Caffe</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2015-04-20T21:31:00+08:00">
+                Published: 周一 20 四月 2015
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
+        </address>
+<p>In <a href="/category/code.html">Code</a>.</p>
+<p>tags: <a href="/tag/nn.html">NN</a> <a href="/tag/code.html">Code</a> <a href="/tag/cpp.html">Cpp</a> </p>
+</footer><!-- /.post-info -->                <h1>device_alternate.hpp</h1>
+<p>It diffrentiate the CPU only mode and GPCPU mode with <code>ifdef CPU_ONLY</code>. In the <code>CPU_ONLY</code> closure, some functions are stubed,like</p>
+<ul>
+<li>
+<p><code>template &lt;typename Dtype&gt; void classname&lt;Dtype&gt;::Forward_gpu(const vector&lt;Blob&lt;Dtype&gt;*&gt;\&amp; bottom, const vector&lt;Blob&lt;Dtype&gt;*&gt;\&amp; top)</code>;</p>
+</li>
+<li>
+<p><code>template &lt;typename Dtype&gt; void classname&lt;Dtype&gt;::Backward_gpu(const vector&lt;Blob …</code></p></li></ul>
+                <a class="readmore" href="/under-the-hood-caffe.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
+
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/the-chernoff-bound.html" rel="bookmark"
+                           title="Permalink to The Chernoff Bound">The Chernoff Bound</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2015-04-17T21:33:00+08:00">
+                Published: 周五 17 四月 2015
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
+        </address>
+<p>In <a href="/category/math.html">Math</a>.</p>
+<p>tags: <a href="/tag/chernoff.html">Chernoff</a> <a href="/tag/ai.html">AI</a> <a href="/tag/converge.html">Converge</a> <a href="/tag/math.html">Math</a> </p>
+</footer><!-- /.post-info -->                <p>本文主要介绍一下chernoff bound的证明，以及一些在统计学习理论中的涉及到的一些不等式,首先来几个简单的。</p>
+<p>Jensen 不等X为随机变量，$f:X\rightarrow\mathbb{R}$为凸函数,则下面的不等式成立</p>
+<p>\begin{equation}f(\mathbb{E}[X])\leq \mathbb{E}[f(x)] \end{equation}
+这个就是凸函数的性质，这里并不给出证明了，想知道为什么的看一下《凸优化》的前几章就行了。</p>
+<p>接下来是Markov不等式，这里终于牵涉到概率了。假设X为非负的随机变量，且$t&gt;0$，则下式成立。</p>
+<p>\begin{equation}P(X&gt;t)\leq\frac{\mathbb{E}[X]}{t} \end …</p>
+                <a class="readmore" href="/the-chernoff-bound.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
+
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/cpp-bind.html" rel="bookmark"
+                           title="Permalink to CPP Bind">CPP Bind</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2015-04-17T21:31:00+08:00">
+                Published: 周五 17 四月 2015
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
+        </address>
+<p>In <a href="/category/cpp.html">CPP</a>.</p>
+<p>tags: <a href="/tag/cpp.html">CPP</a> <a href="/tag/bind.html">Bind</a> </p>
+</footer><!-- /.post-info -->                <p>bind是一组用于函数绑定的模板。在对某个函数进行绑定时，可以指定部分参数或全部参数，也可以不指定任何参数，还可以调整各个参数间的顺序。对于未指定的参数，可以使用占位符_1、_2、_3来表示。_1表示绑定后的函数的第1个参数，_2表示绑定后的函数的第2个参数，其他依次类推。在使用bind之后，会生成一个新的函数对象作为返回值。bind类似于curry或者偏应用，但是功能上来说更为强大。</p>
+<h1>Bind使用</h1>
+<p>bind可以绑定到普通函数、函数对象、类的成员函数和类的成员变量这四种类型。下面的代码介绍了这几种类型bind的形式(代码来自C++ STL 2ed，55页)：</p>
+<div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;functional&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;memory&gt;</span><span class="cp"></span>
+<span class="kt">void</span> <span class="nf">func</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">)</span>
+<span class="p">{</span>
+
+<span class="p">}</span>
+<span class="k">auto</span> <span class="n">l</span> <span class="o">=</span> <span class="p">[](</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">)</span>
+<span class="p">{</span>
+
+<span class="p">};</span>
+<span class="n">std</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">void</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">)</span><span class="o">&gt;</span> <span class="n">func2</span> <span class="o">=</span> <span class="p">[](</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int …</span></pre></div>
+                <a class="readmore" href="/cpp-bind.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
+
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/the-boosting-method.html" rel="bookmark"
+                           title="Permalink to The Boosting Method">The Boosting Method</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2015-04-17T21:31:00+08:00">
+                Published: 周五 17 四月 2015
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
+        </address>
+<p>In <a href="/category/ai.html">AI</a>.</p>
+<p>tags: <a href="/tag/boosting.html">Boosting</a> <a href="/tag/ai.html">AI</a> <a href="/tag/converge.html">Converge</a> </p>
+</footer><!-- /.post-info -->                <h1>Boosting方法</h1>
+<p>Boosting方法是一种组合方法，处理的是分类问题（当前对于分类的讨论限制为二分类，下面则不再复述）。其中心思想相当的简单：每次利用一个弱分类器(weak learner)对数据进行分类，每次分类完成之后，将分错的数据权重提高一点，并迭代进行多次分类。最后通过综合多次分类的结果作为最终的分类器，这样最终得到的分类器在测试数据与训练数据上都可以得到比较好的成绩。</p>
+<h1>boosting简单图解</h1>
+<p>boosting的大概流程如下图：
+<img alt="boosting概述" src="{attach}image\BOOSTING\boosting_procedure.png"></p>
+<p>训练集中一共有n个点，我们可以为里面的每一个点赋上一个权重$W_i(0 \le i &lt; n)$，表示这个点的重要程度，初始时都相等（都赋值为1就可以了）。通过依次训练模型的过程，我们对点的权重进行修正，如果分类正确了，权重不变或者降低；如果分类错了，则权重提高。程序越往后执行，训练出的模型就越会在意那些容易分错（权重高）的点。正因为boosting对于错误分类的过于强调，在数据有错误或误差时如果使用强分类器来做基础分类器的话会导致非常严重的overfitting。因此，boosting中推荐使用弱分类器（必须大于1/2）来进行组装。</p>
+<p>上图中绿色的线就是表示依次训练模型。当全部的程序执行完后，会得到M个模型，分别对应上图的$y_1\cdots …</p>
+                <a class="readmore" href="/the-boosting-method.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
+
+            <li><article class="hentry">
+                <header>
+                    <h1><a href="/normal-distribution.html" rel="bookmark"
+                           title="Permalink to Normal Distribution">Normal Distribution</a></h1>
+                </header>
+
+                <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2014-07-17T20:31:00+08:00">
+                Published: 周四 17 七月 2014
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
+        </address>
+<p>In <a href="/category/math.html">Math</a>.</p>
+<p>tags: <a href="/tag/math.html">Math</a> <a href="/tag/probability.html">Probability</a> </p>
+</footer><!-- /.post-info -->                <h1>正态分布介绍</h1>
+<p>神说，要有正态分布，就有了正态分布。</p>
+<p>神看正态分布是好的，就让随机误差就服从了正态分布.
+然而，对正太分布推动最大的是中心极限定理.设随机变量 $X_n(n=1,2,\cdots)$ 服从参数为 $p$ 的二项分布，则对任意的 $x$, 恒有</p>
+<p>\begin{equation}\lim_{n\rightarrow\infty}P{ \frac{X_n – np}{\sqrt{np(1-p)}} \le x }=\int_{-\infty}^x \frac{1}{\sqrt{2\pi}} e^{\frac{-t^2}{2}}dt\end …</p>
+                <a class="readmore" href="/normal-distribution.html">read more</a>
+                </div><!-- /.entry-content -->
+            </article></li>
+                </ol><!-- /#posts-list -->
+<p class="paginator">
+        <a href="/author/spiritsaway.html">&laquo;</a>
+    Page 2 / 3
+        <a href="/author/spiritsaway3.html">&raquo;</a>
+</p>
+                </section><!-- /#content -->
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>links</h2>
+                        <ul>
+                            <li><a href="http://getpelican.com/">Pelican</a></li>
+                            <li><a href="http://python.org/">Python.org</a></li>
+                            <li><a href="http://jinja.pocoo.org/">Jinja2</a></li>
+                            <li><a href="#">You can modify those links in your config file</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+
+                            <li><a href="#">You can add links in your config file</a></li>
+                            <li><a href="#">Another social link</a></li>
+                        </ul>
+                </div><!-- /.social -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="http://getpelican.com/">Pelican</a>, which takes great advantage of <a href="http://python.org">Python</a>.
+                </address><!-- /#about -->
+
+                <p>The theme is by <a href="http://coding.smashingmagazine.com/2009/08/04/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>

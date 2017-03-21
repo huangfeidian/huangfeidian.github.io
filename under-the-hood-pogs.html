@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="chinese (simplified)">
+<head>
+        <meta charset="utf-8" />
+        <title>Under the Hood : POGS</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">SpiritsAway </a></h1>
+                <nav><ul>
+                    <li><a href="/pages/about.html">about</a></li>
+                    <li><a href="/category/ai.html">AI</a></li>
+                    <li><a href="/category/algorithm.html">Algorithm</a></li>
+                    <li class="active"><a href="/category/code.html">Code</a></li>
+                    <li><a href="/category/compiler.html">Compiler</a></li>
+                    <li><a href="/category/cpp.html">CPP</a></li>
+                    <li><a href="/category/math.html">Math</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/under-the-hood-pogs.html" rel="bookmark"
+           title="Permalink to Under the Hood : POGS">Under the Hood : POGS</a></h1>
+    </header>
+
+    <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2015-05-15T21:31:00+08:00">
+                Published: 周五 15 五月 2015
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
+        </address>
+<p>In <a href="/category/code.html">Code</a>.</p>
+<p>tags: <a href="/tag/code.html">Code</a> <a href="/tag/admm.html">ADMM</a> </p>
+</footer><!-- /.post-info -->      <h1>POGS Introduction</h1>
+<p>Proximal Graph Solver (POGS) is a solver for convex optimization problems in graph form using Alternating Direction Method of Multipliers (ADMM).  The graph form problem can be expressed as</p>
+<p>\begin{equation}\begin{aligned}&amp; minimize \quad &amp; f(y)+g(x)\&amp; subject to \quad &amp; y=Ax\\end{aligned}\end{equation}
+where $ f$  and $ g$  are convex and can take on the values  $R \cup {∞}$ . The solver requires that the proximal operators of $ f$  and  $g$  are known and that  $f $ and  $g $ are separable, meaning that they can be written as</p>
+<p>\begin{equation}\begin{aligned}f(y)&amp; = \sum_{i=1}^m f_i(y_i)\g(x) &amp; = \sum_{i=1}^n g_i(x_i)\end{aligned}\end{equation}
+The following functions are currently supported</p>
+<p><img alt="支持函数列表" src="{attach}image\POGS\functions.png"></p>
+<p>where  $I(.)$  is the indicator function, taking on the value 0 if the condition is satisfied and infinity otherwise.</p>
+<h1>util.h</h1>
+<p>The content of <code>util.h</code> is mainly about some <code>ASSERT</code> macro,like <code>LEQ,LT,NEQ,GT,GEQ,EQ_EPS</code>. Beside the common c++ macro, some CUDA specific macro is here as well:</p>
+<div class="highlight"><pre><span></span><span class="cp">#ifdef __CUDACC__</span>
+<span class="cp">#define CUDA_CHECK_ERR() \</span>
+<span class="cp">  do { \</span>
+<span class="cp">    cudaError_t err = cudaGetLastError(); \</span>
+<span class="cp">    if (err != cudaSuccess) { \</span>
+<span class="cp">      std::cout &lt;&lt; __FILE__ &lt;&lt; &quot;:&quot; &lt;&lt; __LINE__ &lt;&lt; &quot;:&quot; \</span>
+<span class="cp">                &lt;&lt; __BLUE &lt;&lt; __func__ &lt;&lt; &quot;\n&quot; \</span>
+<span class="cp">                &lt;&lt; __RED &lt;&lt; &quot;ERROR_CUDA: &quot; &lt;&lt; cudaGetErrorString(err) \</span>
+<span class="cp">                &lt;&lt; __RESET &lt;&lt; std::endl; \</span>
+<span class="cp">      exit(EXIT_FAILURE); \</span>
+<span class="cp">    } \</span>
+<span class="cp">  } while (0)</span>
+<span class="cp">#endif</span>
+</pre></div>
+
+
+<h1>prox_lib.h</h1>
+<p>In this file , all kinds of loss function are defined. Currently pogs support 16 functions.</p>
+<div class="highlight"><pre><span></span><span class="k">enum</span> <span class="n">Function</span>
+<span class="p">{</span>
+    <span class="n">kAbs</span><span class="p">,</span>       <span class="c1">// f(x) = |x|</span>
+    <span class="n">kExp</span><span class="p">,</span>       <span class="c1">// f(x) = e^x</span>
+    <span class="n">kHuber</span><span class="p">,</span>     <span class="c1">// f(x) = huber(x)</span>
+    <span class="n">kIdentity</span><span class="p">,</span>  <span class="c1">// f(x) = x</span>
+    <span class="n">kIndBox01</span><span class="p">,</span>  <span class="c1">// f(x) = I(0 &lt;= x &lt;= 1)</span>
+    <span class="n">kIndEq0</span><span class="p">,</span>    <span class="c1">// f(x) = I(x = 0)</span>
+    <span class="n">kIndGe0</span><span class="p">,</span>    <span class="c1">// f(x) = I(x &gt;= 0)</span>
+    <span class="n">kIndLe0</span><span class="p">,</span>    <span class="c1">// f(x) = I(x &lt;= 0)</span>
+    <span class="n">kLogistic</span><span class="p">,</span>  <span class="c1">// f(x) = log(1 + e^x)</span>
+    <span class="n">kMaxNeg0</span><span class="p">,</span>   <span class="c1">// f(x) = max(0, -x)</span>
+    <span class="n">kMaxPos0</span><span class="p">,</span>   <span class="c1">// f(x) = max(0, x)</span>
+    <span class="n">kNegEntr</span><span class="p">,</span>   <span class="c1">// f(x) = x log(x)</span>
+    <span class="n">kNegLog</span><span class="p">,</span>    <span class="c1">// f(x) = -log(x)</span>
+    <span class="n">kRecipr</span><span class="p">,</span>    <span class="c1">// f(x) = 1/x</span>
+    <span class="n">kSquare</span><span class="p">,</span>    <span class="c1">// f(x) = (1/2) x^2</span>
+    <span class="n">kZero</span>
+<span class="p">};</span>
+</pre></div>
+
+
+<p>If we want to add our own loss function, we should extend this enum definition.</p>
+<p>The optimization functions in pogs are in this form$$c * f(a * x - b) + d * x+e*x^2$$. The enum stands for the$f$. Parameters $a,c,e$ default to 1, while b and d default to 0. This optimization function is warpped in a <code>FunctionObj</code></p>
+<div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="k">struct</span> <span class="n">FunctionObj</span>
+<span class="p">{</span>
+    <span class="n">Function</span> <span class="n">h</span><span class="p">;</span>
+    <span class="n">T</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">e</span><span class="p">;</span>
+
+    <span class="n">FunctionObj</span><span class="p">(</span><span class="n">Function</span> <span class="n">h</span><span class="p">,</span> <span class="n">T</span> <span class="n">a</span><span class="p">,</span> <span class="n">T</span> <span class="n">b</span><span class="p">,</span> <span class="n">T</span> <span class="n">c</span><span class="p">,</span> <span class="n">T</span> <span class="n">d</span><span class="p">,</span> <span class="n">T</span> <span class="n">e</span><span class="p">)</span> <span class="o">:</span>
+            <span class="n">h</span><span class="p">(</span><span class="n">h</span><span class="p">),</span> <span class="n">a</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">b</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="n">c</span><span class="p">(</span><span class="n">c</span><span class="p">),</span> <span class="n">d</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="n">e</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">CheckConsts</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="kt">void</span> <span class="n">CheckConsts</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">c</span> <span class="o">&lt;</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+            <span class="n">Printf</span><span class="p">(</span><span class="s">&quot;WARNING c &lt; 0. Function not convex. Using c = 0&quot;</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">e</span> <span class="o">&lt;</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+            <span class="n">Printf</span><span class="p">(</span><span class="s">&quot;WARNING e &lt; 0. Function not convex. Using e = 0&quot;</span><span class="p">);</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">max</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">max</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</pre></div>
+
+
+<p>Then here comes some simple warpper of math functions,like</p>
+<div class="highlight"><pre><span></span><span class="n">__DEVICE__</span> <span class="kr">inline</span> <span class="kt">double</span> <span class="nf">Abs</span><span class="p">(</span><span class="kt">double</span> <span class="n">x</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">fabs</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="n">__DEVICE__</span> <span class="kr">inline</span> <span class="kt">float</span> <span class="nf">Abs</span><span class="p">(</span><span class="kt">float</span> <span class="n">x</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">fabsf</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Apart from the common math functions, there are some interesting math functions as well. Like the implementation of <a href="http://keithbriggs.info/software/LambertW.c">Lambert function</a> and <a href="http://math.stackexchange.com/questions/60376">root of cubic function</a>.The lambert w function is the inverse function of</p>
+<p>\begin{equation}f(x)=xe^x\end{equation}
+ These two functions are used later.</p>
+<p>Then all math functions' evaluation is warpped into a <code>FuncEval</code></p>
+<div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">__DEVICE__</span> <span class="kr">inline</span> <span class="n">T</span> <span class="n">FuncEval</span><span class="p">(</span><span class="k">const</span> <span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">f_obj</span><span class="p">,</span> <span class="n">T</span> <span class="n">x</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">T</span> <span class="n">dx</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">d</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span>
+    <span class="n">T</span> <span class="n">ex</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">e</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span> <span class="o">/</span> <span class="mi">2</span><span class="p">;</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">a</span> <span class="o">*</span> <span class="n">x</span> <span class="o">-</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">b</span><span class="p">;</span>
+    <span class="k">switch</span> <span class="p">(</span><span class="n">f_obj</span><span class="p">.</span><span class="n">h</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">case</span> <span class="nl">kAbs</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">FuncAbs</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="k">default</span><span class="o">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">FuncZero</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+            <span class="k">break</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">c</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">dx</span> <span class="o">+</span> <span class="n">ex</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>These warppers are necessary because we want to run on CPU/GPU, while these two platform has different implementation for these function. We don't want to mess our logicflow code with some <code>ifdef endif</code> guards. So we just warp these function and leave the macro guards to implementation files.</p>
+<p>The warppers are used by <code>proximal operator</code> definitions. The socalled <code>proximal operator</code> has such form $$Prox{c * f(a * x - b) + d * x + e * x^2}$$ where $a,b,c,d,e$ are parameters. For every function enum, there is a corresponding proximal operator function whoes signature is the concatenation of <code>Prox</code> prefix and function enum name. The rational behind  these 16 functions is that we can solve these functions analytically. These proximal operator is the result function of corresponding optimization problems.</p>
+<p>The <code>cubic root</code> is used in <code>reciprocal</code> and the <code>lambert</code> is used in <code>expotional</code>. The only exception is <code>logistic</code> , it's implemented in  iteration :</p>
+<div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">__DEVICE__</span> <span class="kr">inline</span> <span class="n">T</span> <span class="n">ProxLogistic</span><span class="p">(</span><span class="n">T</span> <span class="n">v</span><span class="p">,</span> <span class="n">T</span> <span class="n">rho</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// Initial guess based on piecewise approximation.</span>
+    <span class="n">T</span> <span class="n">x</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">v</span> <span class="o">&lt;</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="o">-</span><span class="mf">2.5</span><span class="p">))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span>
+    <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">v</span> <span class="o">&gt;</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">2.5</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">rho</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">v</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">rho</span><span class="p">;</span>
+    <span class="k">else</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">rho</span> <span class="o">*</span> <span class="n">v</span> <span class="o">-</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">0.5</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">0.2</span><span class="p">)</span> <span class="o">+</span> <span class="n">rho</span><span class="p">);</span>
+
+    <span class="c1">// Newton iteration.</span>
+    <span class="n">T</span> <span class="n">l</span> <span class="o">=</span> <span class="n">v</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">rho</span><span class="p">,</span> <span class="n">u</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">T</span> <span class="n">inv_ex</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">Exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="p">));</span>
+        <span class="n">T</span> <span class="n">f</span> <span class="o">=</span> <span class="n">inv_ex</span> <span class="o">+</span> <span class="n">rho</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">v</span><span class="p">);</span>
+        <span class="n">T</span> <span class="n">g</span> <span class="o">=</span> <span class="n">inv_ex</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">inv_ex</span><span class="p">)</span> <span class="o">+</span> <span class="n">rho</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">f</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>
+        <span class="k">else</span>
+            <span class="n">u</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">f</span> <span class="o">/</span> <span class="n">g</span><span class="p">;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Min</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">u</span><span class="p">);</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Max</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">l</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Guarded method if not converged.</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">u</span> <span class="o">-</span> <span class="n">l</span> <span class="o">&gt;</span> <span class="n">Tol</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">T</span> <span class="n">g_rho</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">rho</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">Exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="p">)))</span> <span class="o">+</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">v</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">g_rho</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="n">Max</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">x</span> <span class="o">-</span> <span class="n">g_rho</span><span class="p">);</span>
+            <span class="n">u</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">else</span>
+        <span class="p">{</span>
+            <span class="n">u</span> <span class="o">=</span> <span class="n">Min</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">x</span> <span class="o">-</span> <span class="n">g_rho</span><span class="p">);</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">u</span> <span class="o">+</span> <span class="n">l</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Finally, all optimiztion process is abtracted to one <code>ProxEval</code>,this function is a variation of oringinal proximal operator, with additional penalty parameter. So current problem can be constructed as such:</p>
+<p>\begin{equation}\label{eq:penalty}minimize\quad c*f(ax-b)+dx+ex^2+\rho (x-v)^2\end{equation}
+We can tranform this problem to the proximal operator that we are familar with. Letting$y=ax+b$, the problem with penalty  can be transformed to</p>
+<p>\begin{equation}c<em>f(y)+d</em>\frac{y+b}{a}+e(\frac{y+b}{a})^2+\rho(\frac{y+b}{a}-v)^2\end{equation}
+We take derivation of $y$ except for the term $c*f(y)$ , and set it to 0. Then we get</p>
+<p>\begin{equation}\begin{aligned}&amp;\frac{d}{a}+\frac{2e}{a^2}(y+b)+\frac{2\rho}{a^2}<em>(y+b-av)=0\\Rightarrow &amp;y=a</em>(v*\rho-d)/(e+\rho)-b\end{aligned}\end{equation}
+So the penalty proximal operator problem can be refractored to another proximal operator problem</p>
+<p>\begin{equation}c<em>(f(y)+\frac{e+\rho}{ca^2}(y-a</em>(v*\rho-d)/(e+\rho)-b)+k)\end{equation}
+where the $k$ is a const value, so we can neglect it. The cpp code implemention is just what we have analyzed.</p>
+<div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">__DEVICE__</span> <span class="kr">inline</span> <span class="n">T</span> <span class="n">ProxEval</span><span class="p">(</span><span class="k">const</span> <span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">f_obj</span><span class="p">,</span> <span class="n">T</span> <span class="n">v</span><span class="p">,</span> <span class="n">T</span> <span class="n">rho</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">const</span> <span class="n">T</span> <span class="n">a</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">b</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">c</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">d</span><span class="p">,</span> <span class="n">e</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">e</span><span class="p">;</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="p">(</span><span class="n">v</span> <span class="o">*</span> <span class="n">rho</span> <span class="o">-</span> <span class="n">d</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">e</span> <span class="o">+</span> <span class="n">rho</span><span class="p">)</span> <span class="o">-</span> <span class="n">b</span><span class="p">;</span>
+    <span class="n">rho</span> <span class="o">=</span> <span class="p">(</span><span class="n">e</span> <span class="o">+</span> <span class="n">rho</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="n">a</span> <span class="o">*</span> <span class="n">a</span><span class="p">);</span>
+    <span class="k">switch</span> <span class="p">(</span><span class="n">f_obj</span><span class="p">.</span><span class="n">h</span><span class="p">)</span>
+    <span class="p">{</span>
+    <span class="c1">//here come all cases, I just list one for example</span>
+    <span class="k">case</span> <span class="nl">kSquare</span><span class="p">:</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">ProxSquare</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">rho</span><span class="p">);</span>
+        <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="nl">kZero</span><span class="p">:</span>
+    <span class="k">default</span><span class="o">:</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">ProxZero</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">rho</span><span class="p">);</span>
+        <span class="k">break</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">v</span> <span class="o">+</span> <span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="n">a</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>As well as the derivation of these functions,in pogs they are called subgradient. The derivation function signature is concatenation of ProjSubgrad and function enum name. The common evaluation warpper is the same as <code>FuncEval</code></p>
+<div class="highlight"><pre><span></span><span class="n">emplate</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">__DEVICE__</span> <span class="kr">inline</span> <span class="n">T</span> <span class="n">ProjSubgradEval</span><span class="p">(</span><span class="k">const</span> <span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">f_obj</span><span class="p">,</span> <span class="n">T</span> <span class="n">v</span><span class="p">,</span> <span class="n">T</span> <span class="n">x</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">const</span> <span class="n">T</span> <span class="n">a</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">b</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">c</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">d</span><span class="p">,</span> <span class="n">e</span> <span class="o">=</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">e</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">a</span> <span class="o">==</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">0.</span><span class="p">)</span> <span class="o">||</span> <span class="n">c</span> <span class="o">==</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">0.</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">d</span> <span class="o">+</span> <span class="n">e</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1.</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">c</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">v</span> <span class="o">-</span> <span class="n">d</span> <span class="o">-</span> <span class="n">e</span> <span class="o">*</span> <span class="n">x</span><span class="p">);</span>
+    <span class="n">T</span> <span class="n">axb</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="n">x</span> <span class="o">-</span> <span class="n">b</span><span class="p">;</span>
+    <span class="k">switch</span> <span class="p">(</span><span class="n">f_obj</span><span class="p">.</span><span class="n">h</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">case</span> <span class="nl">kAbs</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">ProjSubgradAbs</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">axb</span><span class="p">);</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="k">default</span><span class="o">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">ProjSubgradZero</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">axb</span><span class="p">);</span>
+            <span class="k">break</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">a</span> <span class="o">*</span> <span class="n">c</span> <span class="o">*</span> <span class="n">v</span> <span class="o">+</span> <span class="n">d</span> <span class="o">+</span> <span class="n">e</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>After layers and layers warpper, this file finally defines some interface function to evaluate these functions parallelly. Yet another OPENMP/CUDA warpper. Here are some examples:</p>
+<div class="highlight"><pre><span></span><span class="c1">// CPU version</span>
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">ProxEval</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">f_obj</span><span class="p">,</span> <span class="n">T</span> <span class="n">rho</span><span class="p">,</span> <span class="k">const</span> <span class="n">T</span> <span class="o">*</span><span class="n">x_in</span><span class="p">,</span>
+        <span class="n">T</span> <span class="o">*</span><span class="n">x_out</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="cp">#ifdef _OPENMP</span>
+<span class="cp">#pragma omp parallel for</span>
+<span class="cp">#endif</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">x_out</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">ProxEval</span><span class="p">(</span><span class="n">f_obj</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">x_in</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">rho</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="c1">//GPU version</span>
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="k">struct</span> <span class="nl">ProxEvalF</span><span class="p">:</span> <span class="n">thrust</span><span class="o">::</span><span class="n">binary_function</span><span class="o">&lt;</span><span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="p">{</span>
+        <span class="n">T</span> <span class="n">rho</span><span class="p">;</span><span class="n">__device__</span> <span class="nf">ProxEvalF</span><span class="p">(</span><span class="n">T</span> <span class="n">rho</span><span class="p">)</span> <span class="o">:</span>
+                <span class="n">rho</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+        <span class="n">__device__</span> <span class="n">T</span> <span class="nf">operator</span><span class="p">()(</span><span class="k">const</span> <span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">f_obj</span><span class="p">,</span> <span class="n">T</span> <span class="n">x</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">ProxEval</span><span class="p">(</span><span class="n">f_obj</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">rho</span><span class="p">);</span>
+        <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">ProxEval</span><span class="p">(</span><span class="k">const</span> <span class="n">thrust</span><span class="o">::</span><span class="n">device_vector</span><span class="o">&lt;</span><span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">f_obj</span><span class="p">,</span> <span class="n">T</span> <span class="n">rho</span><span class="p">,</span>
+        <span class="k">const</span> <span class="n">T</span> <span class="o">*</span><span class="n">x_in</span><span class="p">,</span> <span class="n">T</span> <span class="o">*</span><span class="n">x_out</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">thrust</span><span class="o">::</span><span class="n">transform</span><span class="p">(</span><span class="n">thrust</span><span class="o">::</span><span class="n">device</span><span class="p">,</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">cbegin</span><span class="p">(),</span> <span class="n">f_obj</span><span class="p">.</span><span class="n">cend</span><span class="p">(),</span>
+            <span class="n">thrust</span><span class="o">::</span><span class="n">device_pointer_cast</span><span class="p">(</span><span class="n">x_in</span><span class="p">),</span>
+            <span class="n">thrust</span><span class="o">::</span><span class="n">device_pointer_cast</span><span class="p">(</span><span class="n">x_out</span><span class="p">),</span> <span class="n">ProxEvalF</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">rho</span><span class="p">));</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>These implemetations are very interesting. Need more attention here.
+This file also defines the <code>eps</code></p>
+<div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">__DEVICE__</span> <span class="kr">inline</span> <span class="n">T</span> <span class="n">Epsilon</span><span class="p">();</span>
+<span class="k">template</span><span class="o">&lt;&gt;</span>
+<span class="n">__DEVICE__</span> <span class="kr">inline</span> <span class="kt">double</span> <span class="n">Epsilon</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="mf">4e-16</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">template</span><span class="o">&lt;&gt;</span>
+<span class="n">__DEVICE__</span> <span class="kr">inline</span> <span class="kt">float</span> <span class="n">Epsilon</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="mf">1e-7</span><span class="n">f</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h1>pogs.h</h1>
+<p>The pogs.h defines some control variables and instructions:</p>
+<div class="highlight"><pre><span></span><span class="k">const</span> <span class="kt">double</span> <span class="n">kAbsTol</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">;</span>
+<span class="k">const</span> <span class="kt">double</span> <span class="n">kRelTol</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">;</span>
+<span class="k">const</span> <span class="kt">double</span> <span class="n">kRhoInit</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">;</span>
+<span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">kVerbose</span> <span class="o">=</span> <span class="mi">2u</span><span class="p">;</span>   <span class="c1">// 0...4</span>
+<span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">kMaxIter</span> <span class="o">=</span> <span class="mi">2500u</span><span class="p">;</span>
+<span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">kInitIter</span> <span class="o">=</span> <span class="mi">10u</span><span class="p">;</span>
+<span class="k">const</span> <span class="kt">bool</span> <span class="n">kAdaptiveRho</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+<span class="k">const</span> <span class="kt">bool</span> <span class="n">kGapStop</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+</pre></div>
+
+
+<p>Apparently the name schema is subject to Google C++ style. Aside from these const values, some enum status are defined as well.</p>
+<div class="highlight"><pre><span></span><span class="k">enum</span> <span class="n">PogsStatus</span>
+<span class="p">{</span>
+    <span class="n">POGS_SUCCESS</span><span class="p">,</span>    <span class="c1">// Converged succesfully.</span>
+    <span class="n">POGS_INFEASIBLE</span><span class="p">,</span> <span class="c1">// Problem likely infeasible.</span>
+    <span class="n">POGS_UNBOUNDED</span><span class="p">,</span>  <span class="c1">// Problem likely unbounded</span>
+    <span class="n">POGS_MAX_ITER</span><span class="p">,</span>   <span class="c1">// Reached max iter.</span>
+    <span class="n">POGS_NAN_FOUND</span><span class="p">,</span>  <span class="c1">// Encountered nan.</span>
+    <span class="n">POGS_ERROR</span>
+<span class="p">};</span>
+</pre></div>
+
+
+<p>Then there comes the problem warpper <code>Pogs</code></p>
+<div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">M</span><span class="p">,</span> <span class="k">typename</span> <span class="n">P</span><span class="o">&gt;</span>
+<span class="k">class</span> <span class="nc">Pogs</span>
+<span class="p">{</span>
+    <span class="k">private</span><span class="o">:</span>
+        <span class="c1">// Data</span>
+        <span class="n">M</span> <span class="n">_A</span><span class="p">;</span>
+        <span class="n">P</span> <span class="n">_P</span><span class="p">;</span>
+        <span class="n">T</span> <span class="o">*</span><span class="n">_de</span><span class="p">,</span> <span class="o">*</span><span class="n">_z</span><span class="p">,</span> <span class="o">*</span><span class="n">_zt</span><span class="p">,</span> <span class="n">_rho</span><span class="p">;</span>
+        <span class="kt">bool</span> <span class="n">_done_init</span><span class="p">;</span>
+
+        <span class="c1">// Setup matrix _A and solver _LS</span>
+        <span class="kt">int</span> <span class="nf">_Init</span><span class="p">();</span>
+
+        <span class="c1">// Output.</span>
+        <span class="n">T</span> <span class="o">*</span><span class="n">_x</span><span class="p">,</span> <span class="o">*</span><span class="n">_y</span><span class="p">,</span> <span class="o">*</span><span class="n">_mu</span><span class="p">,</span> <span class="o">*</span><span class="n">_lambda</span><span class="p">,</span> <span class="n">_optval</span><span class="p">;</span>
+
+        <span class="c1">// Parameters.</span>
+        <span class="n">T</span> <span class="n">_abs_tol</span><span class="p">,</span> <span class="n">_rel_tol</span><span class="p">;</span>
+        <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">_max_iter</span><span class="p">,</span> <span class="n">_init_iter</span><span class="p">,</span> <span class="n">_verbose</span><span class="p">;</span>
+        <span class="kt">bool</span> <span class="n">_adaptive_rho</span><span class="p">,</span> <span class="n">_gap_stop</span><span class="p">,</span> <span class="n">_init_x</span><span class="p">,</span> <span class="n">_init_lambda</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>When we use <code>Pogs</code>, we just use a warpper of it <code>PogsDirect</code> or <code>PogsIndirect</code></p>
+<div class="highlight"><pre><span></span><span class="cp">#ifndef __CUDACC__</span>
+    <span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">M</span><span class="o">&gt;</span>
+    <span class="k">using</span> <span class="n">PogsDirect</span> <span class="o">=</span> <span class="n">Pogs</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">ProjectorDirect</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">M</span><span class="o">&gt;</span> <span class="o">&gt;</span><span class="p">;</span>
+
+    <span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">M</span><span class="o">&gt;</span>
+    <span class="k">using</span> <span class="n">PogsIndirect</span> <span class="o">=</span> <span class="n">Pogs</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">ProjectorCgls</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">M</span><span class="o">&gt;</span> <span class="o">&gt;</span><span class="p">;</span>
+<span class="cp">#endif</span>
+</pre></div>
+
+
+<h1>pogs.cpp</h1>
+<p>Firstly, it defines a<code>ApplyOp</code> in a anonymous namespace, yet another function warpper:</p>
+<div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Op</span><span class="o">&gt;</span>
+<span class="k">struct</span> <span class="nl">ApplyOp</span><span class="p">:</span> <span class="n">std</span><span class="o">::</span><span class="n">binary_function</span><span class="o">&lt;</span><span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="p">{</span>
+        <span class="n">Op</span> <span class="n">binary_op</span><span class="p">;</span>
+        <span class="n">ApplyOp</span><span class="p">(</span><span class="n">Op</span> <span class="n">binary_op</span><span class="p">)</span> <span class="o">:</span>
+                <span class="n">binary_op</span><span class="p">(</span><span class="n">binary_op</span><span class="p">)</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+        <span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="k">operator</span><span class="p">()(</span><span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">h</span><span class="p">,</span> <span class="n">T</span> <span class="n">x</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">h</span><span class="p">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">binary_op</span><span class="p">(</span><span class="n">h</span><span class="p">.</span><span class="n">a</span><span class="p">,</span> <span class="n">x</span><span class="p">);</span>
+            <span class="n">h</span><span class="p">.</span><span class="n">d</span> <span class="o">=</span> <span class="n">binary_op</span><span class="p">(</span><span class="n">h</span><span class="p">.</span><span class="n">d</span><span class="p">,</span> <span class="n">x</span><span class="p">);</span>
+            <span class="n">h</span><span class="p">.</span><span class="n">e</span> <span class="o">=</span> <span class="n">binary_op</span><span class="p">(</span><span class="n">binary_op</span><span class="p">(</span><span class="n">h</span><span class="p">.</span><span class="n">e</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">x</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">h</span><span class="p">;</span>
+        <span class="p">}</span>
+<span class="p">};</span>
+</pre></div>
+
+
+<p>Well , I have no idea why we need it.</p>
+<p>Then here is the default pogs constructor:</p>
+<div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">M</span><span class="p">,</span> <span class="k">typename</span> <span class="n">P</span><span class="o">&gt;</span>
+<span class="n">Pogs</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">P</span><span class="o">&gt;::</span><span class="n">Pogs</span><span class="p">(</span><span class="k">const</span> <span class="n">M</span> <span class="o">&amp;</span><span class="n">A</span><span class="p">)</span> <span class="o">:</span>
+        <span class="n">_A</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> <span class="n">_P</span><span class="p">(</span><span class="n">_A</span><span class="p">),</span> <span class="n">_de</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">_z</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">_zt</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">_rho</span><span class="p">(</span>
+                <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">kRhoInit</span><span class="p">)),</span> <span class="n">_done_init</span><span class="p">(</span><span class="nb">false</span><span class="p">),</span> <span class="n">_x</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">_y</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">_mu</span><span class="p">(</span>
+                <span class="mi">0</span><span class="p">),</span> <span class="n">_lambda</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">_optval</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">0.</span><span class="p">)),</span> <span class="n">_abs_tol</span><span class="p">(</span>
+                <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">kAbsTol</span><span class="p">)),</span> <span class="n">_rel_tol</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">kRelTol</span><span class="p">)),</span> <span class="n">_max_iter</span><span class="p">(</span>
+                <span class="n">kMaxIter</span><span class="p">),</span> <span class="n">_init_iter</span><span class="p">(</span><span class="n">kInitIter</span><span class="p">),</span> <span class="n">_verbose</span><span class="p">(</span><span class="n">kVerbose</span><span class="p">),</span> <span class="n">_adaptive_rho</span><span class="p">(</span>
+                <span class="n">kAdaptiveRho</span><span class="p">),</span> <span class="n">_gap_stop</span><span class="p">(</span><span class="n">kGapStop</span><span class="p">),</span> <span class="n">_init_x</span><span class="p">(</span><span class="nb">false</span><span class="p">),</span> <span class="n">_init_lambda</span><span class="p">(</span>
+                <span class="nb">false</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">_x</span> <span class="o">=</span> <span class="k">new</span> <span class="n">T</span><span class="p">[</span><span class="n">_A</span><span class="p">.</span><span class="n">Cols</span><span class="p">()]();</span>
+    <span class="n">_y</span> <span class="o">=</span> <span class="k">new</span> <span class="n">T</span><span class="p">[</span><span class="n">_A</span><span class="p">.</span><span class="n">Rows</span><span class="p">()]();</span>
+    <span class="n">_mu</span> <span class="o">=</span> <span class="k">new</span> <span class="n">T</span><span class="p">[</span><span class="n">_A</span><span class="p">.</span><span class="n">Cols</span><span class="p">()]();</span>
+    <span class="n">_lambda</span> <span class="o">=</span> <span class="k">new</span> <span class="n">T</span><span class="p">[</span><span class="n">_A</span><span class="p">.</span><span class="n">Rows</span><span class="p">()]();</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>The constructor list is insane! After the contruction, we call <code>pogs::init</code> to do some check and memory allocation.</p>
+<div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">M</span><span class="p">,</span> <span class="k">typename</span> <span class="n">P</span><span class="o">&gt;</span>
+<span class="kt">int</span> <span class="n">Pogs</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">P</span><span class="o">&gt;::</span><span class="n">_Init</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">DEBUG_EXPECT</span><span class="p">(</span><span class="o">!</span><span class="n">_done_init</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">_done_init</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="n">_done_init</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+
+    <span class="kt">size_t</span> <span class="n">m</span> <span class="o">=</span> <span class="n">_A</span><span class="p">.</span><span class="n">Rows</span><span class="p">();</span>
+    <span class="kt">size_t</span> <span class="n">n</span> <span class="o">=</span> <span class="n">_A</span><span class="p">.</span><span class="n">Cols</span><span class="p">();</span>
+
+    <span class="n">_de</span> <span class="o">=</span> <span class="k">new</span> <span class="n">T</span><span class="p">[</span><span class="n">m</span> <span class="o">+</span> <span class="n">n</span><span class="p">];</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="n">_de</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="n">_z</span> <span class="o">=</span> <span class="k">new</span> <span class="n">T</span><span class="p">[</span><span class="n">m</span> <span class="o">+</span> <span class="n">n</span><span class="p">];</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="n">_z</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="n">_zt</span> <span class="o">=</span> <span class="k">new</span> <span class="n">T</span><span class="p">[</span><span class="n">m</span> <span class="o">+</span> <span class="n">n</span><span class="p">];</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="n">_zt</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="n">memset</span><span class="p">(</span><span class="n">_de</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">m</span> <span class="o">+</span> <span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">));</span>
+    <span class="n">memset</span><span class="p">(</span><span class="n">_z</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">m</span> <span class="o">+</span> <span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">));</span>
+    <span class="n">memset</span><span class="p">(</span><span class="n">_zt</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">m</span> <span class="o">+</span> <span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">));</span>
+
+    <span class="n">_A</span><span class="p">.</span><span class="n">Init</span><span class="p">();</span>
+    <span class="n">_A</span><span class="p">.</span><span class="n">Equil</span><span class="p">(</span><span class="n">_de</span><span class="p">,</span> <span class="n">_de</span> <span class="o">+</span> <span class="n">m</span><span class="p">);</span>
+    <span class="n">_P</span><span class="p">.</span><span class="n">Init</span><span class="p">();</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>After all the preparation, we call <code>pogs::solve</code> to get everything done. The signature of such function is:</p>
+<div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">M</span><span class="p">,</span> <span class="k">typename</span> <span class="n">P</span><span class="o">&gt;</span>
+<span class="n">PogsStatus</span> <span class="n">Pogs</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">P</span><span class="o">&gt;::</span><span class="n">Solve</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">f</span><span class="p">,</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">g</span><span class="p">)</span>
+</pre></div>
+
+
+<p>At the beginning of this function, it sets some const vars and memory allocation.</p>
+<div class="highlight"><pre><span></span><span class="kt">double</span> <span class="n">t0</span> <span class="o">=</span> <span class="n">timer</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="c1">// Constants for adaptive-rho and over-relaxation.</span>
+<span class="k">const</span> <span class="n">T</span> <span class="n">kDeltaMin</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1.05</span><span class="p">);</span>
+<span class="k">const</span> <span class="n">T</span> <span class="n">kGamma</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1.01</span><span class="p">);</span>
+<span class="k">const</span> <span class="n">T</span> <span class="n">kTau</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">0.8</span><span class="p">);</span>
+<span class="k">const</span> <span class="n">T</span> <span class="n">kAlpha</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1.7</span><span class="p">);</span>
+<span class="k">const</span> <span class="n">T</span> <span class="n">kRhoMin</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">);</span>
+<span class="k">const</span> <span class="n">T</span> <span class="n">kRhoMax</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1e4</span><span class="p">);</span>
+<span class="k">const</span> <span class="n">T</span> <span class="n">kKappa</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">0.9</span><span class="p">);</span>
+<span class="k">const</span> <span class="n">T</span> <span class="n">kOne</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1.0</span><span class="p">);</span>
+<span class="k">const</span> <span class="n">T</span> <span class="n">kZero</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">0.0</span><span class="p">);</span>
+<span class="k">const</span> <span class="n">T</span> <span class="n">kProjTolMax</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1e-8</span><span class="p">);</span>
+<span class="k">const</span> <span class="n">T</span> <span class="n">kProjTolMin</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1e-2</span><span class="p">);</span>
+<span class="k">const</span> <span class="n">T</span> <span class="n">kProjTolPow</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1.3</span><span class="p">);</span>
+<span class="k">const</span> <span class="n">T</span> <span class="n">kProjTolIni</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1e-5</span><span class="p">);</span>
+<span class="kt">bool</span> <span class="n">use_exact_stop</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+<span class="kt">size_t</span> <span class="n">m</span> <span class="o">=</span> <span class="n">_A</span><span class="p">.</span><span class="n">Rows</span><span class="p">();</span>
+<span class="kt">size_t</span> <span class="n">n</span> <span class="o">=</span> <span class="n">_A</span><span class="p">.</span><span class="n">Cols</span><span class="p">();</span>
+<span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="n">f_cpu</span> <span class="o">=</span> <span class="n">f</span><span class="p">;</span>
+<span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">FunctionObj</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="n">g_cpu</span> <span class="o">=</span> <span class="n">g</span><span class="p">;</span>
+
+<span class="c1">// Allocate data for ADMM variables.</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">de</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">vector_view_array</span><span class="p">(</span><span class="n">_de</span><span class="p">,</span> <span class="n">m</span> <span class="o">+</span> <span class="n">n</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">z</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">vector_view_array</span><span class="p">(</span><span class="n">_z</span><span class="p">,</span> <span class="n">m</span> <span class="o">+</span> <span class="n">n</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">zt</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">vector_view_array</span><span class="p">(</span><span class="n">_zt</span><span class="p">,</span> <span class="n">m</span> <span class="o">+</span> <span class="n">n</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">zprev</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">vector_calloc</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">m</span> <span class="o">+</span> <span class="n">n</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">ztemp</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">vector_calloc</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">m</span> <span class="o">+</span> <span class="n">n</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">z12</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">vector_calloc</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">m</span> <span class="o">+</span> <span class="n">n</span><span class="p">);</span>
+
+<span class="c1">// Create views for x and y components.</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">d</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">vector_subvector</span><span class="p">(</span><span class="o">&amp;</span><span class="n">de</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">m</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">e</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">vector_subvector</span><span class="p">(</span><span class="o">&amp;</span><span class="n">de</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">vector_subvector</span><span class="p">(</span><span class="o">&amp;</span><span class="n">z</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">vector_subvector</span><span class="p">(</span><span class="o">&amp;</span><span class="n">z</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">m</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">x12</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">vector_subvector</span><span class="p">(</span><span class="o">&amp;</span><span class="n">z12</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">y12</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">vector_subvector</span><span class="p">(</span><span class="o">&amp;</span><span class="n">z12</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">m</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">xprev</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">vector_subvector</span><span class="p">(</span><span class="o">&amp;</span><span class="n">zprev</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">yprev</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">vector_subvector</span><span class="p">(</span><span class="o">&amp;</span><span class="n">zprev</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">m</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">xtemp</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">vector_subvector</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ztemp</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">ytemp</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">vector_subvector</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ztemp</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">m</span><span class="p">);</span>
+</pre></div>
+
+
+<p>The <code>gsl::vector_subvector</code> is to provide a vector slice with its begin idx and length. The most important piece of these memory allocation is that $z$ is concatenation of $x,y$, ie</p>
+<p>\begin{equation}\begin{aligned}z_{temp}&amp;=x_{temp}+y_{temp}\z_{prev}&amp;=x_{prev}+y_{prev}\z_{12}&amp;=x_{12}+y_{12}\z&amp;=x+y\\end{aligned}\end{equation}
+And the vars' correspondance to the vars in paper is </p>
+<p>\begin{equation}\begin{aligned}z_{prev}&amp;=z^{k}\z_{t}&amp;=\hat{z}^k\z&amp;=z^{k+1}\z_{12}&amp;=z^{k+1/2}\\end{aligned}\end{equation}
+Some more attention should be payed to the scale.</p>
+<div class="highlight"><pre><span></span><span class="c1">// Scale f and g to account for diagonal scaling e and d.</span>
+<span class="n">std</span><span class="o">::</span><span class="n">transform</span><span class="p">(</span><span class="n">f_cpu</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">f_cpu</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">d</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">f_cpu</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span>
+        <span class="n">ApplyOp</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">divides</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">divides</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">()));</span>
+<span class="n">std</span><span class="o">::</span><span class="n">transform</span><span class="p">(</span><span class="n">g_cpu</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">g_cpu</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">e</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">g_cpu</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span>
+        <span class="n">ApplyOp</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">multiplies</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">multiplies</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">()));</span>
+</pre></div>
+
+
+<p>If we have already run the solver before and gotten some results, we can resume the solver by filling $x,lambda$ by reusing these results.</p>
+<div class="highlight"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">_init_x</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">gsl</span><span class="o">::</span><span class="n">vector_memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">xtemp</span><span class="p">,</span> <span class="n">_x</span><span class="p">);</span>
+    <span class="n">gsl</span><span class="o">::</span><span class="n">vector_div</span><span class="p">(</span><span class="o">&amp;</span><span class="n">xtemp</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">e</span><span class="p">);</span>
+    <span class="n">_A</span><span class="p">.</span><span class="n">Mul</span><span class="p">(</span><span class="sc">&#39;n&#39;</span><span class="p">,</span> <span class="n">kOne</span><span class="p">,</span> <span class="n">xtemp</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">kZero</span><span class="p">,</span> <span class="n">ytemp</span><span class="p">.</span><span class="n">data</span><span class="p">);</span>
+    <span class="n">gsl</span><span class="o">::</span><span class="n">vector_memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">z</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ztemp</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">_init_lambda</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">gsl</span><span class="o">::</span><span class="n">vector_memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ytemp</span><span class="p">,</span> <span class="n">_lambda</span><span class="p">);</span>
+    <span class="n">gsl</span><span class="o">::</span><span class="n">vector_div</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ytemp</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">d</span><span class="p">);</span>
+    <span class="n">_A</span><span class="p">.</span><span class="n">Mul</span><span class="p">(</span><span class="sc">&#39;t&#39;</span><span class="p">,</span> <span class="o">-</span><span class="n">kOne</span><span class="p">,</span> <span class="n">ytemp</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">kZero</span><span class="p">,</span> <span class="n">xtemp</span><span class="p">.</span><span class="n">data</span><span class="p">);</span>
+    <span class="n">gsl</span><span class="o">::</span><span class="n">blas_scal</span><span class="p">(</span><span class="o">-</span><span class="n">kOne</span> <span class="o">/</span> <span class="n">_rho</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ztemp</span><span class="p">);</span>
+    <span class="n">gsl</span><span class="o">::</span><span class="n">vector_memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">zt</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ztemp</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Otherwise, we make a initial guess for these two vars</p>
+<div class="highlight"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">_init_x</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">_init_lambda</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// Alternating projections to satisfy </span>
+    <span class="c1">//   1. \lambda \in \partial f(y), \mu \in \partial g(x)</span>
+    <span class="c1">//   2. \mu = -A^T\lambda</span>
+    <span class="n">gsl</span><span class="o">::</span><span class="n">vector_set_all</span><span class="p">(</span><span class="o">&amp;</span><span class="n">zprev</span><span class="p">,</span> <span class="n">kZero</span><span class="p">);</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">kInitIter</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">ProjSubgradEval</span><span class="p">(</span><span class="n">g_cpu</span><span class="p">,</span> <span class="n">xprev</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">x</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">xtemp</span><span class="p">.</span><span class="n">data</span><span class="p">);</span>
+        <span class="n">ProjSubgradEval</span><span class="p">(</span><span class="n">f_cpu</span><span class="p">,</span> <span class="n">yprev</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">y</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">ytemp</span><span class="p">.</span><span class="n">data</span><span class="p">);</span>
+        <span class="n">_P</span><span class="p">.</span><span class="n">Project</span><span class="p">(</span><span class="n">xtemp</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">ytemp</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">kOne</span><span class="p">,</span> <span class="n">xprev</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">yprev</span><span class="p">.</span><span class="n">data</span><span class="p">,</span>
+                <span class="n">kProjTolIni</span><span class="p">);</span>
+        <span class="n">gsl</span><span class="o">::</span><span class="n">blas_axpy</span><span class="p">(</span><span class="o">-</span><span class="n">kOne</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ztemp</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zprev</span><span class="p">);</span>
+        <span class="n">gsl</span><span class="o">::</span><span class="n">blas_scal</span><span class="p">(</span><span class="o">-</span><span class="n">kOne</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zprev</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="c1">// xt = -1 / \rho * \mu, yt = -1 / \rho * \lambda.</span>
+    <span class="n">gsl</span><span class="o">::</span><span class="n">vector_memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">zt</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zprev</span><span class="p">);</span>
+    <span class="n">gsl</span><span class="o">::</span><span class="n">blas_scal</span><span class="p">(</span><span class="o">-</span><span class="n">kOne</span> <span class="o">/</span> <span class="n">_rho</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zt</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">_init_lambda</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">_init_x</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">ASSERT</span><span class="p">(</span><span class="nb">false</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="n">_init_x</span> <span class="o">=</span> <span class="n">_init_lambda</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+</pre></div>
+
+
+<p>Then it defines the stop criteria.</p>
+<div class="highlight"><pre><span></span><span class="n">T</span> <span class="n">sqrtn_atol</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">sqrt</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">n</span><span class="p">))</span> <span class="o">*</span> <span class="n">_abs_tol</span><span class="p">;</span>
+<span class="n">T</span> <span class="n">sqrtm_atol</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">sqrt</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">m</span><span class="p">))</span> <span class="o">*</span> <span class="n">_abs_tol</span><span class="p">;</span>
+<span class="n">T</span> <span class="n">sqrtmn_atol</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">sqrt</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">m</span> <span class="o">+</span> <span class="n">n</span><span class="p">))</span> <span class="o">*</span> <span class="n">_abs_tol</span><span class="p">;</span>
+<span class="n">T</span> <span class="n">delta</span> <span class="o">=</span> <span class="n">kDeltaMin</span><span class="p">,</span> <span class="n">xi</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1.0</span><span class="p">);</span>
+<span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">0u</span><span class="p">,</span> <span class="n">kd</span> <span class="o">=</span> <span class="mi">0u</span><span class="p">,</span> <span class="n">ku</span> <span class="o">=</span> <span class="mi">0u</span><span class="p">;</span>
+<span class="kt">bool</span> <span class="n">converged</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="n">T</span> <span class="n">nrm_r</span><span class="p">,</span> <span class="n">nrm_s</span><span class="p">,</span> <span class="n">gap</span><span class="p">,</span> <span class="n">eps_gap</span><span class="p">,</span> <span class="n">eps_pri</span><span class="p">,</span> <span class="n">eps_dua</span><span class="p">;</span>
+</pre></div>
+
+
+<p>Finally, here is the big iteration loop. I'm going to examine it step by step.</p>
+<div class="highlight"><pre><span></span><span class="n">gsl</span><span class="o">::</span><span class="n">vector_memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">zprev</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z</span><span class="p">);</span>
+<span class="c1">// Evaluate Proximal Operators</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">blas_axpy</span><span class="p">(</span><span class="o">-</span><span class="n">kOne</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zt</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z</span><span class="p">);</span>
+<span class="n">ProxEval</span><span class="p">(</span><span class="n">g_cpu</span><span class="p">,</span> <span class="n">_rho</span><span class="p">,</span> <span class="n">x</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">x12</span><span class="p">.</span><span class="n">data</span><span class="p">);</span>
+<span class="n">ProxEval</span><span class="p">(</span><span class="n">f_cpu</span><span class="p">,</span> <span class="n">_rho</span><span class="p">,</span> <span class="n">y</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">y12</span><span class="p">.</span><span class="n">data</span><span class="p">);</span>
+</pre></div>
+
+
+<p>In math , these code are identical to </p>
+<p>\begin{equation}\begin{aligned}z_{prev}&amp;=z\z&amp;=z-z_t\x_{12}&amp;=\textbf{prox} (g,x,\rho)\y_{12}&amp;=\textbf{prox}(f,y,\rho)\\end{aligned}\end{equation}
+The <code>prox</code> is proximal operator. After the new value of $x,y$ are computed, we calculate the gap,optimal value and tolerance to decide if the stop criterion is meet.</p>
+<div class="highlight"><pre><span></span><span class="n">gsl</span><span class="o">::</span><span class="n">blas_axpy</span><span class="p">(</span><span class="o">-</span><span class="n">kOne</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z12</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">blas_dot</span><span class="p">(</span><span class="o">&amp;</span><span class="n">z</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z12</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">gap</span><span class="p">);</span>
+<span class="n">gap</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">abs</span><span class="p">(</span><span class="n">gap</span><span class="p">);</span>
+<span class="n">eps_gap</span> <span class="o">=</span> <span class="n">sqrtmn_atol</span><span class="o">+</span> <span class="n">_rel_tol</span> <span class="o">*</span> <span class="n">gsl</span><span class="o">::</span><span class="n">blas_nrm2</span><span class="p">(</span><span class="o">&amp;</span><span class="n">z</span><span class="p">)</span> <span class="o">*</span> <span class="n">gsl</span><span class="o">::</span><span class="n">blas_nrm2</span><span class="p">(</span><span class="o">&amp;</span><span class="n">z12</span><span class="p">);</span>
+<span class="n">eps_pri</span> <span class="o">=</span> <span class="n">sqrtm_atol</span> <span class="o">+</span> <span class="n">_rel_tol</span> <span class="o">*</span> <span class="n">gsl</span><span class="o">::</span><span class="n">blas_nrm2</span><span class="p">(</span><span class="o">&amp;</span><span class="n">y12</span><span class="p">);</span>
+<span class="n">eps_dua</span> <span class="o">=</span> <span class="n">sqrtn_atol</span> <span class="o">+</span> <span class="n">_rel_tol</span> <span class="o">*</span> <span class="n">_rho</span> <span class="o">*</span> <span class="n">gsl</span><span class="o">::</span><span class="n">blas_nrm2</span><span class="p">(</span><span class="o">&amp;</span><span class="n">x</span><span class="p">);</span><span class="c1">// should be x12?</span>
+</pre></div>
+
+
+<p>The math procedure is</p>
+<p>\begin{equation}\begin{aligned}z&amp;=z-z_{12}\gap&amp;=\vert z<em>z_{12}\vert \\epsilon ^{gap}&amp;=\sqrt{m+n} +\epsilon ^{rel} * \Vert z\Vert_2^2 </em>\Vert z_{12}\Vert_2^2\\epsilon ^{pri}&amp;=\sqrt{m} +\epsilon ^{rel} * \Vert y_{12}\Vert_2^2\\epsilon ^{dual}&amp;=\sqrt{n} +\epsilon ^{rel} *\Vert x_{12}\Vert_2^2\\end{aligned}\end{equation}</p>
+<div class="highlight"><pre><span></span><span class="c1">// Apply over relaxation.</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">vector_memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ztemp</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zt</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">blas_axpy</span><span class="p">(</span><span class="n">kAlpha</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z12</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ztemp</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">blas_axpy</span><span class="p">(</span><span class="n">kOne</span> <span class="o">-</span> <span class="n">kAlpha</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zprev</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ztemp</span><span class="p">);</span>
+
+<span class="c1">// Project onto y = Ax.</span>
+<span class="n">T</span> <span class="n">proj_tol</span> <span class="o">=</span> <span class="n">kProjTolMin</span>
+        <span class="o">/</span> <span class="n">std</span><span class="o">::</span><span class="n">pow</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">kProjTolPow</span><span class="p">);</span>
+<span class="n">proj_tol</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">max</span><span class="p">(</span><span class="n">proj_tol</span><span class="p">,</span> <span class="n">kProjTolMax</span><span class="p">);</span>
+<span class="n">_P</span><span class="p">.</span><span class="n">Project</span><span class="p">(</span><span class="n">xtemp</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">ytemp</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">kOne</span><span class="p">,</span> <span class="n">x</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">y</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">proj_tol</span><span class="p">);</span>
+</pre></div>
+
+
+<p>The corrosponding math procedure is</p>
+<p>\begin{equation}\begin{aligned}z_{temp}&amp;=z_{t}+\alpha * z_{12}+(1-\alpha)*z_{prev}\proj_{tol}&amp;=\max(ProjTolMax,ProjTolMin/(k+1)^{ProjTolPow})\(x,y)&amp;=\text{proj} (x_{temp},y_{temp},proj_tol)\\end{aligned}\end{equation}
+The projector function is not fully discussed. We will dive into its details later.</p>
+<p>Now we calculate the residual :</p>
+<div class="highlight"><pre><span></span><span class="c1">// Calculate residuals.</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">vector_memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ztemp</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zprev</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">blas_axpy</span><span class="p">(</span><span class="o">-</span><span class="n">kOne</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ztemp</span><span class="p">);</span>
+<span class="n">nrm_s</span> <span class="o">=</span> <span class="n">_rho</span> <span class="o">*</span> <span class="n">gsl</span><span class="o">::</span><span class="n">blas_nrm2</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ztemp</span><span class="p">);</span>
+
+<span class="n">gsl</span><span class="o">::</span><span class="n">vector_memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ztemp</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z12</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">blas_axpy</span><span class="p">(</span><span class="o">-</span><span class="n">kOne</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ztemp</span><span class="p">);</span>
+<span class="n">nrm_r</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">blas_nrm2</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ztemp</span><span class="p">);</span>
+</pre></div>
+
+
+<p>The math procudure is</p>
+<p>\begin{equation}\begin{aligned}\Vert s^k \Vert_2^2&amp;=\rho *\Vert z_{prev}-z\Vert <em 12>2^2\\Vert r^k \Vert_2^2&amp;=\Vert z</em>-z\Vert _2^2\\end{aligned}\end{equation}
+Then the solver decide if it calculate the exact residual by comparing current rough residual to the eps</p>
+<div class="highlight"><pre><span></span><span class="c1">// Calculate exact residuals only if necessary.</span>
+<span class="kt">bool</span> <span class="n">exact</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="k">if</span> <span class="p">((</span><span class="n">nrm_r</span> <span class="o">&lt;</span> <span class="n">eps_pri</span> <span class="o">&amp;&amp;</span> <span class="n">nrm_s</span> <span class="o">&lt;</span> <span class="n">eps_dua</span><span class="p">)</span> <span class="o">||</span> <span class="n">use_exact_stop</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">gsl</span><span class="o">::</span><span class="n">vector_memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ztemp</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z12</span><span class="p">);</span>
+    <span class="n">_A</span><span class="p">.</span><span class="n">Mul</span><span class="p">(</span><span class="sc">&#39;n&#39;</span><span class="p">,</span> <span class="n">kOne</span><span class="p">,</span> <span class="n">x12</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="o">-</span><span class="n">kOne</span><span class="p">,</span> <span class="n">ytemp</span><span class="p">.</span><span class="n">data</span><span class="p">);</span>
+    <span class="n">nrm_r</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">blas_nrm2</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ytemp</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">nrm_r</span> <span class="o">&lt;</span> <span class="n">eps_pri</span><span class="p">)</span> <span class="o">||</span> <span class="n">use_exact_stop</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">gsl</span><span class="o">::</span><span class="n">vector_memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ztemp</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z12</span><span class="p">);</span>
+        <span class="n">gsl</span><span class="o">::</span><span class="n">blas_axpy</span><span class="p">(</span><span class="n">kOne</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zt</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ztemp</span><span class="p">);</span>
+        <span class="n">gsl</span><span class="o">::</span><span class="n">blas_axpy</span><span class="p">(</span><span class="o">-</span><span class="n">kOne</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zprev</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ztemp</span><span class="p">);</span>
+        <span class="n">_A</span><span class="p">.</span><span class="n">Mul</span><span class="p">(</span><span class="sc">&#39;t&#39;</span><span class="p">,</span> <span class="n">kOne</span><span class="p">,</span> <span class="n">ytemp</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">kOne</span><span class="p">,</span> <span class="n">xtemp</span><span class="p">.</span><span class="n">data</span><span class="p">);</span>
+        <span class="n">nrm_s</span> <span class="o">=</span> <span class="n">_rho</span> <span class="o">*</span> <span class="n">gsl</span><span class="o">::</span><span class="n">blas_nrm2</span><span class="p">(</span><span class="o">&amp;</span><span class="n">xtemp</span><span class="p">);</span>
+        <span class="n">exact</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Frankly,I don't know where the exact residual come from!!!!</p>
+<p>Finally we come to the stopping criterial</p>
+<div class="highlight"><pre><span></span><span class="n">converged</span> <span class="o">=</span> <span class="n">exact</span> <span class="o">&amp;&amp;</span> <span class="n">nrm_r</span> <span class="o">&lt;</span> <span class="n">eps_pri</span> <span class="o">&amp;&amp;</span> <span class="n">nrm_s</span> <span class="o">&lt;</span> <span class="n">eps_dua</span><span class="o">&amp;&amp;</span> <span class="p">(</span><span class="o">!</span><span class="n">_gap_stop</span> <span class="o">||</span> <span class="n">gap</span> <span class="o">&lt;</span> <span class="n">eps_gap</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">converged</span> <span class="o">||</span> <span class="n">k</span> <span class="o">==</span> <span class="n">_max_iter</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="k">break</span><span class="p">;</span>
+</pre></div>
+
+
+<p>If not converged yet, we should update the dual variable</p>
+<div class="highlight"><pre><span></span><span class="c1">// Update dual variable.</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">blas_axpy</span><span class="p">(</span><span class="n">kAlpha</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z12</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zt</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">blas_axpy</span><span class="p">(</span><span class="n">kOne</span> <span class="o">-</span> <span class="n">kAlpha</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zprev</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zt</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">blas_axpy</span><span class="p">(</span><span class="o">-</span><span class="n">kOne</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">z</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">zt</span><span class="p">);</span>
+</pre></div>
+
+
+<p>In short, the z update is</p>
+<p>\begin{equation}z_t=\alpha * z_{12} +(1-\alpha)*z_{prev} -z\end{equation}
+Sometimes the $\rho$ is dynamic , we would update the $\rho$ as well. The detail is ad-hoc so I'm not going to explain it (It's just a mess).</p>
+<p>The whole procedure is not straight to understand, especially with the different $z$ names. The workflow presented in paper is:</p>
+<p>\begin{equation}\begin{aligned}x^{k+1/2}&amp;=\text{prox}_g(x^k-\hat{x}^k)\y^{k+1/2}&amp;=\text{prox}_f(y^k-\hat{y}^k)\(x^{k+1},y^{k+1})&amp;=\prod _A (x^{k+1/2}+\hat{x}^k,y^{k+1/2}+\hat{y}^k)\\hat{x}^{k+1}&amp;=\hat{x}^k+x^{k+1/2}-x^{k+1}\\hat{y}^{k+1}&amp;=\hat{y}^k+y^{k+1/2}-y^{k+1}\\end{aligned}\end{equation}
+The $\prod$ denotes projection onto ${(x,y)| y=Ax}$.</p>
+<p>The solver body is completed, and we instantiate some template at the end of this cpp file:</p>
+<div class="highlight"><pre><span></span><span class="c1">// Explicit template instantiation.</span>
+<span class="c1">// Dense direct.</span>
+<span class="k">template</span> <span class="k">class</span> <span class="nc">Pogs</span><span class="o">&lt;</span><span class="kt">double</span><span class="p">,</span> <span class="n">MatrixDense</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">,</span>
+        <span class="n">ProjectorDirect</span><span class="o">&lt;</span><span class="kt">double</span><span class="p">,</span> <span class="n">MatrixDense</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&gt;</span> <span class="p">;</span>
+<span class="k">template</span> <span class="k">class</span> <span class="nc">Pogs</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="n">MatrixDense</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">,</span>
+        <span class="n">ProjectorDirect</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="n">MatrixDense</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&gt;</span> <span class="p">;</span>
+
+<span class="c1">// Dense indirect.</span>
+<span class="k">template</span> <span class="k">class</span> <span class="nc">Pogs</span><span class="o">&lt;</span><span class="kt">double</span><span class="p">,</span> <span class="n">MatrixDense</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">,</span>
+        <span class="n">ProjectorCgls</span><span class="o">&lt;</span><span class="kt">double</span><span class="p">,</span> <span class="n">MatrixDense</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&gt;</span> <span class="p">;</span>
+<span class="k">template</span> <span class="k">class</span> <span class="nc">Pogs</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="n">MatrixDense</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">,</span>
+        <span class="n">ProjectorCgls</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="n">MatrixDense</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&gt;</span> <span class="p">;</span>
+
+<span class="c1">// Sparse indirect.</span>
+<span class="k">template</span> <span class="k">class</span> <span class="nc">Pogs</span><span class="o">&lt;</span><span class="kt">double</span><span class="p">,</span> <span class="n">MatrixSparse</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">,</span>
+        <span class="n">ProjectorCgls</span><span class="o">&lt;</span><span class="kt">double</span><span class="p">,</span> <span class="n">MatrixSparse</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&gt;</span> <span class="p">;</span>
+<span class="k">template</span> <span class="k">class</span> <span class="nc">Pogs</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="n">MatrixSparse</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">,</span>
+        <span class="n">ProjectorCgls</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="n">MatrixSparse</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&gt;</span> <span class="p">;</span>
+</pre></div>
+
+
+<h1>projection.h</h1>
+<p>The subspace projection problem is to project $x_0,y_0$ to one point $(x_1,y_1)$ in subspace $y=Ax$. Ie </p>
+<p>\begin{equation}minimize \quad \Vert (x_1,y_1)-(x_0,y_0)\Vert _2^2 \quad w.r.t. \quad y_1=Ax_1 \end{equation}
+Infact this subspace projection is a viaration of least squre projection $Ax=b$. If we conside $b=x_0++y_0$ and $A_1=I++A$ where the $++$ is concatenation . So current problem is to solve the least square projection of $A_1 x=b$.</p>
+<p>But there is a cut through answer without the concatenation . We take derivation of </p>
+<p>\begin{equation}\Vert x-x_0\Vert _2^2 +\Vert Ax -y_0\Vert _2^2\end{equation}
+and set it to zero, we get</p>
+<p>\begin{equation}x(I+A^TA)=x_0+A^Ty_0\end{equation}
+That's a least square projection problem. If we solve the $x$ ,then $y=Ax$.</p>
+<p>The least square projection problem.r can be done in two manner: conjugate gradient and direct.</p>
+<p>The conjugate gradient algorithm is detailed below for solving $Ax = b$ where $A$ is a real, symmetric, positive-definite matrix. The input vector $x_0$ can be an approximate initial solution or 0. </p>
+<p><img alt="共轭梯度法" src="{attach}image\POGS\conjugategradient.png"></p>
+<p>While the direct method is to compute</p>
+<p>\begin{equation}x=(A^TA)^{-1}Ab\end{equation}
+The code is straight forward. Here is the preparation work.</p>
+<div class="highlight"><pre><span></span><span class="kt">size_t</span> <span class="n">min_dim</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">min</span><span class="p">(</span><span class="n">_A</span><span class="p">.</span><span class="n">Rows</span><span class="p">(),</span> <span class="n">_A</span><span class="p">.</span><span class="n">Cols</span><span class="p">());</span>
+
+<span class="n">info</span><span class="o">-&gt;</span><span class="n">AA</span> <span class="o">=</span> <span class="k">new</span> <span class="n">T</span><span class="p">[</span><span class="n">min_dim</span> <span class="o">*</span> <span class="n">min_dim</span><span class="p">];</span>
+<span class="n">ASSERT</span><span class="p">(</span><span class="n">info</span><span class="o">-&gt;</span><span class="n">AA</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">);</span>
+<span class="n">info</span><span class="o">-&gt;</span><span class="n">L</span> <span class="o">=</span> <span class="k">new</span> <span class="n">T</span><span class="p">[</span><span class="n">min_dim</span> <span class="o">*</span> <span class="n">min_dim</span><span class="p">];</span>
+<span class="n">ASSERT</span><span class="p">(</span><span class="n">info</span><span class="o">-&gt;</span><span class="n">L</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">);</span>
+<span class="n">memset</span><span class="p">(</span><span class="n">info</span><span class="o">-&gt;</span><span class="n">AA</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">min_dim</span> <span class="o">*</span> <span class="n">min_dim</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">));</span>
+<span class="n">memset</span><span class="p">(</span><span class="n">info</span><span class="o">-&gt;</span><span class="n">L</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">min_dim</span> <span class="o">*</span> <span class="n">min_dim</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">));</span>
+
+<span class="n">CBLAS_TRANSPOSE_t</span> <span class="n">op_type</span> <span class="o">=</span> <span class="n">_A</span><span class="p">.</span><span class="n">Rows</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">_A</span><span class="p">.</span><span class="n">Cols</span><span class="p">()</span> <span class="o">?</span> <span class="nl">CblasTrans</span> <span class="p">:</span> <span class="n">CblasNoTrans</span><span class="p">;</span>
+
+<span class="c1">// Compute AA</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">_A</span><span class="p">.</span><span class="n">Order</span><span class="p">()</span> <span class="o">==</span> <span class="n">MatrixDense</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">ROW</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">const</span> <span class="n">gsl</span><span class="o">::</span><span class="n">matrix</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">CblasRowMajor</span><span class="o">&gt;</span> <span class="n">A</span> <span class="o">=</span>
+        <span class="n">gsl</span><span class="o">::</span><span class="n">matrix_view_array</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">CblasRowMajor</span><span class="o">&gt;</span>
+        <span class="p">(</span><span class="n">_A</span><span class="p">.</span><span class="n">Data</span><span class="p">(),</span> <span class="n">_A</span><span class="p">.</span><span class="n">Rows</span><span class="p">(),</span> <span class="n">_A</span><span class="p">.</span><span class="n">Cols</span><span class="p">());</span>
+    <span class="n">gsl</span><span class="o">::</span><span class="n">matrix</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">CblasRowMajor</span><span class="o">&gt;</span> <span class="n">AA</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">matrix_view_array</span> <span class="o">&lt;</span> <span class="n">T</span><span class="p">,</span> <span class="n">CblasRowMajor</span> <span class="o">&gt;</span>
+        <span class="p">(</span><span class="n">info</span><span class="o">-&gt;</span><span class="n">AA</span><span class="p">,</span> <span class="n">min_dim</span><span class="p">,</span> <span class="n">min_dim</span><span class="p">);</span>
+    <span class="n">gsl</span><span class="o">::</span><span class="n">blas_syrk</span><span class="p">(</span><span class="n">CblasLower</span><span class="p">,</span> <span class="n">op_type</span><span class="p">,</span>
+        <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1.</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">A</span><span class="p">,</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">0.</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">AA</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>In short, the pogs consider $A$ is $m*n$ ,while$m\ge n$. If the input is not in that form, we would transpose $A$(not transpose it in memory but logically). The<code>min_dim</code> is $less(m,n)$. And the $A^TA$ is computed by a <code>syrk</code> call. </p>
+<div class="highlight"><pre><span></span><span class="k">const</span> <span class="n">gsl</span><span class="o">::</span><span class="n">matrix</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">CblasRowMajor</span><span class="o">&gt;</span> <span class="n">A</span> <span class="o">=</span>
+    <span class="n">gsl</span><span class="o">::</span><span class="n">matrix_view_array</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">CblasRowMajor</span><span class="o">&gt;</span>
+    <span class="p">(</span><span class="n">_A</span><span class="p">.</span><span class="n">Data</span><span class="p">(),</span> <span class="n">_A</span><span class="p">.</span><span class="n">Rows</span><span class="p">(),</span> <span class="n">_A</span><span class="p">.</span><span class="n">Cols</span><span class="p">());</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">matrix</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">CblasRowMajor</span><span class="o">&gt;</span> <span class="n">AA</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">matrix_view_array</span> <span class="o">&lt;</span> <span class="n">T</span><span class="p">,</span> <span class="n">CblasRowMajor</span> <span class="o">&gt;</span>
+    <span class="p">(</span><span class="n">info</span><span class="o">-&gt;</span><span class="n">AA</span><span class="p">,</span> <span class="n">min_dim</span><span class="p">,</span> <span class="n">min_dim</span><span class="p">);</span>
+<span class="n">gsl</span><span class="o">::</span><span class="n">matrix</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">CblasRowMajor</span><span class="o">&gt;</span> <span class="n">L</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">matrix_view_array</span> <span class="o">&lt;</span> <span class="n">T</span><span class="p">,</span> <span class="n">CblasRowMajor</span> <span class="o">&gt;</span>
+    <span class="p">(</span><span class="n">info</span><span class="o">-&gt;</span><span class="n">L</span><span class="p">,</span> <span class="n">min_dim</span><span class="p">,</span> <span class="n">min_dim</span><span class="p">);</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="n">s</span> <span class="o">!=</span> <span class="n">info</span><span class="o">-&gt;</span><span class="n">s</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">gsl</span><span class="o">::</span><span class="n">matrix_memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">L</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">AA</span><span class="p">);</span>
+    <span class="n">gsl</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">diagL</span> <span class="o">=</span> <span class="n">gsl</span><span class="o">::</span><span class="n">matrix_diagonal</span><span class="p">(</span><span class="o">&amp;</span><span class="n">L</span><span class="p">);</span>
+    <span class="n">gsl</span><span class="o">::</span><span class="n">vector_add_constant</span><span class="p">(</span><span class="o">&amp;</span><span class="n">diagL</span><span class="p">,</span> <span class="n">s</span><span class="p">);</span>
+    <span class="n">gsl</span><span class="o">::</span><span class="n">linalg_cholesky_decomp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">L</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">_A</span><span class="p">.</span><span class="n">Rows</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">_A</span><span class="p">.</span><span class="n">Cols</span><span class="p">())</span>
+<span class="p">{</span>
+    <span class="n">gsl</span><span class="o">::</span><span class="n">blas_gemv</span><span class="p">(</span><span class="n">CblasTrans</span><span class="p">,</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1.</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">A</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">y_vec</span><span class="p">,</span>
+        <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1.</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">x_vec</span><span class="p">);</span>
+    <span class="n">gsl</span><span class="o">::</span><span class="n">linalg_cholesky_svx</span><span class="p">(</span><span class="o">&amp;</span><span class="n">L</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">x_vec</span><span class="p">);</span>
+    <span class="n">gsl</span><span class="o">::</span><span class="n">blas_gemv</span><span class="p">(</span><span class="n">CblasNoTrans</span><span class="p">,</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">1.</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">A</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">x_vec</span><span class="p">,</span>
+        <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="mf">0.</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">y_vec</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>We must take care of row major or col major.</p>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>links</h2>
+                        <ul>
+                            <li><a href="http://getpelican.com/">Pelican</a></li>
+                            <li><a href="http://python.org/">Python.org</a></li>
+                            <li><a href="http://jinja.pocoo.org/">Jinja2</a></li>
+                            <li><a href="#">You can modify those links in your config file</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+
+                            <li><a href="#">You can add links in your config file</a></li>
+                            <li><a href="#">Another social link</a></li>
+                        </ul>
+                </div><!-- /.social -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="http://getpelican.com/">Pelican</a>, which takes great advantage of <a href="http://python.org">Python</a>.
+                </address><!-- /#about -->
+
+                <p>The theme is by <a href="http://coding.smashingmagazine.com/2009/08/04/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>

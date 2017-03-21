@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="chinese (simplified)">
+<head>
+        <meta charset="utf-8" />
+        <title>The Boosting Method</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">SpiritsAway </a></h1>
+                <nav><ul>
+                    <li><a href="/pages/about.html">about</a></li>
+                    <li class="active"><a href="/category/ai.html">AI</a></li>
+                    <li><a href="/category/algorithm.html">Algorithm</a></li>
+                    <li><a href="/category/code.html">Code</a></li>
+                    <li><a href="/category/compiler.html">Compiler</a></li>
+                    <li><a href="/category/cpp.html">CPP</a></li>
+                    <li><a href="/category/math.html">Math</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/the-boosting-method.html" rel="bookmark"
+           title="Permalink to The Boosting Method">The Boosting Method</a></h1>
+    </header>
+
+    <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2015-04-17T21:31:00+08:00">
+                Published: 周五 17 四月 2015
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
+        </address>
+<p>In <a href="/category/ai.html">AI</a>.</p>
+<p>tags: <a href="/tag/boosting.html">Boosting</a> <a href="/tag/ai.html">AI</a> <a href="/tag/converge.html">Converge</a> </p>
+</footer><!-- /.post-info -->      <h1>Boosting方法</h1>
+<p>Boosting方法是一种组合方法，处理的是分类问题（当前对于分类的讨论限制为二分类，下面则不再复述）。其中心思想相当的简单：每次利用一个弱分类器(weak learner)对数据进行分类，每次分类完成之后，将分错的数据权重提高一点，并迭代进行多次分类。最后通过综合多次分类的结果作为最终的分类器，这样最终得到的分类器在测试数据与训练数据上都可以得到比较好的成绩。</p>
+<h1>boosting简单图解</h1>
+<p>boosting的大概流程如下图：
+<img alt="boosting概述" src="{attach}image\BOOSTING\boosting_procedure.png"></p>
+<p>训练集中一共有n个点，我们可以为里面的每一个点赋上一个权重$W_i(0 \le i &lt; n)$，表示这个点的重要程度，初始时都相等（都赋值为1就可以了）。通过依次训练模型的过程，我们对点的权重进行修正，如果分类正确了，权重不变或者降低；如果分类错了，则权重提高。程序越往后执行，训练出的模型就越会在意那些容易分错（权重高）的点。正因为boosting对于错误分类的过于强调，在数据有错误或误差时如果使用强分类器来做基础分类器的话会导致非常严重的overfitting。因此，boosting中推荐使用弱分类器（必须大于1/2）来进行组装。</p>
+<p>上图中绿色的线就是表示依次训练模型。当全部的程序执行完后，会得到M个模型，分别对应上图的$y_1\cdots y_M(x)$，通过加权的方式组合成一个最终的模型$Y_M(x)$。</p>
+<p><img alt="PRML boosting" src="{attach}image\BOOSTING\prml_boosting_illustration.png"></p>
+<p>上图（图片来自prml p660）就是一个Boosting的分类过程，绿色的线表示目前取得的模型（模型是由前m次得到的模型合并得到的），虚线表示当前这次模型。每次分类的时候，会更关注分错的数据，上图中，红色和蓝色的点就是数据，点越大表示权重越高，看看右下角的图片，当m=150的时候，获取的模型已经几乎能够将红色和蓝色的点区分开了。</p>
+<p>当前只是一个浅显的介绍，并没有涉及那些具体细节：对于点的权重如何调整，对于生成的多个分类器如何组合，如何选择和使用弱分类器。此外，还有最重要的一点：该方法为何能得到非常好的效果。下面便以几种知名的boosting方法来解释其中的一些细节和原理。</p>
+<h1>极简boosting</h1>
+<p>话说这种方式的boosting我还不知道它的正式学名。。。这种boosting包含了一下几个部分：</p>
+<ul>
+<li>
+<p>弱分类器：对于$n$个权值分别为${w_1,w_2,\cdots,w_n}$的数据${a_1,a_2,\cdots,a_n}$，该分类器所能正确分类的数据的权值总和至少为$(\frac{1}{2}+\gamma)\sum_{i=1}^{n}{w_i}$，其中$\gamma$非负。</p>
+</li>
+<li>
+<p>权重更新：每次分类之后，对于错分数据的权重乘以$1+\epsilon$($\epsilon$大于0)，其他的不变。</p>
+</li>
+<li>
+<p>投票分类：最终数据的分类标签由所有的分类器投票决定，每个分类器的投票权重相等，即majority vote。</p>
+</li>
+</ul>
+<p>现在我们来证明一下这个boosting是有效的：随着分类的次数$T$的增加，数据错误分类的个数$m$会逐渐趋近于0.</p>
+<p>首先，考虑到分类器的组合是majority vote 方式。如果一个数据被错误分类了，则该数据在所有的分类器中至少分类错误了$T/2$次。又由于每次错误分类都会导致权值放大$1+\epsilon$。因此，被误分类的数据最后的权重值至少为$(1+\epsilon)^{T/2}$。所以，总的来说，这$m$个错误分类数据的权值总和至少为$m(1+\epsilon)^{T/2}$。</p>
+<p>现在我们来考虑最后一次分类时的所有数据的权重和。每次分类时，一个数据被误分类的概率最多为$f=1/2-\gamma$，被正确分类的概率至少为$1/2+\gamma$。又由于每一个数据被分类之间是独立事件，用$weight(t)$代表第$t$次分类并调整权重之后的所有数据的权重总和，则我们有下式：</p>
+<p>\begin{equation}\begin{split}weight(t+1)&amp;\le((1+\epsilon)f+1-f)\times weight(t)\&amp;=(1+\epsilon f)\times weight(t)\&amp;\le(1+\frac{\epsilon}{2}-\gamma\epsilon)\times weight(t)\end{split}\end{equation}
+又由于初始时$w(0)=n$，所以：</p>
+<p>\begin{equation}weight(T)\le n(1+\frac{\epsilon}{2}-\gamma\epsilon)^T\end{equation}
+同时被误分类的数据的权重的总和不可能大于所有数据权重的总和，因此我们有下式：</p>
+<p>\begin{equation}m(1+\epsilon)^{T/2}\leq n(1+\frac{\epsilon}{2}-\gamma\epsilon)^T\end{equation}
+对于上士取对数，可以得到如下结果：</p>
+<p>\begin{equation}ln(m)+\frac{T}{2}ln(1+\epsilon)\le ln(n)+Tln(1+\frac{\epsilon}{2}-\gamma\epsilon)\end{equation}
+同时，利用自然对数的近似$ln(1+\delta)=\delta$，我们可以化简为：</p>
+<p>\begin{equation}ln(m)\le ln(n)-T\gamma\epsilon\end{equation}
+所以，错误分类数是指数衰减的。当$T=(1+ln(n))/{\gamma\epsilon}$时，$m\le \frac{1}{e}$，即不存在误分类。</p>
+<p>因此，分类次数只需要$O(log(n))$就可以达到完美分类。</p>
+<h1>adaboost</h1>
+<p>adaboost相对于上面的极简boost方法，做了一些修改。数据采取的是二元组形式${x_i,y_i}$，其中$y_i$为${+1,-1}$。设$G_m$为第$m$个分类器，$e_m$为第$m$次分类时的分类错误率，$w_{m,i}$为第$m$轮分类之前数据${x_i,y_i}$的权重，同时保存一个变量$a_m$：</p>
+<p>\begin{equation}a_m=\frac{1}{2}log(\frac{1-e_m}{e_m})\end{equation}</p>
+<ul>
+<li>
+<p>初始权重为$\frac{1}{n}$；</p>
+</li>
+<li>
+<p>权重更新策略不同，对于分类正确的样本会权值减少为原来的$e^{-a_m}/Z_m$，对分类错误的样本权值会增加为原来的$e^{a_m}/Z_m$。这里的$Z_m$是一个规范化因子，其值为$$Z_m=\sum_{i=1}^{n}{w_{m,i}\text{exp}(-a_my_iG_m(x_i))}$$ </p>
+</li>
+<li>
+<p>最终分类器不再是简单的majority vote ，而是带权重的majority vote。每个分类器$G_m$的权重为$a_m$。</p>
+</li>
+</ul>
+<p>最终的分类器$G(x)$为</p>
+<p>\begin{equation}G(x)=sgn(\sum_{m=1}^{M}{a_mG_m(x)})\end{equation}</p>
+<p>现在，我们来证明该方法的有效性。首先给出adaboost方法训练误差的上界：</p>
+<p>\begin{equation}\frac{1}{n}\sum_{i=1}^{n}{I(G(x_i)\ne y_i)}\le \frac{1}{n}\sum_{i=1}^{n}{e^{-y_if(x_i)}}=\prod_{j=0}^{m}{Z_m}\end{equation}
+下面，我们对该误差上界来进行证明。上式的左边很容易证明：</p>
+<p>\begin{equation}G(x_i)\ne y_i \Rightarrow f(x_i)y_i&lt;0\Rightarrow 1&lt;e^{-f(x_i)y_i}\end{equation}
+难点是后半部分，这里我们首先给出adaboost中$Z_m$与$w_{m+1,i}$之间的关系：</p>
+<p>\begin{equation}\begin{split}w_{m+1,i}&amp;=\frac{w_{m,i}}{Z_m}\text{exp}(-a_my_iG_m(x_i))\Z_mw_{m+1,i}&amp;=w_{m,i}\text{exp}(-a_my_iG_m(x_i))\end{split}\end{equation}
+接下来，开始展开右边的等式的推导过程：</p>
+<p>\begin{equation}\begin{split}\frac{1}{n}\text{exp}(-y_if(x_i))&amp;=\frac{1}{n}\sum_{i}\text{exp}(-\sum_{m=1}^{M}{a_my_iG_m(x_i)})\&amp;=\sum_{i}{w_{1,i}\text{exp}(-\sum_{m=1}^{M}{a_my_iG_m(x_i)})}\&amp;=\sum_{i}{w_{1,i}\prod_{m=1}^{M}{\text{exp}(-{a_my_iG_m(x_i)})}}\&amp;=Z_1\sum_{i}{w_{2,i}\prod_{m=2}^{M}{\text{exp}(-{a_my_iG_m(x_i)})}}\&amp;=Z_1Z_2\sum_{i}{w_{3,i}\prod_{m=3}^{M}{\text{exp}(-{a_my_iG_m(x_i)})}}\&amp;=Z_1Z_2\cdots Z_{M-1}\sum_{i}{w_{M,i}{\text{exp}(-{a_My_iG_M(x_i)})}}\&amp;=\prod_{m=1}^{M}{Z_m}\end{split}\end{equation}</p>
+<p>由这个误差公式可以看出，每次做弱分类的时候，如果把本次分类的$Z_m$控制的尽可能的小，则总体的训练误差也会随之减小。总的来说，这是一个贪心的过程。</p>
+<p>虽说我们已经把这个误差上界求出来了，但是该上界的上界这里并没有体现。所以，我们继续求上界的上界。前人给出了如下结论：</p>
+<p>\begin{equation}\prod_{m=1}^{M}{Z_m}=\prod_{m=1}^{M}{(2\sqrt{e_m(1-e_m)})}=\prod_{m=1}^{M}{\sqrt{1-4{{\gamma}<em m="1">m}^2}}\leq \text{exp}(-2\sum</em>^{M}{\gamma_m}^2)\end{equation}
+其中，$\gamma_m=1/2-e_m$。</p>
+<p>下面开始证明这个结论：</p>
+<p>\begin{equation}\begin{split}Z_m&amp;=\sum_{i=1}^{n}{w_{m,i}\text{exp}(a_my_iG_m(x_i))}\&amp;=\sum_{y_i=G_m(x_i)}{w_{m,i}e^{-a_m}}+\sum_{u_i\ne G_m(x_i)}{w_{m,i}e^{a_m}}\&amp;=(1-e_m)e^{-a_m}+e_me^{a_m}\&amp;=2\sqrt{e_m(1-e_m)}\&amp;=\sqrt{1-4\gamma_m^2}\end{split}\end{equation}
+又由于$\sqrt{1-4a}\le 1-2a\le e^{-2a}$，所以</p>
+<p>\begin{equation}\prod_{m=1}^{M}(\sqrt{1-4\gamma_m^2})\le \text{exp}(-2\sum_{m=1}^{M}{\gamma_m^2})\end{equation}
+取$\gamma_1,\gamma_2,\cdots,$中的最小值为$\gamma$，并将这些不等式串接起来，可以得到</p>
+<p>\begin{equation}\frac{1}{n}\sum_{i=1}^{N}{I(G(x_i)\ne y_i)}\le \text{exp}(-2M\gamma^2)\end{equation}
+所以，误差是指数衰减的，与之前的的极简boosting类似。</p>
+<p>本来还要深入一下讨论gradient boost的，考虑到篇幅，还是以后再写吧。</p>
+<h1>参考链接</h1>
+<ul>
+<li>
+<p>prml上关于boosting的部分：<a href="http://book.douban.com/subject/2061116/">http://book.douban.com/subject/2061116/</a></p>
+</li>
+<li>
+<p>csdn博主july写的adaboost：<a href="http://blog.csdn.net/v_july_v/article/details/40718799">http://blog.csdn.net/v_july_v/article/details/40718799</a></p>
+</li>
+<li>
+<p>hopcroft的新作 fundations of data science：<a href="http://research.microsoft.com/en-US/people/kannan/book-no-solutions-aug-21-2014.pdf">http://research.microsoft.com/en-US/people/kannan/book-no-solutions-aug-21-2014.pdf</a></p>
+</li>
+</ul>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>links</h2>
+                        <ul>
+                            <li><a href="http://getpelican.com/">Pelican</a></li>
+                            <li><a href="http://python.org/">Python.org</a></li>
+                            <li><a href="http://jinja.pocoo.org/">Jinja2</a></li>
+                            <li><a href="#">You can modify those links in your config file</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+
+                            <li><a href="#">You can add links in your config file</a></li>
+                            <li><a href="#">Another social link</a></li>
+                        </ul>
+                </div><!-- /.social -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="http://getpelican.com/">Pelican</a>, which takes great advantage of <a href="http://python.org">Python</a>.
+                </address><!-- /#about -->
+
+                <p>The theme is by <a href="http://coding.smashingmagazine.com/2009/08/04/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>

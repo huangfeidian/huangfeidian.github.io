@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="chinese (simplified)">
+<head>
+        <meta charset="utf-8" />
+        <title>Under the Hood : parallel caffe</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">SpiritsAway </a></h1>
+                <nav><ul>
+                    <li><a href="/pages/about.html">about</a></li>
+                    <li><a href="/category/ai.html">AI</a></li>
+                    <li><a href="/category/algorithm.html">Algorithm</a></li>
+                    <li class="active"><a href="/category/code.html">Code</a></li>
+                    <li><a href="/category/compiler.html">Compiler</a></li>
+                    <li><a href="/category/cpp.html">CPP</a></li>
+                    <li><a href="/category/math.html">Math</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/under-the-hood-parallel-caffe.html" rel="bookmark"
+           title="Permalink to Under the Hood : parallel caffe">Under the Hood : parallel caffe</a></h1>
+    </header>
+
+    <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2015-04-21T21:31:00+08:00">
+                Published: 周二 21 四月 2015
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
+        </address>
+<p>In <a href="/category/code.html">Code</a>.</p>
+<p>tags: <a href="/tag/nn.html">NN</a> <a href="/tag/caffe.html">caffe</a> <a href="/tag/code.html">Code</a> </p>
+</footer><!-- /.post-info -->      <h1>parallel caffe</h1>
+<p>The parallel caffe is contributed by Inspur Ltd. They claim that get a 10.49x boost from 8-Gpu instance. The parallel caffe origins from caffe with some modification:</p>
+<ul>
+<li>
+<p>framework</p>
+</li>
+<li>
+<p>used MPI to data-parallelism  </p>
+</li>
+<li>
+<p>each MPI process run one solve  </p>
+</li>
+<li>
+<p>training code is also mostly untouched  </p>
+</li>
+<li>
+<p>use a parameter server(thread),every solve compute each parameter , update to parameter server(PS) , PS compute and download new parameter to solve. </p>
+</li>
+<li>
+<p>class/files</p>
+</li>
+<li>
+<p>solver/SGDSolver  </p>
+</li>
+<li>
+<p>data_layer/base_datalayer (parallel data read or distribute)  </p>
+</li>
+<li>
+<p>net (some interface and parameter update optimization)  </p>
+</li>
+<li>
+<p>other (include headfile, some interface, etc.)  </p>
+</li>
+</ul>
+<p>We would to dissect all the modifications to get the essence of parallization.</p>
+<h1>mpi</h1>
+<p>In the mpi.h header, it introduce six functions to encapsulate the original mpi calls:</p>
+<div class="highlight"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">Dtype</span><span class="o">&gt;</span>
+<span class="kt">int</span> <span class="n">caffe_mpi_send</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">int</span> <span class="n">count</span><span class="p">,</span> <span class="kt">int</span> <span class="n">dest</span><span class="p">,</span> <span class="kt">int</span> <span class="n">tag</span><span class="p">,</span>
+                    <span class="n">MPI_Comm</span> <span class="n">comm</span><span class="p">);</span>
+
+<span class="kt">int</span> <span class="nf">caffe_mpi_send</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">int</span> <span class="n">count</span><span class="p">,</span> <span class="n">MPI_Datatype</span> <span class="n">datatype</span><span class="p">,</span> <span class="kt">int</span> <span class="n">dest</span><span class="p">,</span> <span class="kt">int</span> <span class="n">tag</span><span class="p">,</span>
+                    <span class="n">MPI_Comm</span> <span class="n">comm</span><span class="p">);</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">Dtype</span><span class="o">&gt;</span>
+<span class="kt">int</span> <span class="n">caffe_mpi_recv</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">int</span> <span class="n">count</span><span class="p">,</span>  <span class="kt">int</span> <span class="n">source</span><span class="p">,</span> <span class="kt">int</span> <span class="n">tag</span><span class="p">,</span>
+                    <span class="n">MPI_Comm</span> <span class="n">comm</span><span class="p">,</span> <span class="n">MPI_Status</span> <span class="o">*</span><span class="n">status</span><span class="p">);</span>
+
+<span class="kt">int</span> <span class="nf">caffe_mpi_recv</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">int</span> <span class="n">count</span><span class="p">,</span> <span class="n">MPI_Datatype</span> <span class="n">datatype</span><span class="p">,</span> <span class="kt">int</span> <span class="n">source</span><span class="p">,</span> <span class="kt">int</span> <span class="n">tag</span><span class="p">,</span>
+                    <span class="n">MPI_Comm</span> <span class="n">comm</span><span class="p">,</span> <span class="n">MPI_Status</span> <span class="o">*</span><span class="n">status</span><span class="p">);</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">Dtype</span><span class="o">&gt;</span>
+<span class="kt">int</span> <span class="n">caffe_mpi_isend</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">int</span> <span class="n">count</span><span class="p">,</span> <span class="kt">int</span> <span class="n">dest</span><span class="p">,</span> <span class="kt">int</span> <span class="n">tag</span><span class="p">,</span>
+                    <span class="n">MPI_Comm</span> <span class="n">comm</span><span class="p">,</span> <span class="n">MPI_Request</span> <span class="o">*</span><span class="n">req</span><span class="p">);</span>
+
+<span class="kt">int</span> <span class="nf">caffe_mpi_isend</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">int</span> <span class="n">count</span><span class="p">,</span> <span class="n">MPI_Datatype</span> <span class="n">datatype</span><span class="p">,</span> <span class="kt">int</span> <span class="n">dest</span><span class="p">,</span> <span class="kt">int</span> <span class="n">tag</span><span class="p">,</span>
+                    <span class="n">MPI_Comm</span> <span class="n">comm</span><span class="p">,</span> <span class="n">MPI_Request</span> <span class="o">*</span><span class="n">req</span><span class="p">);</span>
+</pre></div>
+
+
+<p>The <code>template</code> version functions is to deal with the types which are not covered by mpi.</p>
+<p>In the mpi.cpp file, these function definitions are straight forward.</p>
+<div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;&gt;</span>
+<span class="kt">int</span> <span class="n">caffe_mpi_send</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">int</span> <span class="n">count</span><span class="p">,</span>  <span class="kt">int</span> <span class="n">dest</span><span class="p">,</span> <span class="kt">int</span> <span class="n">tag</span><span class="p">,</span>
+                    <span class="n">MPI_Comm</span> <span class="n">comm</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">MPI_Send</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">MPI_DOUBLE</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span>
+                    <span class="n">comm</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="n">caffe_mpi_send</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">int</span> <span class="n">count</span><span class="p">,</span> <span class="n">MPI_Datatype</span> <span class="n">datatype</span><span class="p">,</span> <span class="kt">int</span> <span class="n">dest</span><span class="p">,</span> <span class="kt">int</span> <span class="n">tag</span><span class="p">,</span>
+                    <span class="n">MPI_Comm</span> <span class="n">comm</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">MPI_Send</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">datatype</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span>
+                    <span class="n">comm</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">template</span><span class="o">&lt;&gt;</span>
+<span class="kt">int</span> <span class="n">caffe_mpi_recv</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">int</span> <span class="n">count</span><span class="p">,</span>  <span class="kt">int</span> <span class="n">dest</span><span class="p">,</span> <span class="kt">int</span> <span class="n">tag</span><span class="p">,</span>
+                    <span class="n">MPI_Comm</span> <span class="n">comm</span><span class="p">,</span> <span class="n">MPI_Status</span> <span class="o">*</span><span class="n">status</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">MPI_Recv</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">MPI_DOUBLE</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span>
+                    <span class="n">comm</span><span class="p">,</span> <span class="n">status</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="n">caffe_mpi_recv</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">int</span> <span class="n">count</span><span class="p">,</span> <span class="n">MPI_Datatype</span> <span class="n">datatype</span><span class="p">,</span> <span class="kt">int</span> <span class="n">dest</span><span class="p">,</span> <span class="kt">int</span> <span class="n">tag</span><span class="p">,</span>
+                    <span class="n">MPI_Comm</span> <span class="n">comm</span><span class="p">,</span> <span class="n">MPI_Status</span> <span class="o">*</span><span class="n">status</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">MPI_Recv</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">datatype</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span>
+                    <span class="n">comm</span><span class="p">,</span> <span class="n">status</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">template</span> <span class="o">&lt;&gt;</span>
+<span class="kt">int</span> <span class="n">caffe_mpi_isend</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">int</span> <span class="n">count</span><span class="p">,</span> <span class="kt">int</span> <span class="n">dest</span><span class="p">,</span> <span class="kt">int</span> <span class="n">tag</span><span class="p">,</span>
+                    <span class="n">MPI_Comm</span> <span class="n">comm</span><span class="p">,</span> <span class="n">MPI_Request</span> <span class="o">*</span><span class="n">req</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">MPI_Isend</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">MPI_DOUBLE</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span><span class="n">comm</span><span class="p">,</span> <span class="n">req</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="n">caffe_mpi_isend</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">int</span> <span class="n">count</span><span class="p">,</span> <span class="n">MPI_Datatype</span> <span class="n">datatype</span><span class="p">,</span> <span class="kt">int</span> <span class="n">dest</span><span class="p">,</span> <span class="kt">int</span> <span class="n">tag</span><span class="p">,</span>
+                    <span class="n">MPI_Comm</span> <span class="n">comm</span><span class="p">,</span> <span class="n">MPI_Request</span> <span class="o">*</span><span class="n">req</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">MPI_Isend</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">datatype</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span><span class="n">comm</span><span class="p">,</span> <span class="n">req</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>The template functions are instantiated with <code>float</code> and <code>double</code>, while in the code above i just show the <code>double</code> version. The <code>MPI_Isend</code> is a asynchronized function call, so it won't block current sender thread. We don't need a <code>MPI_Irecv</code> function because the reciever thread is separated from network thread and the reciever would only recieve one message from rank 0. </p>
+<h1>base_datalayer</h1>
+<p>In the parallel caffe, the <code>base_datalayer</code> add some  data members :</p>
+<div class="highlight"><pre><span></span><span class="kt">int</span> <span class="n">datum_channels_</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">datum_height_</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">datum_width_</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">datum_size_</span><span class="p">;</span>
+<span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;</span> <span class="n">data_mean_</span><span class="p">;</span>
+<span class="k">const</span> <span class="n">Dtype</span><span class="o">*</span> <span class="n">mean_</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">rank</span><span class="p">;</span>
+</pre></div>
+
+
+<p>Well, through the mess I only know what does <code>rank</code> mean: the rank of mechine. So the data is feed to network in parallel. Each machine has a replication of the whole network.</p>
+<p>As for the datum thing, they are origined from older caffe version . The newest caffe put the datum thing into <code>memoryDataLayer</code>. The <code>base_datalayer</code> has defined some <code>get</code> function:</p>
+<div class="highlight"><pre><span></span><span class="kt">int</span> <span class="nf">datum_channels</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">datum_channels_</span><span class="p">;</span> <span class="p">}</span>
+<span class="kt">int</span> <span class="nf">datum_height</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">datum_height_</span><span class="p">;</span> <span class="p">}</span>
+<span class="kt">int</span> <span class="nf">datum_width</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">datum_width_</span><span class="p">;</span> <span class="p">}</span>
+<span class="kt">int</span> <span class="nf">datum_size</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">datum_size_</span><span class="p">;</span> <span class="p">}</span>
+</pre></div>
+
+
+<p>In the <code>BaseDataLayer</code> declaration, the parallel caffe add some code to differentiate the combination of cpu/gpu and root/test mode. These functions may be used by old caffe version. </p>
+<div class="highlight"><pre><span></span><span class="k">virtual</span> <span class="kt">void</span> <span class="nf">Forward_cpu_test</span><span class="p">(</span><span class="k">const</span> <span class="n">vector</span><span class="o">&lt;</span><span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*&gt;&amp;</span> <span class="n">bottom</span><span class="p">,</span>
+  <span class="n">vector</span><span class="o">&lt;</span><span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*&gt;*</span> <span class="n">top</span><span class="p">);</span>
+<span class="k">virtual</span> <span class="kt">void</span> <span class="nf">Forward_cpu_root</span><span class="p">(</span><span class="k">const</span> <span class="n">vector</span><span class="o">&lt;</span><span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*&gt;&amp;</span> <span class="n">bottom</span><span class="p">,</span>
+  <span class="n">vector</span><span class="o">&lt;</span><span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*&gt;*</span> <span class="n">top</span><span class="p">,</span><span class="k">const</span> <span class="kt">int</span> <span class="n">source</span><span class="p">);</span>
+<span class="k">virtual</span> <span class="kt">void</span> <span class="nf">Forward_gpu_test</span><span class="p">(</span><span class="k">const</span> <span class="n">vector</span><span class="o">&lt;</span><span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*&gt;&amp;</span> <span class="n">bottom</span><span class="p">,</span>
+  <span class="n">vector</span><span class="o">&lt;</span><span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*&gt;*</span> <span class="n">top</span><span class="p">);</span>
+<span class="k">virtual</span> <span class="kt">void</span> <span class="nf">Forward_gpu_root</span><span class="p">(</span><span class="k">const</span> <span class="n">vector</span><span class="o">&lt;</span><span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*&gt;&amp;</span> <span class="n">bottom</span><span class="p">,</span>
+  <span class="n">vector</span><span class="o">&lt;</span><span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*&gt;*</span> <span class="n">top</span><span class="p">,</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">source</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">rank</span><span class="p">;</span>
+</pre></div>
+
+
+<p>And it add a data member <code>rank</code> as well. But why would you need it when the father class already has the same data member?</p>
+<p>There are some modifications in the base_data_layer.cpp. Firstly, we get the <code>mpi rank</code>  in <code>BaseDataLayer</code> constructor and in <code>LayerSetUp</code> by:</p>
+<div class="highlight"><pre><span></span><span class="n">MPI_Comm_rank</span> <span class="p">(</span><span class="n">MPI_COMM_WORLD</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">rank</span><span class="p">);</span>
+</pre></div>
+
+
+<p>In the <code>Forward_cpu</code> definition, it calls the <code>caffe_mpi_recv</code> to recieve data from <code>rank</code> 0 </p>
+<div class="highlight"><pre><span></span><span class="n">MPI_Status</span> <span class="n">status</span><span class="p">;</span>
+    <span class="n">status</span><span class="p">.</span><span class="n">MPI_ERROR</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+<span class="n">caffe_mpi_recv</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;</span><span class="p">((</span><span class="o">*</span><span class="n">top</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">mutable_cpu_data</span><span class="p">(),</span><span class="n">prefetch_data_</span><span class="p">.</span><span class="n">count</span><span class="p">(),</span>
+            <span class="mi">0</span><span class="p">,</span><span class="n">TAG_DATA_OUT</span><span class="p">,</span><span class="n">MPI_COMM_WORLD</span><span class="p">,</span><span class="o">&amp;</span><span class="n">status</span><span class="p">);</span>
+<span class="n">DLOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="s">&quot;Recv Dataout status &quot;</span><span class="o">&lt;&lt;</span><span class="n">status</span><span class="p">.</span><span class="n">MPI_ERROR</span><span class="p">;</span>
+<span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">output_labels_</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">caffe_mpi_recv</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;</span><span class="p">((</span><span class="o">*</span><span class="n">top</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">mutable_cpu_data</span><span class="p">(),</span><span class="n">prefetch_label_</span><span class="p">.</span><span class="n">count</span><span class="p">(),</span>
+            <span class="mi">0</span><span class="p">,</span><span class="n">TAG_DATA_OUT_IF</span><span class="p">,</span><span class="n">MPI_COMM_WORLD</span><span class="p">,</span><span class="o">&amp;</span><span class="n">status</span><span class="p">);</span>
+<span class="n">DLOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="s">&quot;Recv Dataout if status &quot;</span><span class="o">&lt;&lt;</span><span class="n">status</span><span class="p">.</span><span class="n">MPI_ERROR</span><span class="p">;</span>
+</pre></div>
+
+
+<p>While in the <code>Forward_cpu_root</code>, the server actively send the data and label to clients.</p>
+<div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">Dtype</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">BasePrefetchingDataLayer</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;::</span><span class="n">Forward_cpu_root</span><span class="p">(</span>
+        <span class="k">const</span> <span class="n">vector</span><span class="o">&lt;</span><span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*&gt;&amp;</span> <span class="n">bottom</span><span class="p">,</span> <span class="n">vector</span><span class="o">&lt;</span><span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*&gt;*</span> <span class="n">top</span><span class="p">,</span>
+        <span class="k">const</span> <span class="kt">int</span> <span class="n">source</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">switch</span> <span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">layer_param_</span><span class="p">.</span><span class="n">data_param</span><span class="p">().</span><span class="n">backend</span><span class="p">())</span>
+    <span class="p">{</span>
+        <span class="k">case</span> <span class="nl">DataParameter_DB_LEVELDB</span><span class="p">:</span>
+        <span class="p">{</span>
+            <span class="n">Forward_cpu_test</span><span class="p">(</span><span class="n">bottom</span><span class="p">,</span> <span class="n">top</span><span class="p">);</span>
+            <span class="n">caffe_mpi_send</span> <span class="o">&lt;</span> <span class="n">Dtype</span>
+                    <span class="o">&gt;</span> <span class="p">((</span><span class="o">*</span><span class="n">top</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">mutable_cpu_data</span><span class="p">(),</span> <span class="n">prefetch_data_</span><span class="p">.</span><span class="n">count</span><span class="p">(),</span> <span class="n">source</span><span class="p">,</span> <span class="n">TAG_DATA_OUT</span><span class="p">,</span> <span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">output_labels_</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">caffe_mpi_send</span> <span class="o">&lt;</span> <span class="n">Dtype</span>
+                        <span class="o">&gt;</span> <span class="p">((</span><span class="o">*</span><span class="n">top</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">mutable_cpu_data</span><span class="p">(),</span> <span class="n">prefetch_label_</span><span class="p">.</span><span class="n">count</span><span class="p">(),</span> <span class="n">source</span><span class="p">,</span> <span class="n">TAG_DATA_OUT_IF</span><span class="p">,</span> <span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span> <span class="nl">DataParameter_DB_LMDB</span><span class="p">:</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="k">default</span><span class="o">:</span>
+            <span class="n">LOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;Unknown database backend&quot;</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>And for gpu mode, it firstly recieve all the message on cpu, then synchronize the gpu with cpu.</p>
+<h1>SGDSolver</h1>
+<p>In the <code>SGDSolver</code> declaration, there are three new functions:</p>
+<div class="highlight"><pre><span></span><span class="k">virtual</span> <span class="kt">void</span> <span class="nf">ComputeUpdateValueServerThread</span><span class="p">();</span>
+<span class="k">virtual</span> <span class="kt">void</span> <span class="nf">ComputeUpdateValueClientThread</span><span class="p">(</span><span class="kt">int</span><span class="o">&amp;</span> <span class="n">mpi_source</span><span class="p">,</span><span class="kt">int</span> <span class="n">tid</span><span class="p">);</span>
+<span class="k">virtual</span> <span class="kt">void</span> <span class="nf">GetValue</span><span class="p">(</span><span class="kt">int</span> <span class="o">&amp;</span><span class="n">mpi_source</span><span class="p">,</span><span class="k">const</span> <span class="kt">int</span> <span class="n">tid</span><span class="p">);</span>
+</pre></div>
+
+
+<p>But the bigger picture is: there a param server here.</p>
+<div class="highlight"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span> <span class="n">TPRAMA</span><span class="p">{</span>
+<span class="kt">void</span><span class="o">*</span> <span class="n">layer</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">tid</span><span class="p">;</span>
+<span class="p">}</span><span class="n">tprama</span><span class="p">;</span>
+
+<span class="k">class</span> <span class="nc">lockmutex</span><span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+        <span class="n">lockmutex</span><span class="p">(</span><span class="n">pthread_mutex_t</span><span class="o">*</span> <span class="n">mut</span><span class="p">){</span><span class="n">mutex</span> <span class="o">=</span> <span class="n">mut</span><span class="p">;</span><span class="n">lock</span><span class="p">();};</span>
+        <span class="o">~</span><span class="n">lockmutex</span><span class="p">(){</span><span class="n">unlock</span><span class="p">();};</span>
+        <span class="kt">void</span> <span class="nf">lock</span><span class="p">(){</span><span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="n">mutex</span><span class="p">);};</span>
+        <span class="kt">void</span> <span class="nf">unlock</span><span class="p">(){</span><span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="n">mutex</span><span class="p">);};</span>
+<span class="k">private</span><span class="o">:</span>
+        <span class="n">pthread_mutex_t</span> <span class="o">*</span><span class="n">mutex</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="k">class</span> <span class="nc">atomInt</span><span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+        <span class="n">atomInt</span><span class="p">(</span><span class="kt">int</span> <span class="n">val</span><span class="o">=</span><span class="mi">0</span><span class="p">){</span>
+                <span class="n">atomValue</span><span class="o">=</span><span class="n">val</span><span class="p">;</span>
+                <span class="n">pthread_rwlock_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">rwlockAtom</span><span class="p">,</span><span class="nb">NULL</span><span class="p">);</span>
+        <span class="p">};</span>
+        <span class="o">~</span><span class="n">atomInt</span><span class="p">(){</span>
+                <span class="n">pthread_rwlock_destroy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">rwlockAtom</span><span class="p">);</span>
+        <span class="p">};</span>
+        <span class="kt">int</span> <span class="nf">getValue</span><span class="p">(){</span>
+                <span class="kt">int</span> <span class="n">ret</span><span class="p">;</span>
+                <span class="n">pthread_rwlock_rdlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">rwlockAtom</span><span class="p">);</span>
+                <span class="n">ret</span><span class="o">=</span><span class="n">atomValue</span><span class="p">;</span>
+                <span class="n">pthread_rwlock_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">rwlockAtom</span><span class="p">);</span>
+                <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="kt">int</span> <span class="nf">add</span><span class="p">(</span><span class="kt">int</span> <span class="n">val</span><span class="p">){</span>
+                <span class="kt">int</span> <span class="n">ret</span><span class="p">;</span>
+                <span class="n">pthread_rwlock_wrlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">rwlockAtom</span><span class="p">);</span>
+                <span class="n">atomValue</span><span class="o">+=</span><span class="n">val</span><span class="p">;</span>
+                <span class="n">ret</span><span class="o">=</span><span class="n">atomValue</span><span class="p">;</span>
+                <span class="n">pthread_rwlock_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">rwlockAtom</span><span class="p">);</span>
+                <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+        <span class="p">};</span>
+        <span class="kt">int</span> <span class="nf">sub</span><span class="p">(</span><span class="kt">int</span> <span class="n">val</span><span class="p">){</span>
+                <span class="kt">int</span> <span class="n">ret</span><span class="p">;</span>
+                <span class="n">pthread_rwlock_wrlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">rwlockAtom</span><span class="p">);</span>
+                <span class="n">atomValue</span><span class="o">-=</span><span class="n">val</span><span class="p">;</span>
+                <span class="n">ret</span><span class="o">=</span><span class="n">atomValue</span><span class="p">;</span>
+                <span class="n">pthread_rwlock_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">rwlockAtom</span><span class="p">);</span>
+                <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+        <span class="p">};</span>
+<span class="k">private</span><span class="o">:</span>
+        <span class="kt">int</span> <span class="n">atomValue</span><span class="p">;</span>
+        <span class="n">pthread_rwlock_t</span> <span class="n">rwlockAtom</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="cp">#define WAIT_SEC (3)</span>
+<span class="cp">#define WAIT_USEC (0)</span>
+</pre></div>
+
+
+<p>It defines a <code>atomInt</code> structure. But as far as I'm concerned, doesn't c++11 already have <code>std::atomic_int</code>?</p>
+<p>In the solver.cpp, where major modification lie, it begins with some <code>mutex</code>, <code>condition variable</code> and <code>semaphore</code> variable definition:</p>
+<div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">queue</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">idleQ</span><span class="p">;</span>
+<span class="n">sem_t</span> <span class="n">semQ</span><span class="p">;</span><span class="c1">//wait program finish</span>
+<span class="kt">int</span> <span class="n">taskS1</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">upNum</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">upSum</span><span class="p">;</span>
+<span class="kt">void</span> <span class="o">*</span> <span class="n">tempDiff</span><span class="o">=</span><span class="nb">NULL</span><span class="p">;</span><span class="c1">//like float/double</span>
+<span class="kt">int</span> <span class="o">*</span><span class="n">flagCC</span><span class="o">=</span><span class="nb">NULL</span><span class="p">;</span>
+<span class="n">pthread_mutex_t</span> <span class="n">mutexFin</span><span class="p">;</span><span class="c1">//=PTHREAD_MUTEX_INITIALIZER;//check and wait program finish</span>
+<span class="n">pthread_cond_t</span> <span class="n">condFin</span><span class="p">;</span><span class="c1">//=PTHREAD_MUTEX_INITIALIZER;//check and wait program finish</span>
+<span class="n">pthread_mutex_t</span> <span class="n">mutexUp</span><span class="o">=</span><span class="n">PTHREAD_MUTEX_INITIALIZER</span><span class="p">;</span><span class="c1">//wait update net paramater in server thread</span>
+<span class="n">pthread_cond_t</span> <span class="n">condUp</span><span class="o">=</span><span class="n">PTHREAD_COND_INITIALIZER</span><span class="p">;</span><span class="c1">//wait update net paramater in server thread</span>
+<span class="n">pthread_mutex_t</span> <span class="n">mutexCtrl</span><span class="o">=</span><span class="n">PTHREAD_MUTEX_INITIALIZER</span><span class="p">;</span><span class="c1">//when update net paramaters finished, broadcast to send data to MPI clients</span>
+<span class="n">pthread_cond_t</span> <span class="n">condCtrl</span><span class="o">=</span><span class="n">PTHREAD_COND_INITIALIZER</span><span class="p">;</span>
+<span class="n">pthread_mutex_t</span> <span class="n">mutexData</span><span class="o">=</span><span class="n">PTHREAD_MUTEX_INITIALIZER</span><span class="p">;</span><span class="c1">//update data and diff</span>
+<span class="n">pthread_mutex_t</span> <span class="n">mutexQ</span><span class="o">=</span><span class="n">PTHREAD_MUTEX_INITIALIZER</span><span class="p">;</span><span class="c1">//update idleQ</span>
+<span class="n">atomInt</span> <span class="n">taskSum</span><span class="p">,</span><span class="n">taskS</span><span class="p">;</span>
+</pre></div>
+
+
+<p>The <code>upNum</code> represents for how many nodes have been updated, while the <code>upSum</code> represents the total nodes number (commonworld.size).</p>
+<p>The definition of <code>GetValue</code> is straight forward. It recieves the diff from some client. Because we can't decide the order the message comes in, we use <code>caffe_mpi_recv any</code> to get one message. After the header message(which is esssentially the weight of  top layer ) get recieved, we can identify the message source and store it to <code>mpi_source</code>. Then we recieve other weights layer by layer, stored to <code>diff</code> , which is <code>tempDiff[tid]</code>. After all layer weights of one specific client are successfully transfered, we mark <code>flagCC[tid]=1</code> and add <code>upNum</code> by one. So <code>flagCC[i]</code> is  to indicate <code>tempDiff[i]</code> set or not. And <code>upNum</code> is the number of clients we have gotten the diffs from.</p>
+<div class="highlight"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">Dtype</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">SGDSolver</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;::</span><span class="n">GetValue</span><span class="p">(</span><span class="kt">int</span> <span class="o">&amp;</span><span class="n">mpi_source</span><span class="p">,</span><span class="k">const</span> <span class="kt">int</span> <span class="n">tid</span><span class="p">)</span> 
+<span class="p">{</span>
+    <span class="n">MPI_Status</span> <span class="n">status</span><span class="p">;</span>
+    <span class="n">Dtype</span> <span class="o">**</span><span class="n">diff</span> <span class="o">=</span> <span class="p">((</span><span class="n">Dtype</span><span class="o">***</span><span class="p">)</span><span class="n">tempDiff</span><span class="p">)[</span><span class="n">tid</span><span class="p">];</span>
+    <span class="n">vector</span><span class="o">&lt;</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&gt;&amp;</span> <span class="n">net_params</span> <span class="o">=</span> <span class="k">this</span><span class="o">-&gt;</span><span class="n">net_</span><span class="o">-&gt;</span><span class="n">params</span><span class="p">();</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">param_id</span> <span class="o">=</span> <span class="n">net_params</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="o">-</span><span class="mi">1</span><span class="p">;</span> <span class="n">param_id</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span> <span class="o">--</span><span class="n">param_id</span><span class="p">)</span> 
+    <span class="p">{</span>
+        <span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">status</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="k">sizeof</span><span class="p">(</span><span class="n">status</span><span class="p">));</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">param_id</span><span class="o">==</span><span class="n">net_params</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">caffe_mpi_recv</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="n">diff</span><span class="p">[</span><span class="n">param_id</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span><span class="n">net_params</span><span class="p">[</span><span class="n">param_id</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">count</span><span class="p">(),</span>
+                            <span class="n">MPI_ANY_SOURCE</span><span class="p">,</span><span class="n">TAG_UPDATE_1</span><span class="p">,</span><span class="n">MPI_COMM_WORLD</span><span class="p">,</span><span class="o">&amp;</span><span class="n">status</span><span class="p">);</span>
+            <span class="n">mpi_source</span><span class="o">=</span><span class="n">status</span><span class="p">.</span><span class="n">MPI_SOURCE</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">else</span>
+        <span class="p">{</span>
+            <span class="n">caffe_mpi_recv</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="n">diff</span><span class="p">[</span><span class="n">param_id</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span><span class="n">net_params</span><span class="p">[</span><span class="n">param_id</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">count</span><span class="p">(),</span>
+                            <span class="n">mpi_source</span><span class="p">,</span><span class="n">TAG_UPDATE</span><span class="p">,</span><span class="n">MPI_COMM_WORLD</span><span class="p">,</span><span class="o">&amp;</span><span class="n">status</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="p">{</span>
+            <span class="n">lockmutex</span> <span class="n">lockm</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutexData</span><span class="p">);</span>
+            <span class="n">flagCC</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+            <span class="o">++</span><span class="n">upNum</span><span class="p">;</span>
+            <span class="n">pthread_cond_broadcast</span><span class="p">(</span><span class="o">&amp;</span><span class="n">condUp</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>What the heck are you thinking, why not use C++11. You kill the protability, you bastard!</p>
+<h1>ServerUpdate</h1>
+<p>If we want to update the net parameter in server thread, we have to call:</p>
+<div class="highlight"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">Dtype</span><span class="o">&gt;</span>
+<span class="kt">void</span><span class="o">*</span> <span class="n">ComputeValueThreadServer</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">param</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">SGDSolver</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*</span> <span class="n">layer</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">SGDSolver</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*&gt;</span><span class="p">(</span> <span class="p">((</span><span class="n">tprama</span><span class="o">*</span><span class="p">)</span> <span class="n">param</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">layer</span><span class="p">);</span>
+    <span class="c1">//int tid = ((tprama*)param)-&gt;tid;</span>
+    <span class="k">struct</span> <span class="n">timeval</span> <span class="n">now_time</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">timespec</span> <span class="n">wait_time</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">timeoutret</span><span class="p">;</span>
+    <span class="k">while</span><span class="p">(</span><span class="nb">true</span><span class="p">){</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">taskSum</span><span class="p">.</span><span class="n">getValue</span><span class="p">()</span> <span class="o">&lt;=</span><span class="mi">0</span><span class="p">){</span><span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="s">&quot;Server out&quot;</span><span class="p">;</span> <span class="n">pthread_exit</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span> <span class="p">}</span>
+        <span class="n">gettimeofday</span><span class="p">(</span><span class="o">&amp;</span><span class="n">now_time</span><span class="p">,</span><span class="nb">NULL</span><span class="p">);</span>
+        <span class="n">wait_time</span><span class="p">.</span><span class="n">tv_sec</span>      <span class="o">=</span>       <span class="n">now_time</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">+</span> <span class="n">WAIT_SEC</span><span class="p">;</span>
+        <span class="n">wait_time</span><span class="p">.</span><span class="n">tv_nsec</span>     <span class="o">=</span>       <span class="n">now_time</span><span class="p">.</span><span class="n">tv_usec</span><span class="o">*</span><span class="mi">1000</span> <span class="o">+</span> <span class="n">WAIT_USEC</span><span class="p">;</span><span class="c1">//nano seconds</span>
+        <span class="p">{</span>
+            <span class="n">lockmutex</span> <span class="n">lockm</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutexData</span><span class="p">);</span>
+            <span class="k">while</span><span class="p">(</span><span class="n">upNum</span> <span class="o">&lt;</span> <span class="n">upSum</span><span class="p">){</span>
+                <span class="n">timeoutret</span><span class="o">=</span><span class="n">pthread_cond_timedwait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">condUp</span><span class="p">,</span><span class="o">&amp;</span><span class="n">mutexData</span><span class="p">,</span><span class="o">&amp;</span><span class="n">wait_time</span><span class="p">);</span>
+                <span class="k">if</span><span class="p">(</span><span class="n">timeoutret</span><span class="o">==</span><span class="n">ETIMEDOUT</span><span class="p">){</span>
+                    <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="s">&quot;time out &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">upNum</span><span class="p">;</span>
+                    <span class="k">break</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">upNum</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">){</span>
+                <span class="n">layer</span><span class="o">-&gt;</span><span class="n">ComputeValueServer</span><span class="p">();</span>
+                <span class="n">pthread_cond_broadcast</span><span class="p">(</span><span class="o">&amp;</span><span class="n">condCtrl</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Well, it uses <code>pthread_cond_timewait</code>, which would perfectly replaced by <code>std::cond_variable.wait_for</code>. Besides, the <code>pthread_cond_broadcast</code> could be easily replaced by <code>std::cond_variable.notify_all</code>.</p>
+<p>The <code>ComputeValueServer</code> wraps the train and test job :</p>
+<div class="highlight"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">Dtype</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">Solver</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;::</span><span class="n">ComputeValueServer</span><span class="p">(){</span>
+    <span class="n">ComputeUpdateValueServerThread</span><span class="p">();</span>
+    <span class="o">++</span><span class="n">itest</span><span class="p">;</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">itest</span> <span class="o">%</span> <span class="n">param_</span><span class="p">.</span><span class="n">test_interval</span><span class="p">()</span> <span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">TestAll</span><span class="p">();</span>
+    <span class="n">upNum</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>The <code>ComputeUpdateValueServerThread</code> has a pretty big body, so I will explain it bit by bit. The function is a template function, with such declaration.</p>
+<div class="highlight"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">Dtype</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">SGDSolver</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;::</span><span class="n">ComputeUpdateValueServerThread</span><span class="p">()</span>
+</pre></div>
+
+
+<p>The function's countpart in normal caffe is <code>SGDSolver&lt;Dtype&gt;::ComputeUpdateValue</code>. And it seems that the code is identical to some older version of caffe. So i'm not going to explain it. Just go back to section ~\ref{sec:solver}. But there are some modifications that are interesting.</p>
+<div class="highlight"><pre><span></span><span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">upSum</span><span class="p">;</span><span class="o">++</span><span class="n">i</span><span class="p">){</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">flagCC</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">==</span><span class="mi">1</span><span class="p">){</span>
+        <span class="n">Dtype</span> <span class="o">**</span><span class="n">diff</span> <span class="o">=</span> <span class="p">((</span><span class="n">Dtype</span><span class="o">***</span><span class="p">)</span><span class="n">tempDiff</span><span class="p">)[</span><span class="n">i</span><span class="p">];</span>
+        <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">param_id</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">param_id</span> <span class="o">&lt;</span> <span class="n">net_params</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="o">++</span><span class="n">param_id</span><span class="p">){</span>
+            <span class="n">caffe_axpy</span><span class="p">(</span><span class="n">net_params</span><span class="p">[</span><span class="n">param_id</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">count</span><span class="p">(),(</span><span class="n">Dtype</span><span class="p">)</span><span class="mi">1</span><span class="p">,</span>
+                    <span class="o">&amp;</span><span class="n">diff</span><span class="p">[</span><span class="n">param_id</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span><span class="n">net_params</span><span class="p">[</span><span class="n">param_id</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">mutable_cpu_diff</span><span class="p">());</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>The code in listing above is to gather all the diffs sent from distributed nodes. The diffs are stored in <code>tempDiff[upSum][netsize][netcount]</code>). Then add them to server's diff. After all the diffs are gathered, it begins to do the network update according to <code>L1</code> or <code>L2</code> regulation. And after the server network update, it save the new network weights back to <code>tempDiff</code>, which is illustrated below:</p>
+<div class="highlight"><pre><span></span><span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">upSum</span><span class="p">;</span><span class="o">++</span><span class="n">i</span><span class="p">){</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">flagCC</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">==</span><span class="mi">1</span><span class="p">){</span>
+        <span class="c1">//Dtype **data = ((Dtype***)tempData)[i]; //test del tempData20150113</span>
+        <span class="n">Dtype</span> <span class="o">**</span><span class="n">diff</span> <span class="o">=</span> <span class="p">((</span><span class="n">Dtype</span><span class="o">***</span><span class="p">)</span><span class="n">tempDiff</span><span class="p">)[</span><span class="n">i</span><span class="p">];</span>
+        <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">param_id</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">param_id</span> <span class="o">&lt;</span> <span class="n">net_params</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="o">++</span><span class="n">param_id</span><span class="p">){</span>
+            <span class="n">caffe_copy</span><span class="p">(</span><span class="n">net_params</span><span class="p">[</span><span class="n">param_id</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">count</span><span class="p">(),</span>
+                    <span class="n">net_params</span><span class="p">[</span><span class="n">param_id</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">cpu_data</span><span class="p">(),</span>
+                    <span class="o">&amp;</span><span class="n">diff</span><span class="p">[</span><span class="n">param_id</span><span class="p">][</span><span class="mi">0</span><span class="p">]);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>So in short, the <code>tempDiff</code> is the buffer to store diff/weight message communicated between Server and Client. </p>
+<h1>Client Update</h1>
+<p>As for the <code>ComputeValueThreadClient</code>, it seems that it issue all the synchronization work and wait for successful transmission of the messages. </p>
+<div class="highlight"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">Dtype</span><span class="o">&gt;</span>
+<span class="kt">void</span><span class="o">*</span> <span class="n">ComputeValueThreadClient</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">param</span><span class="p">)</span> <span class="p">{</span>
+   <span class="n">SGDSolver</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*</span> <span class="n">layer</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">SGDSolver</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*&gt;</span><span class="p">(((</span><span class="n">tprama</span><span class="o">*</span><span class="p">)</span><span class="n">param</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">layer</span><span class="p">);</span>
+  <span class="kt">int</span> <span class="n">tid</span> <span class="o">=</span> <span class="p">((</span><span class="n">tprama</span><span class="o">*</span> <span class="p">)</span><span class="n">param</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">tid</span><span class="p">;</span>
+  <span class="n">CHECK</span><span class="p">(</span><span class="n">layer</span><span class="p">);</span>
+  <span class="kt">int</span> <span class="n">flagFin</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">taskSum</span><span class="p">.</span><span class="n">getValue</span><span class="p">()</span> <span class="o">&lt;=</span><span class="mi">0</span><span class="p">){</span> <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="s">&quot;client task out&quot;</span><span class="p">;</span><span class="n">pthread_exit</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);}</span>
+<span class="k">while</span><span class="p">(</span><span class="nb">true</span><span class="p">){</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">taskS</span><span class="p">.</span><span class="n">getValue</span><span class="p">()</span><span class="o">&lt;</span><span class="n">taskS1</span><span class="p">)</span><span class="k">break</span><span class="p">;</span>
+    <span class="n">layer</span><span class="o">-&gt;</span><span class="n">ComputeValueClient</span><span class="p">(</span><span class="n">tid</span><span class="p">);</span>
+    <span class="n">sem_post</span><span class="p">(</span><span class="o">&amp;</span><span class="n">semQ</span><span class="p">);</span>
+    <span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutexFin</span><span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">taskSum</span><span class="p">.</span><span class="n">sub</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;=</span><span class="mi">0</span><span class="p">)</span><span class="n">flagFin</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span><span class="n">taskS</span><span class="p">.</span><span class="n">sub</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+    <span class="n">pthread_cond_signal</span><span class="p">(</span><span class="o">&amp;</span><span class="n">condFin</span><span class="p">);</span>
+    <span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutexFin</span><span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">flagFin</span><span class="p">)</span><span class="k">break</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>The <code>taskSum</code> record how many clients to sync with. Everytime the <code>layer-&gt;ComputeValueClient</code> finishes, the <code>taskSum--</code>. And if <code>taskSum==0</code>, the sync task finishes.</p>
+<p>In the <code>ComputeValueClient</code> definition, it calls <code>ComputeUpdateValueClientThread</code>:</p>
+<div class="highlight"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">Dtype</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">Solver</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;::</span><span class="n">ComputeValueClient</span><span class="p">(</span><span class="kt">int</span> <span class="n">tid</span><span class="p">){</span>
+    <span class="kt">int</span> <span class="n">mpi_source</span><span class="p">;</span>
+    <span class="n">ComputeUpdateValueClientThread</span><span class="p">(</span><span class="n">mpi_source</span><span class="p">,</span><span class="n">tid</span><span class="p">);</span>
+    <span class="p">{</span>
+        <span class="n">lockmutex</span> <span class="n">lockm</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutexData</span><span class="p">);</span>
+        <span class="k">while</span><span class="p">(</span><span class="n">upNum</span><span class="o">!=</span><span class="mi">0</span><span class="p">){</span>
+            <span class="n">pthread_cond_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">condCtrl</span><span class="p">,</span><span class="o">&amp;</span><span class="n">mutexData</span><span class="p">);</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="n">flagCC</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">Dtype</span> <span class="o">**</span><span class="n">diff</span> <span class="o">=</span> <span class="p">((</span><span class="n">Dtype</span><span class="o">***</span><span class="p">)</span><span class="n">tempDiff</span><span class="p">)[</span><span class="n">tid</span><span class="p">];</span>
+    <span class="n">caffe_mpi_send</span><span class="p">(</span><span class="n">diff</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">1</span><span class="p">,</span><span class="n">mpiTypeDiff</span><span class="p">,</span><span class="n">mpi_source</span><span class="p">,</span><span class="n">TAG_NET_OUT</span><span class="p">,</span><span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+    <span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutexQ</span><span class="p">);</span>
+    <span class="n">idleQ</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">mpi_source</span><span class="p">);</span>
+    <span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutexQ</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>My understanding is this function revieves the diffs sent from <code>source</code> and wait for the server thread to update. After update,the <code>upNum</code> is set to <code>0</code>. Then it calls <code>caffe_mpi_send</code> to send the updated weight to client <code>tid</code>. And after the sending, the <code>tid</code>  is pushed to <code>idleQ</code> to mark this client is successfully updated. It seems that <code>flagCC</code> is equivalent to <code>idleQ</code>,redundant? Look that piece of shit:</p>
+<div class="highlight"><pre><span></span><span class="k">while</span><span class="p">(</span><span class="n">upNum</span><span class="o">!=</span><span class="mi">0</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">pthread_cond_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">condCtrl</span><span class="p">,</span><span class="o">&amp;</span><span class="n">mutexData</span><span class="p">);</span>
+    <span class="k">break</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>As for the <code>ComputeUpdateValueClientThread(mpi_source,tid)</code>, it's a wrapper for <code>GetValue</code>:</p>
+<div class="highlight"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">Dtype</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">SGDSolver</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;::</span><span class="n">ComputeUpdateValueClientThread</span><span class="p">(</span><span class="kt">int</span><span class="o">&amp;</span> <span class="n">mpi_source</span><span class="p">,</span><span class="kt">int</span> <span class="n">tid</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="n">GetValue</span><span class="p">(</span><span class="n">mpi_source</span><span class="p">,</span><span class="n">tid</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>So in short, the <code>ComputeValueThreadClient</code> simply  get the diff from client,wait for server thread to update, then send back the updated weight.</p>
+<h1>Solver</h1>
+<p>Here comes the core of parallel caffe :<code>void Solver&lt;Dtype&gt;::Solve(const char* resume_file)</code>. The leading lines are identical to original caffe.</p>
+<div class="highlight"><pre><span></span><span class="n">Caffe</span><span class="o">::</span><span class="n">set_phase</span><span class="p">(</span><span class="n">Caffe</span><span class="o">::</span><span class="n">TRAIN</span><span class="p">);</span>
+<span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;Solving &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">net_</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">();</span>
+<span class="n">PreSolve</span><span class="p">();</span>
+
+<span class="n">iter_</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">resume_file</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;Restoring previous solver status from &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">resume_file</span><span class="p">;</span>
+    <span class="n">Restore</span><span class="p">(</span><span class="n">resume_file</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="c1">// Remember the initial iter_ value; will be non-zero if we loaded from a</span>
+<span class="c1">// resume_file above.</span>
+<span class="k">const</span> <span class="kt">int</span> <span class="n">start_iter</span> <span class="o">=</span> <span class="n">iter_</span><span class="p">;</span>
+
+<span class="c1">// For a network that is trained by the solver, no bottom or top vecs</span>
+<span class="c1">// should be given, and we will just provide dummy vecs.</span>
+<span class="n">vector</span><span class="o">&lt;</span><span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;*&gt;</span> <span class="n">bottom_vec</span><span class="p">;</span>
+<span class="n">vector</span><span class="o">&lt;</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&gt;&amp;</span> <span class="n">net_params</span> <span class="o">=</span> <span class="k">this</span><span class="o">-&gt;</span><span class="n">net_</span><span class="o">-&gt;</span><span class="n">params</span><span class="p">();</span>
+</pre></div>
+
+
+<p>According to different values of <code>rank</code> in mpi, the execution path is vastly different. We differentiate the server and client role.</p>
+<h1>Server solver</h1>
+<p>When the rank is 0(ie the server), it executes some initiation code first.The <code>upSum</code> is initiated to <code>msize-1</code>, where the <code>msize</code> is the <code>MPI_Comm_size</code>. <code>taskSum</code> is the total iteration number remains to be done.</p>
+<div class="highlight"><pre><span></span><span class="n">pthread_mutex_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutexFin</span><span class="p">,</span><span class="nb">NULL</span><span class="p">);</span>
+<span class="n">pthread_cond_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">condFin</span><span class="p">,</span><span class="nb">NULL</span><span class="p">);</span>
+<span class="n">sem_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">semQ</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="n">idleQ</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+<span class="n">taskSum</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">param_</span><span class="p">.</span><span class="n">max_iter</span><span class="p">()</span><span class="o">-</span><span class="n">iter_</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">msize</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">tNetCount</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+<span class="n">MPI_Comm_size</span> <span class="p">(</span><span class="n">MPI_COMM_WORLD</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">msize</span><span class="p">);</span>
+<span class="n">upSum</span><span class="o">=</span> <span class="n">msize</span> <span class="o">-</span><span class="mi">1</span> <span class="p">;</span>
+<span class="n">taskS</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">taskSum</span><span class="p">.</span><span class="n">getValue</span><span class="p">());</span>
+<span class="n">taskS1</span><span class="o">=</span><span class="n">upSum</span><span class="p">;</span>
+</pre></div>
+
+
+<p>Now it's time to complete memory allocation:</p>
+<ul>
+<li>
+<p><code>flagCC</code> is a array of int with size<code>upSum</code>.</p>
+</li>
+<li>
+<p><code>tempDiff</code> is three dimension array: the first dimension stands for <code>MIP_Comm_size</code>,the second dimension is layer index, the third dimension is index in layer blob(the size is <code>tNetCount</code>). The <code>tempDiff</code> is treated like a one dimension  array during memory allocation.</p>
+</li>
+<li>
+<p><code>netDataType</code> is an array to record the <code>Dtype</code> of every layer. </p>
+</li>
+<li>
+<p><code>displacement</code> is an array to record every layer's beginning address related to <code>layer[0]</code>. </p>
+</li>
+<li>
+<p><code>blocklen</code> is an array to record every layer's weight count.</p>
+</li>
+</ul>
+<p>The <code>netDataType</code>,<code>displacement</code>,<code>blocklen</code>  are composed to define a MPI type struct <code>mpiTypeDiff</code>. which is commited to the MPI_COMMONWORLD.</p>
+<div class="highlight"><pre><span></span><span class="n">flagCC</span><span class="o">=</span><span class="k">new</span> <span class="kt">int</span><span class="p">[</span><span class="n">upSum</span><span class="p">];</span>
+<span class="n">memset</span><span class="p">(</span><span class="n">flagCC</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="o">*</span><span class="n">upSum</span><span class="p">);</span>
+<span class="c1">//tempData=new Dtype**[upSum];  //test del tempData20150113</span>
+<span class="n">tempDiff</span><span class="o">=</span><span class="k">new</span> <span class="n">Dtype</span><span class="o">**</span><span class="p">[</span><span class="n">upSum</span><span class="p">];</span>
+<span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">j</span><span class="o">&lt;</span><span class="n">net_params</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="o">++</span><span class="n">j</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">tNetCount</span> <span class="o">+=</span> <span class="n">net_params</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">count</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">upSum</span><span class="p">;</span><span class="o">++</span><span class="n">i</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">//((Dtype***)tempData)[i]=new Dtype*[net_params.size()]; //test del tempData20150113</span>
+    <span class="p">((</span><span class="n">Dtype</span><span class="o">***</span><span class="p">)</span><span class="n">tempDiff</span><span class="p">)[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="k">new</span> <span class="n">Dtype</span><span class="o">*</span><span class="p">[</span><span class="n">net_params</span><span class="p">.</span><span class="n">size</span><span class="p">()];</span>
+
+    <span class="p">((</span><span class="n">Dtype</span><span class="o">***</span><span class="p">)</span><span class="n">tempDiff</span><span class="p">)[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Dtype</span><span class="p">[</span><span class="n">tNetCount</span><span class="p">];</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span><span class="n">j</span><span class="o">&lt;</span><span class="n">net_params</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="o">++</span><span class="n">j</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="p">((</span><span class="n">Dtype</span><span class="o">***</span><span class="p">)</span><span class="n">tempDiff</span><span class="p">)[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span><span class="o">=</span> <span class="p">((</span><span class="n">Dtype</span><span class="o">***</span><span class="p">)</span><span class="n">tempDiff</span><span class="p">)[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">net_params</span><span class="p">[</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">count</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">MPI_Datatype</span> <span class="o">*</span><span class="n">netDataType</span><span class="o">=</span><span class="k">new</span> <span class="n">MPI_Datatype</span><span class="p">[</span><span class="n">net_params</span><span class="p">.</span><span class="n">size</span><span class="p">()];</span>
+<span class="kt">int</span> <span class="o">*</span><span class="n">blocklen</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="p">[</span><span class="n">net_params</span><span class="p">.</span><span class="n">size</span><span class="p">()];</span>
+<span class="n">MPI_Aint</span> <span class="o">*</span><span class="n">displacement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MPI_Aint</span><span class="p">[</span><span class="n">net_params</span><span class="p">.</span><span class="n">size</span><span class="p">()];</span>
+<span class="n">Dtype</span> <span class="o">**</span><span class="n">diff</span> <span class="o">=</span> <span class="p">((</span><span class="n">Dtype</span><span class="o">***</span><span class="p">)</span><span class="n">tempDiff</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
+<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">param_id</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">param_id</span> <span class="o">&lt;</span> <span class="n">net_params</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="o">++</span><span class="n">param_id</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">blocklen</span><span class="p">[</span><span class="n">param_id</span><span class="p">]</span><span class="o">=</span><span class="n">net_params</span><span class="p">[</span><span class="n">param_id</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">count</span><span class="p">();</span>
+    <span class="k">if</span><span class="p">(</span><span class="k">typeid</span><span class="p">(</span><span class="n">Dtype</span><span class="p">)</span><span class="o">==</span><span class="k">typeid</span><span class="p">(</span><span class="kt">float</span><span class="p">))</span>
+        <span class="n">netDataType</span><span class="p">[</span><span class="n">param_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">MPI_FLOAT</span><span class="p">;</span>
+    <span class="k">else</span> <span class="nf">if</span><span class="p">(</span><span class="k">typeid</span><span class="p">(</span><span class="n">Dtype</span><span class="p">)</span><span class="o">==</span><span class="k">typeid</span><span class="p">(</span><span class="kt">double</span><span class="p">))</span>
+        <span class="n">netDataType</span><span class="p">[</span><span class="n">param_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">MPI_DOUBLE</span><span class="p">;</span>
+    <span class="k">else</span>
+        <span class="nf">LOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="s">&quot;This datetype is not support!&quot;</span><span class="o">&lt;&lt;</span><span class="k">typeid</span><span class="p">(</span><span class="n">Dtype</span><span class="p">).</span><span class="n">name</span><span class="p">();</span>
+    <span class="n">displacement</span><span class="p">[</span><span class="n">param_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span> <span class="n">diff</span><span class="p">[</span><span class="n">param_id</span><span class="p">]</span><span class="o">-</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span> <span class="n">diff</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+<span class="p">}</span>
+<span class="n">MPI_Type_struct</span><span class="p">(</span><span class="n">net_params</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span><span class="n">blocklen</span><span class="p">,</span><span class="n">displacement</span><span class="p">,</span><span class="n">netDataType</span><span class="p">,</span><span class="o">&amp;</span><span class="n">mpiTypeDiff</span><span class="p">);</span>
+<span class="n">MPI_Type_commit</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mpiTypeDiff</span><span class="p">);</span>
+<span class="k">delete</span><span class="p">[]</span> <span class="n">netDataType</span><span class="p">;</span>
+<span class="k">delete</span><span class="p">[]</span> <span class="n">blocklen</span><span class="p">;</span>
+<span class="k">delete</span><span class="p">[]</span> <span class="n">displacement</span><span class="p">;</span>
+</pre></div>
+
+
+<p>After all the necessary memory allocation, it begins to create threads. These threads are authorized to do the message gathering and weight updating job.One thread for the <code>ComputeValueThreadServer</code>, one thread vector for <code>ComputeValueThreadClient</code> where every thread represent one client. The tid for server thread is <code>-1</code>, and the tid for client thread is assigned consecutively from <code>0</code> to <code>upSum</code>.</p>
+<div class="highlight"><pre><span></span><span class="n">pthread_t</span> <span class="n">threads</span><span class="p">;</span>
+<span class="n">pthread_t</span> <span class="o">*</span><span class="n">threadc</span><span class="o">=</span><span class="k">new</span> <span class="n">pthread_t</span><span class="p">[</span><span class="n">msize</span><span class="o">-</span><span class="mi">1</span><span class="p">];</span>
+<span class="n">tprama</span> <span class="n">pramas</span><span class="p">;</span>
+<span class="n">pramas</span><span class="p">.</span><span class="n">layer</span><span class="o">=</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+<span class="n">pramas</span><span class="p">.</span><span class="n">tid</span><span class="o">=-</span><span class="mi">1</span><span class="p">;</span>
+<span class="n">CHECK</span><span class="p">(</span><span class="o">!</span><span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">threads</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">ComputeValueThreadServer</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;</span><span class="p">,</span>
+            <span class="o">&amp;</span><span class="n">pramas</span><span class="p">))</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;Pthread(solve) execution failed.&quot;</span><span class="p">;</span>
+<span class="n">tprama</span> <span class="o">*</span><span class="n">pramac</span> <span class="o">=</span> <span class="k">new</span> <span class="n">tprama</span><span class="p">[</span><span class="n">msize</span><span class="o">-</span><span class="mi">1</span><span class="p">];</span>
+<span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">upSum</span><span class="p">;</span><span class="o">++</span><span class="n">i</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">pramac</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">layer</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+    <span class="n">pramac</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">tid</span> <span class="o">=</span> <span class="n">i</span><span class="p">;</span>
+    <span class="n">CHECK</span><span class="p">(</span><span class="o">!</span><span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">threadc</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">ComputeValueThreadClient</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;</span><span class="p">,</span>
+                <span class="o">&amp;</span><span class="n">pramac</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;Pthread(solve) execution failed.&quot;</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>From now on is the iteration forloop.Every iteration the server send a <code>TAG_ITER</code> to all availble clients, indicates a new iteration.</p>
+<div class="highlight"><pre><span></span><span class="kt">int</span> <span class="n">qfront</span><span class="p">;</span>
+<span class="k">for</span> <span class="p">(;</span> <span class="n">iter_</span> <span class="o">&lt;</span> <span class="n">param_</span><span class="p">.</span><span class="n">max_iter</span><span class="p">();</span> <span class="o">++</span><span class="n">iter_</span><span class="p">)</span> 
+<span class="p">{</span>
+    <span class="n">sem_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">semQ</span><span class="p">);</span>
+    <span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutexQ</span><span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">idleQ</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span>
+    <span class="p">{</span>
+        <span class="n">qfront</span><span class="o">=</span><span class="n">idleQ</span><span class="p">.</span><span class="n">front</span><span class="p">();</span>
+        <span class="n">idleQ</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
+        <span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutexQ</span><span class="p">);</span>
+        <span class="n">caffe_mpi_send</span><span class="p">(</span><span class="o">&amp;</span><span class="n">iter_</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="n">MPI_INT</span><span class="p">,</span><span class="n">qfront</span><span class="p">,</span><span class="n">TAG_ITER</span><span class="p">,</span><span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+        <span class="cm">/*Dtype loss = */</span><span class="n">net_</span><span class="o">-&gt;</span><span class="n">ForwardBackwardRoot</span><span class="p">(</span><span class="n">bottom_vec</span><span class="p">,</span><span class="n">qfront</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span>
+    <span class="p">{</span>
+        <span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutexQ</span><span class="p">);</span>
+        <span class="n">LOG</span><span class="p">(</span><span class="n">FATAL</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="s">&quot;ERROR! idleQ is empty!&quot;</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>After all iterations are finished, it send the iteration end message to all mpi clients.Then it begins the test.Finally  mpi resources and thread resources are freed.</p>
+<div class="highlight"><pre><span></span><span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutexFin</span><span class="p">);</span>
+<span class="k">while</span><span class="p">(</span><span class="n">taskSum</span><span class="p">.</span><span class="n">getValue</span><span class="p">()</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">pthread_cond_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">condFin</span><span class="p">,</span><span class="o">&amp;</span><span class="n">mutexFin</span><span class="p">);</span>
+    <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="s">&quot;TaskSum &quot;</span><span class="o">&lt;&lt;</span><span class="n">taskSum</span><span class="p">.</span><span class="n">getValue</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutexFin</span><span class="p">);</span>
+<span class="n">pthread_mutex_destroy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutexFin</span><span class="p">);</span>
+<span class="n">pthread_cond_destroy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">condFin</span><span class="p">);</span>
+<span class="k">while</span><span class="p">(</span><span class="o">!</span><span class="n">idleQ</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">flagFin</span><span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="n">caffe_mpi_send</span><span class="p">(</span><span class="o">&amp;</span><span class="n">flagFin</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="n">MPI_INT</span><span class="p">,</span><span class="n">idleQ</span><span class="p">.</span><span class="n">front</span><span class="p">(),</span><span class="n">TAG_ITER</span><span class="p">,</span><span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+    <span class="n">idleQ</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="n">TestAll</span><span class="p">();</span>
+<span class="n">sleep</span><span class="p">(</span><span class="n">WAIT_SEC</span><span class="p">);</span>
+<span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">upSum</span><span class="p">;</span><span class="o">++</span><span class="n">i</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">pthread_cancel</span><span class="p">(</span><span class="n">threadc</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+<span class="p">}</span>
+<span class="n">pthread_cancel</span><span class="p">(</span><span class="n">threads</span><span class="p">);</span>
+<span class="k">delete</span><span class="p">[]</span> <span class="n">threadc</span><span class="p">;</span>
+<span class="k">delete</span><span class="p">[]</span> <span class="n">pramac</span><span class="p">;</span>
+<span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="s">&quot;DESTROY &quot;</span><span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">pthread_mutex_destroy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutexData</span><span class="p">));</span>
+</pre></div>
+
+
+<p>Then the server do the final Snapshot and test work.</p>
+<div class="highlight"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">param_</span><span class="p">.</span><span class="n">snapshot_after_train</span><span class="p">())</span> <span class="p">{</span> <span class="n">Snapshot</span><span class="p">();</span> <span class="p">}</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">param_</span><span class="p">.</span><span class="n">display</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">iter_</span> <span class="o">%</span> <span class="n">param_</span><span class="p">.</span><span class="n">display</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">Dtype</span> <span class="n">loss</span><span class="p">;</span>
+    <span class="n">net_</span><span class="o">-&gt;</span><span class="n">taskiter</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+    <span class="n">net_</span><span class="o">-&gt;</span><span class="n">ForwardTest</span><span class="p">(</span><span class="n">bottom_vec</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">loss</span><span class="p">);</span>
+    <span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;Iteration &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">iter_</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;, loss = &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">loss</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">param_</span><span class="p">.</span><span class="n">test_interval</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">iter_</span> <span class="o">%</span> <span class="n">param_</span><span class="p">.</span><span class="n">test_interval</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">TestAll</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="n">LOG</span><span class="p">(</span><span class="n">INFO</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;Optimization Done.&quot;</span><span class="p">;</span>
+</pre></div>
+
+
+<h1>Client solver</h1>
+<p>The client part is way simpler than server. All codes are contained in a <code>while(true)</code> enviroment. Firstly, it recieve the <code>iter</code> to get which iteration it is. If the iteration is <code>-1</code>, the loop ends.And it's the only way to end the loop.</p>
+<div class="highlight"><pre><span></span><span class="n">MPI_Status</span> <span class="n">status</span><span class="p">;</span>
+<span class="n">status</span><span class="p">.</span><span class="n">MPI_ERROR</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+<span class="n">caffe_mpi_recv</span><span class="p">(</span><span class="o">&amp;</span><span class="n">iter_</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="n">MPI_INT</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="n">TAG_ITER</span><span class="p">,</span><span class="n">MPI_COMM_WORLD</span><span class="p">,</span><span class="o">&amp;</span><span class="n">status</span><span class="p">);</span>
+<span class="k">if</span><span class="p">(</span><span class="n">iter_</span><span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="k">break</span><span class="p">;</span>
+</pre></div>
+
+
+<p>After the iteration recv code, here comes some MPI struct registeration. The piece of code is roughly the same in server. But the structure is shit. We can lift these code out of the while loop.</p>
+<p>Then it's <code>ComputeUpdateValueClient</code>. This function trains a batch and send the diff to server. Then it waits to recieve new weights from server.</p>
+<div class="highlight"><pre><span></span><span class="n">ComputeUpdateValueClient</span><span class="p">();</span>
+<span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">status</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="k">sizeof</span><span class="p">(</span><span class="n">status</span><span class="p">));</span>
+<span class="n">vector</span><span class="o">&lt;</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Blob</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;</span> <span class="o">&gt;</span> <span class="o">&gt;&amp;</span> <span class="n">net_params</span> <span class="o">=</span> <span class="k">this</span><span class="o">-&gt;</span><span class="n">net_</span><span class="o">-&gt;</span><span class="n">params</span><span class="p">();</span>
+<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">param_id</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">param_id</span> <span class="o">&lt;</span> <span class="n">net_params</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="o">++</span><span class="n">param_id</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">net_params</span><span class="p">[</span><span class="n">param_id</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">mutable_cpu_data</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="n">caffe_mpi_recv</span><span class="p">(</span><span class="n">net_params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">mutable_cpu_data</span><span class="p">(),</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">mpiTypeCpuData</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="n">TAG_NET_OUT</span><span class="p">,</span><span class="n">MPI_COMM_WORLD</span><span class="p">,</span><span class="o">&amp;</span><span class="n">status</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">param_</span><span class="p">.</span><span class="n">snapshot</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">iter_</span> <span class="o">&gt;</span> <span class="n">start_iter</span> <span class="o">&amp;&amp;</span>
+                    <span class="n">iter_</span> <span class="o">%</span> <span class="n">param_</span><span class="p">.</span><span class="n">snapshot</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> 
+<span class="p">{</span>
+    <span class="n">Snapshot</span><span class="p">();</span><span class="c1">//TODO</span>
+<span class="p">}</span>
+<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">param_id</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">param_id</span> <span class="o">&lt;</span> <span class="n">net_params</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="o">++</span><span class="n">param_id</span><span class="p">)</span> 
+<span class="p">{</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">param_id</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">caffe_mpi_send</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;</span><span class="p">(</span><span class="n">net_params</span><span class="p">[</span><span class="n">param_id</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">mutable_cpu_diff</span><span class="p">(),</span><span class="n">net_params</span><span class="p">[</span><span class="n">param_id</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">count</span><span class="p">(),</span><span class="mi">0</span><span class="p">,</span><span class="n">TAG_UPDATE_1</span><span class="p">,</span><span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span>
+    <span class="p">{</span>
+        <span class="n">caffe_mpi_send</span><span class="o">&lt;</span><span class="n">Dtype</span><span class="o">&gt;</span><span class="p">(</span><span class="n">net_params</span><span class="p">[</span><span class="n">param_id</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">mutable_cpu_diff</span><span class="p">(),</span><span class="n">net_params</span><span class="p">[</span><span class="n">param_id</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">count</span><span class="p">(),</span><span class="mi">0</span><span class="p">,</span><span class="n">TAG_UPDATE</span><span class="p">,</span><span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>The rest code is just plain enough.It just output the loss . Nothing to talk about.</p>
+<h1>error handle</h1>
+<p>In the distributed world, we can't assure ourself that everything would works as expected. The most disastrous thing would be some nodes drop out. So we can't take it for granted that we would recieve <code>upSum</code> diffs from the distributed clients. So we have <code>flagCC[]</code> vector to indicate clients' state. If the <code>tid</code> client sends the diff, we store it at <code>tempDiff[tid]</code> and mark <code>flagCC[tid]=1</code>.</p>
+<p>And  when we are waiting for income diffs, we can't expect we would get all clients.  So we use a <code>pthread_cond_timewait</code>. And we adjust the update policy:</p>
+<div class="highlight"><pre><span></span><span class="n">caffe_scal</span><span class="p">(</span><span class="n">net_params</span><span class="p">[</span><span class="n">param_id</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">count</span><span class="p">(),</span> <span class="p">(</span><span class="n">Dtype</span><span class="p">)(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">upNum</span><span class="p">),</span>
+            <span class="n">net_params</span><span class="p">[</span><span class="n">param_id</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">mutable_cpu_diff</span><span class="p">());</span>
+</pre></div>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>links</h2>
+                        <ul>
+                            <li><a href="http://getpelican.com/">Pelican</a></li>
+                            <li><a href="http://python.org/">Python.org</a></li>
+                            <li><a href="http://jinja.pocoo.org/">Jinja2</a></li>
+                            <li><a href="#">You can modify those links in your config file</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+
+                            <li><a href="#">You can add links in your config file</a></li>
+                            <li><a href="#">Another social link</a></li>
+                        </ul>
+                </div><!-- /.social -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="http://getpelican.com/">Pelican</a>, which takes great advantage of <a href="http://python.org">Python</a>.
+                </address><!-- /#about -->
+
+                <p>The theme is by <a href="http://coding.smashingmagazine.com/2009/08/04/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>
