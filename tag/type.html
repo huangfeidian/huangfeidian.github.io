@@ -1,343 +1,149 @@
 <!DOCTYPE html>
-<html lang="chinese (simplified)">
-<head>
-        <meta charset="utf-8" />
-        <title>SpiritsAway - Type</title>
-        <link rel="stylesheet" href="/theme/css/main.css" />
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>标签 Type - Spirits Away</title>
+    <link rel="shortcut icon" type="image/x-icon" href="\favicon.ico">
+    <link rel="stylesheet" href="http://spiritsaway.info/theme/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="http://spiritsaway.info/theme/font-icons/style.min.css" type="text/css" />
+    <link rel="stylesheet" href="http://spiritsaway.info/theme/css/niu2.min.css" type="text/css" />
+    
+    <script type="text/javascript">window.onload=function(){};</script>
+    <!--[if lt IE 9]>
+        <script src="http://spiritsaway.info/theme/js/html5shiv.js"></script>
+        <script src="http://spiritsaway.info/theme/js/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body> 
+    <div id="body-header">
+<div class="navbar navbar-inverse navbar-fixed-top">
+<div class="col-md-12">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="http://spiritsaway.info">
+            <i class="icon-home"></i>Spirits Away
+        </a>
+    </div>
+    <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+        <ul class="nav navbar-nav">
+            <li><a href="/about.html" title="about">
+                <i class="fa-anchor"></i>关于</a>
+            </li>
+            <li><a href="/archives.html" title="archives">
+                <i class="fa-archive"></i>存档</a>
+            </li>
+            <li><a href="/tag/" title="tags">
+                <i class="fa-tag"></i>标签</a>
+            </li>
+        <!-- category dropdown list -->
+        <li class="dropdown">
+           <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                <i class="icon-folder-open"></i>分类<b class="caret"></b>
+           </a>
+           <ul class="dropdown-menu">
+               <li><a href="http://spiritsaway.info/ai/index.html">
+                   <i class="icon-folder-close"></i>AI
+                      (3)</a></li>
+               <li><a href="http://spiritsaway.info/algorithm/index.html">
+                   <i class="icon-folder-close"></i>Algorithm
+                      (3)</a></li>
+               <li><a href="http://spiritsaway.info/code/index.html">
+                   <i class="icon-folder-close"></i>Code
+                      (3)</a></li>
+               <li><a href="http://spiritsaway.info/compiler/index.html">
+                   <i class="icon-folder-close"></i>Compiler
+                      (2)</a></li>
+               <li><a href="http://spiritsaway.info/cpp/index.html">
+                   <i class="icon-folder-close"></i>CPP
+                      (8)</a></li>
+               <li><a href="http://spiritsaway.info/math/index.html">
+                   <i class="icon-folder-close"></i>Math
+                      (4)</a></li>
+           </ul>
+        </li>
+        <!--  self defined dropdown list -->
+        </ul>
+        
+        <!-- right nav bar -->
+        <ul class="nav navbar-nav navbar-right">
+        <!-- google custom search -->
+       </ul>
+    </nav>
+</div>
+</div>    </div>
+    
+    <div id="body-content">
+<div class="col-md-8 col-md-offset-2">
 
-        <!--[if IE]>
-            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-        <![endif]-->
-</head>
+<h1 class="niu2-index-title">
+<i class="icon-tag icon-lg"></i>Type
+</h1>
 
-<body id="index" class="home">
-        <header id="banner" class="body">
-                <h1><a href="/">SpiritsAway </a></h1>
-                <nav><ul>
-                    <li><a href="/pages/about.html">about</a></li>
-                    <li><a href="/category/ai.html">AI</a></li>
-                    <li><a href="/category/algorithm.html">Algorithm</a></li>
-                    <li><a href="/category/code.html">Code</a></li>
-                    <li><a href="/category/compiler.html">Compiler</a></li>
-                    <li><a href="/category/cpp.html">CPP</a></li>
-                    <li><a href="/category/math.html">Math</a></li>
-                </ul></nav>
-        </header><!-- /#banner -->
+</div>
 
-            <aside id="featured" class="body">
-                <article>
-                    <h1 class="entry-title"><a href="/type-deduction-of-cpp.html">Type Deduction of CPP</a></h1>
-<footer class="post-info">
-        <abbr class="published" title="2015-10-11T20:13:00+08:00">
-                Published: 周日 11 十月 2015
-        </abbr>
-
-        <address class="vcard author">
-                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
-        </address>
-<p>In <a href="/category/cpp.html">CPP</a>.</p>
-<p>tags: <a href="/tag/type.html">Type</a> <a href="/tag/cpp.html">CPP</a> </p>
-</footer><!-- /.post-info --><p>类型系统在语言设计中是一个非常重要的方面，在影响语言的好坏程度的时候，类型系统与相关的库同是起决定性的两个因素。
-C++的类型系统为静态弱类型。虽说静态类型的优点是变量的类型明确，但是碰到这种声明<code>char (*(*X())[])()</code>，在没有cdecl类似工具的辅助下一般人也很难看出变量的意义是什么。上面的例子属于C语言的范畴，C++在其基础上增加了更加复杂的模板类型推导和自动类型推导。在这些因素的影响下，如何读懂C++的类型便成为了一个很大的问题。本文便以弄懂C++的类型为出发点，剖析<code>template&lt;T&gt; ,auto ,decltype</code>这三种语法下的类型推导。相关内容都是自己从internet及相关书籍总结而来，如有错误欢迎指出。</p>
-<h1>理解template类型推导</h1>
-<p>模板(template)被引入C++主要是用来处理泛型容器和通用算法问题。在被证明了是图灵完全之后，模板的使用场景便百花齐放，无所不用其极。看过boost库中spirit等类似库之后，很多人自此都换上了尖括号恐惧症。如果你经历过编译器报模板相关错误，那么你应该能理解我所说的。本文并不想去谈论模板元编程（我也没有资格去谈，水平不够），只讨论一下模板类型推导的问题。由于函数模板类型推导与类模板类型推导原理一样，下文只讨论函数模板推导。简单来说，函数模板声明有如下形式：</p>
-<div class="highlight"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="n">ParamType</span> <span class="n">param</span><span class="p">);</span>
-</pre></div>
-
-
-<p>其中的<code>ParamType</code>可以是<code>T,T\&amp;,T*,T\&amp;\&amp;,T**</code>等简单类型，也可以是一个类似于<code>vector&lt;T&gt;</code>的模板类型。此外，<code>const,volatile</code>等类型修饰符也可以在<code>ParamType</code>中进行使用。</p>
-<p>函数模板以如下形式进行调用:</p>
-<div class="highlight"><pre><span></span><span class="n">f</span><span class="p">(</span><span class="n">expr</span><span class="p">);</span>
-</pre></div>
-
-
-<p>函数模板中的类型推导需要同时考虑<code>ParamType,expr</code>这两个因素，其中<code>ParamType</code>起主导因素。对于<code>ParamType</code>的形式，主要有以下三种：</p>
-<ul>
-<li>
-<p><code>ParamType</code>既不是指针也不是引用。</p>
-</li>
-<li>
-<p><code>ParamType</code>是一个指针或者引用类型，但不是全局引用；</p>
-</li>
-<li>
-<p><code>ParamType</code>是一个全局引用；</p>
-</li>
-</ul>
-<p>接下来我们根据上面所说的三种形式来进行分别讨论。</p>
-<h1>paramType既不是指针也不是引用</h1>
-<p>此时，函数模板的形式如下。</p>
-<div class="highlight"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="n">T</span> <span class="n">param</span><span class="p">);</span>
-</pre></div>
-
-
-<p>传递参数的时候，会直接按照值来传递，因此会调用拷贝构造函数来生成一个新的对象。<code>param</code>的推导遵循如下规则：</p>
-<ul>
-<li>
-<p>如果<code>expr</code>是一个引用，那么先忽略其引用类型；</p>
-</li>
-<li>
-<p>如果有<code>const,volatile</code>修饰符，则一并忽略。</p>
-</li>
-</ul>
-<p>最后得到的类型就是<code>T</code>的类型，例子如下。</p>
-<div class="highlight"><pre><span></span><span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">27</span><span class="p">;</span>              <span class="c1">// as before</span>
-<span class="k">const</span> <span class="kt">int</span> <span class="n">cx</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>        <span class="c1">// as before</span>
-<span class="k">const</span> <span class="kt">int</span><span class="o">&amp;</span> <span class="n">rx</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>       <span class="c1">// as before</span>
-<span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>                    <span class="c1">// T&#39;s and param&#39;s types are both int</span>
-<span class="n">f</span><span class="p">(</span><span class="n">cx</span><span class="p">);</span>                   <span class="c1">// T&#39;s and param&#39;s types are again both int</span>
-<span class="n">f</span><span class="p">(</span><span class="n">rx</span><span class="p">);</span>                   <span class="c1">// T&#39;s and param&#39;s types are still both int</span>
-</pre></div>
-
-
-<h1>ParamType是一个指针或者引用，但不是全局引用</h1>
-<p>此时<code>ParamType</code>有<code>T*,T\&amp;</code>这两种形式，这两种形式的推导是一样的。这里以引用形式来说明，此时函数模板的声明如下：</p>
-<div class="highlight"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">param</span><span class="p">);</span>
-</pre></div>
-
-
-<p>在<code>f(expr)</code>类型推导时，所做工作有如下两步：</p>
-<ul>
-<li>
-<p>如果<code>expr</code>是一个引用类型，即 <code>A\&amp;</code>类型,先忽略引用部分.这一步会把简单引用和全局引用忽略这是通过<code>remove\_reference&lt;A\&amp;&gt;::type</code>来实现的。</p>
-</li>
-<li>
-<p>然后模式匹配上一步返回的类型，通过与<code>ParamType</code>的模式匹配来获得<code>T</code>的类型。</p>
-</li>
-</ul>
-<p>以例子来说，如果我们有下面三个变量声明:</p>
-<div class="highlight"><pre><span></span><span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">27</span><span class="p">;</span>           <span class="c1">// x is an int</span>
-<span class="k">const</span> <span class="kt">int</span> <span class="n">cx</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>     <span class="c1">// cx is a const int</span>
-<span class="k">const</span> <span class="kt">int</span><span class="o">&amp;</span> <span class="n">rx</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>    <span class="c1">// rx is a reference to x as a const int</span>
-</pre></div>
-
-
-<p>则以这些变量作为实参带入<code>f(expr)</code>，会有如下结果：</p>
-<div class="highlight"><pre><span></span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>     <span class="c1">// T is int, param&#39;s type is int&amp;</span>
-<span class="n">f</span><span class="p">(</span><span class="n">cx</span><span class="p">);</span>    <span class="c1">// T is const int, param&#39;s type is const int&amp;</span>
-<span class="n">f</span><span class="p">(</span><span class="n">rx</span><span class="p">);</span>    <span class="c1">// T is const int, param&#39;s type is const int&amp;</span>
-</pre></div>
+<div class="col-md-8 col-md-offset-2">
+    <div class="niu2-index-article">
+        <div class="niu2-index-article-title">
+            <span>
+                <a href="http://spiritsaway.info/cpp/type-deduction-of-cpp.html">Type Deduction of CPP</a>
+            </span>
+        </div>
+<div class="niu2-meta-index">
+    <span class="niu2-meta-date-index">
+        <i class="icon-calendar"></i>2015-10-11
+    </span>
+    <span class="niu2-meta-category-index">
+        <i class="icon-folder-open"></i>CPP
+    </span>
+    <span class="niu2-meta-tag-index">
+        <i class="icon-tag"></i>
+        <a href="http://spiritsaway.info/tag/type.html">Type</a>
+        <a href="http://spiritsaway.info/tag/cpp.html">CPP</a>
+    </span>
+</div>        <div class="niu2-article-summary">
+            
+        </div>
+    </div>
 
 
-<p>首先，除去引用部分。第三个调用中,<code>rx</code>的类型是<code>const int \&amp;</code>，在除去引用之后，变为<code>const int</code>。在经过除去引用之后，这三个参数的类型分别为<code>int,const int,const int</code>。</p>
-<p>对于后两个调用，我们传入的实参<code>cx,rx</code>都是<code>const</code>的，则<code>T</code>会被展开为<code>const T</code>。在形参为引用类型时，<code>const</code>是会传染的，对于其他的类型修饰符<code>volatile</code>也是如。之后，类型推导剩余部分，即<code>int</code>部分，直接匹配。所以最后我们得到的<code>T</code>的类型为<code>int ,const int,const int</code>，对应的<code>ParamType</code>为<code>int\&amp;,const int \&amp; ,const int \&amp;</code>。</p>
-<p>如果 <code>ParamType</code>中已经含有了<code>const,volatile</code>等修饰符，则我们不需要去考虑实参是否有这些修饰符，在推导<code>ParamType</code>的时候统一加上就行了，而<code>T</code>则不需要再去考虑<code>const,volatile</code>。例子如下：</p>
-<div class="highlight"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="k">const</span> <span class="n">T</span><span class="o">&amp;</span> <span class="n">param</span><span class="p">);</span>    <span class="c1">// param is now ref-to-const</span>
-<span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">27</span><span class="p">;</span>                <span class="c1">// as before</span>
-<span class="k">const</span> <span class="kt">int</span> <span class="n">cx</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>          <span class="c1">// as before</span>
-<span class="k">const</span> <span class="kt">int</span><span class="o">&amp;</span> <span class="n">rx</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>         <span class="c1">// as before</span>
-<span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>                      <span class="c1">// T is int, param&#39;s type is const int&amp;</span>
-<span class="n">f</span><span class="p">(</span><span class="n">cx</span><span class="p">);</span>                     <span class="c1">// T is int, param&#39;s type is const int&amp;</span>
-<span class="n">f</span><span class="p">(</span><span class="n">rx</span><span class="p">);</span>                     <span class="c1">// T is int, param&#39;s type is const int&amp;</span>
-</pre></div>
 
+</div>
+    </div>
 
-<p>对于指针类型，也是同理：</p>
-<div class="highlight"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="n">T</span><span class="o">*</span> <span class="n">param</span><span class="p">);</span>          <span class="c1">// param is now a pointer</span>
-<span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">27</span><span class="p">;</span>                <span class="c1">// as before</span>
-<span class="k">const</span> <span class="kt">int</span> <span class="o">*</span><span class="n">px</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">x</span><span class="p">;</span>        <span class="c1">// px is a ptr to x as a const int</span>
-<span class="n">f</span><span class="p">(</span><span class="o">&amp;</span><span class="n">x</span><span class="p">);</span>                     <span class="c1">// T is int, param&#39;s type is int*</span>
-<span class="n">f</span><span class="p">(</span><span class="n">px</span><span class="p">);</span>                     <span class="c1">// T is const int, param&#39;s type is const int*</span>
-</pre></div>
+<div class="niu2-footer">
+    <div id="body-footer" class="col-md-8 col-md-offset-2">
+<hr/>
+<p>
+    Powered by <a href="https://github.com/getpelican/pelican">Pelican</a>, 
+    <a href="https://github.com/mawenbao/niu-x2-sidebar">theme</a> built with <a href="http://getbootstrap.com">Bootstrap3</a>
+    by <a href="http://blog.atime.me">Ma Wenbao</a>, icons by 
+    <a href="http://fortawesome.github.io/Font-Awesome">Font Awesome</a>.
+</p>
+<p>
+    ©
+            2014-2016
+    <a class="niu2-footer-link" href="http://spiritsaway.info">Huiliang Huang</a>
+</p>
+<p class="niu2-icons">
+        <a class="niu2-footer-icon" href="mailto: spiritsaway@outlook.com" title="my email address">
+            <i class="fa-envelope-alt icon-lg"></i>
+        </a>
+        <a class="niu2-footer-icon" href="https://github.com/huangfeidian" title="my github page">
+            <i class="fa-github-alt icon-lg"></i>
+        </a>
+</p>    </div>
+</div>
+    
+    <div id="niu2-pygments" data-theme="github"></div>
 
-
-<h1>ParamType是全局引用</h1>
-<p>全局引用的形式为<code>T\&amp;\&amp;</code>，看上去是右值引用，其实并不完全正确。此时，会有下面的两个规则。</p>
-<ul>
-<li>
-<p>如果<code>expr</code>是一个左值，形式为<code>A</code>或者<code>A\&amp;</code>。那么<code>T</code>和<code>ParamType</code>的类型都会被推导为<code>A\&amp;</code>。</p>
-</li>
-<li>
-<p>如果<code>expr</code>是一个右值，形式为<code>A\&amp;\&amp;</code>。则<code>T</code>的类型会被推导为<code>A</code>，而<code>ParamType</code>的类型会被推导为<code>A\&amp;\&amp;</code>。</p>
-</li>
-</ul>
-<p>简而言之，假设<code>expr</code>的类型为<code>X</code>,<code>T</code>的类型总是<code>remove\_reference&lt;X&gt;::type</code>；而<code>ParamType</code>的类型只有在<code>X=A\&amp;\&amp;</code>的时候才是右值引用，其他情况都是左值引用。</p>
-<p>使用上述规则的例子如下：</p>
-<div class="highlight"><pre><span></span><span class="n">tempalte</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">param</span><span class="p">);</span>        <span class="c1">// param is now a universal reference</span>
-<span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">27</span><span class="p">;</span>               <span class="c1">// as before</span>
-<span class="k">const</span> <span class="kt">int</span> <span class="n">cx</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>         <span class="c1">// as before</span>
-<span class="k">const</span> <span class="kt">int</span><span class="o">&amp;</span> <span class="n">rx</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>        <span class="c1">// as before</span>
-<span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>                     <span class="c1">// x is lvalue, so T is int&amp;, param&#39;s type is also int&amp;</span>
-<span class="n">f</span><span class="p">(</span><span class="n">cx</span><span class="p">);</span>                    <span class="c1">// cx is lvalue, so T is const int&amp;, param&#39;s type is also const int&amp;</span>
-<span class="n">f</span><span class="p">(</span><span class="n">rx</span><span class="p">);</span>                    <span class="c1">// rx is lvalue, so T is const int&amp;, param&#39;s type is also const int&amp;</span>
-<span class="n">f</span><span class="p">(</span><span class="mi">27</span><span class="p">);</span>                    <span class="c1">// 27 is rvalue, so T is int, param&#39;s type is therefore int&amp;&amp;</span>
-</pre></div>
-
-
-<p>事实上现在讨论的推导规则都在C++引用折叠规则之内，但是为了解释引用折叠规则就会牵扯到移动语义和完美转发，比较麻烦，因此这里就先不提了。</p>
-<h1>数组类型参数</h1>
-<p>需要注意的是：数组类型在形参不是引用的时候会退化为指针,即下面两个函数的声明是等价的。</p>
-<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="nf">myFunc</span><span class="p">(</span><span class="kt">int</span> <span class="n">param</span><span class="p">[]);</span>
-<span class="kt">void</span> <span class="nf">myFunc</span><span class="p">(</span><span class="kt">int</span><span class="o">*</span> <span class="n">param</span><span class="p">);</span>
-</pre></div>
-
-
-<p>而在形参为引用（包括左值引用和全局引用）的时候则会推导出数组的类型，不会退化为指针。例子如下：</p>
-<div class="highlight"><pre><span></span><span class="k">const</span> <span class="kt">char</span> <span class="n">name</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&quot;J.P.Briggs&quot;</span><span class="p">;</span>
-<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">f1</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">param</span><span class="p">);</span> 
- <span class="n">f1</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>  <span class="c1">// T&#39;s type and param&#39;s type are const char(&amp;)[13]</span>
-
-<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">f2</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">param</span><span class="p">);</span> 
- <span class="n">f2</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>  <span class="c1">// T&#39;s type and param&#39;s type are const char(&amp;)[13]</span>
-</pre></div>
-
-
-<h1>auto类型推导</h1>
-<p><code>auto</code>关键字首次出现是在c++11，广大人民群众拍手称快欢迎此关键字。<code>auto</code>的类型推导与模板除了在初始化列表类型有差异外，几乎相同。所以这里只提差异之处，看下例：</p>
-<div class="highlight"><pre><span></span><span class="k">auto</span> <span class="n">x1</span> <span class="o">=</span> <span class="mi">27</span><span class="p">;</span>        <span class="c1">// type is int, value is 27</span>
-<span class="k">auto</span> <span class="nf">x2</span><span class="p">(</span><span class="mi">27</span><span class="p">);</span>         <span class="c1">// ditto</span>
-<span class="k">auto</span> <span class="n">x3</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">27</span> <span class="p">};</span>    <span class="c1">// type is std::initializier_list&lt;int&gt;, value is { 27 }</span>
-<span class="k">auto</span> <span class="n">x4</span><span class="p">{</span> <span class="mi">27</span> <span class="p">};</span>       <span class="c1">// ditto</span>
-</pre></div>
-
-
-<p>当推导一个以大括号初始化的类型变量的时候，<code>auto</code>并不会直接推导出变量的最终类型，而是保留初始化列表类型，即<code>std::initializer\_list&lt;T&gt;</code>类型。如果初始化列表中的值类型并不完全相同，则无法完成对于<code>T</code>的推导，导致报错。即使用<code>auto</code>来推导初始化列表时，不允许隐式转换，如下例：</p>
-<div class="highlight"><pre><span></span><span class="k">auto</span> <span class="n">x5</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">3.0</span> <span class="p">};</span>    <span class="c1">// error! can&#39;t deduce T for std::initializer_list&lt;int&gt;</span>
-</pre></div>
-
-
-<p>此外，当初始化列表使用在函数模板时，其类型推导也会产生错误。</p>
-<div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="n">T</span> <span class="n">param</span><span class="p">);</span>         <span class="c1">// template with parameter declaration equivalent to x&#39;s</span>
-<span class="n">f</span><span class="p">({</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">9</span><span class="p">});</span>         <span class="c1">// error! can&#39;t deduce type for T</span>
-</pre></div>
-
-
-<p>如果想让初始化列表也能参与到模板类型推导，则需要修改函数模板的声明。</p>
-<div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="kt">void</span> <span class="n">f</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">initializer_list</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">initList</span><span class="p">);</span>
-<span class="n">f</span><span class="p">({</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">9</span> <span class="p">});</span>    <span class="c1">// T deduce as int, and initList&#39;s type is std::initializer_list&lt;int&gt;</span>
-</pre></div>
-
-
-<p>至于为什么会出现这些稀奇古怪的规则，我不清楚，Scott Meyers也不清楚。唯一的建议是不要让编译器去推导初始化列表的类型，否则就等着报模板错误吧。</p>
-<h1>decltype类型推导</h1>
-<p><code>decltype</code>关键字在很早的时候就进入了C++语言中，但是之前有很多限制用处不是很大，能使用的地方现在也基本被<code>auto</code>代替了。在C++ 11中，他唯一的作用就是声明一个返回类型依赖于模板参数的模板函数，这个功能在使用<code>auto</code>时会出错。如下例，我们来构造一个类似于数组操作符的函数:</p>
-<div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">Container</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Index</span><span class="o">&gt;</span>
-<span class="k">auto</span> <span class="n">access</span><span class="p">(</span><span class="n">Container</span><span class="o">&amp;</span> <span class="n">c</span><span class="p">,</span> <span class="n">Index</span> <span class="n">i</span><span class="p">)</span>    <span class="c1">// </span>
-<span class="p">{</span>
-  <span class="k">return</span> <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>            <span class="c1">// return type deduced from c[i]</span>
-<span class="p">}</span>
-</pre></div>
-
-
-<p>C++语言中操作符<code>[]</code>的返回值默认是<code>A\&amp;</code>的，而不是直接返回值，因为要处理<code>a[i]=c</code>的情况。所以上文中<code>c[i]</code>的类型是引用类型。但是，<code>auto</code>的推导规则是类似于模板的推导规则的，即引用类型会被转换为非引用类型。在这个规则的作用下，会造成<code>access[i]=c</code>无法通过编译。</p>
-<p>为了达到所期望的要求，需要对原程序进行修改。在C++11中，引入了后置返回类型<code>trailing return type</code>，实现所期望的功能需要修改为如下代码：</p>
-<div class="highlight"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">Container</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Index</span><span class="o">&gt;</span>
-<span class="k">auto</span> <span class="n">access</span><span class="p">(</span><span class="n">Container</span><span class="o">&amp;</span> <span class="n">c</span><span class="p">,</span> <span class="n">Index</span> <span class="n">i</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="k">decltype</span><span class="p">(</span><span class="k">auto</span><span class="p">)</span>  
-<span class="p">{</span>
-  <span class="k">return</span> <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
-<span class="p">}</span>
-</pre></div>
-
-
-<p>为什么这样就可以得到正确的返回值类型？这个需要追究到C++标准中对于<code>decltype</code>的说明。在C++标准中，对于<code>decltype(e)</code>的类型有如下定义：</p>
-<ul>
-<li>
-<p>如果<code>e</code>是一个没有给括号包围的变量名或者一个没有被括号包围的类成员访问，则<code>decltype(e)</code>的类型就是最终访问的变量的类型。如果访问的变量并不存在，则视为错误。</p>
-</li>
-<li>
-<p>如果； <code>e</code>是一个函数调用或者重载操作符（如果有括号包围，则去除括号）,则<code>decltype(e)</code>是最终所调用函数的返回值类型；</p>
-</li>
-<li>
-<p>否则，如果<code>e</code>是一个左值，且<code>e</code>的类型是<code>T</code>，则<code>decltype(e)</code>为<code>T\&amp;</code>；</p>
-</li>
-<li>
-<p>否则 ，<code>decltype(e)</code>的类型就是<code>e</code>的类型。</p>
-</li>
-</ul>
-<p>下面的代码便是上述规则的一些实例：</p>
-<div class="highlight"><pre><span></span><span class="k">const</span> <span class="kt">int</span><span class="o">&amp;&amp;</span> <span class="n">foo</span><span class="p">();</span>
-<span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
-<span class="k">struct</span> <span class="n">A</span> <span class="p">{</span> <span class="kt">double</span> <span class="n">x</span><span class="p">;</span> <span class="p">};</span>
-<span class="k">const</span> <span class="n">A</span><span class="o">*</span> <span class="n">a</span> <span class="o">=</span> <span class="k">new</span> <span class="n">A</span><span class="p">();</span>
-<span class="k">decltype</span><span class="p">(</span><span class="n">foo</span><span class="p">())</span> <span class="n">x1</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">i</span><span class="p">);</span> <span class="c1">// type is const int&amp;&amp;</span>
-<span class="k">decltype</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="n">x2</span><span class="p">;</span> <span class="c1">// type is int</span>
-<span class="k">decltype</span><span class="p">(</span><span class="n">a</span><span class="o">-&gt;</span><span class="n">x</span><span class="p">)</span> <span class="n">x3</span><span class="p">;</span> <span class="c1">// type is double</span>
-<span class="k">decltype</span><span class="p">((</span><span class="n">a</span><span class="o">-&gt;</span><span class="n">x</span><span class="p">))</span> <span class="n">x4</span> <span class="o">=</span> <span class="n">x3</span><span class="p">;</span> <span class="c1">// type is const double&amp;</span>
-</pre></div>
-
-
-<p>注意最后的两个声明,可以看出对于左值来说有没有加括号是有很大差别的。对于<code>decltype(a-&gt;x)</code>，得到的是<code>A::x</code>的类型，所以是<code>double</code>。而对于<code>decltype((a-&gt;x))</code>来说，返回的是<code>(a-&gt;x)</code>的类型。由于<code>a</code>的类型为<code>const A*</code>，又因为<code>(a-&gt;x)</code>是一个左值表达式，所以最后返回的是<code>const double\&amp;</code>。类似的例子还有：</p>
-<div class="highlight"><pre><span></span><span class="k">decltype</span><span class="p">(</span><span class="k">auto</span><span class="p">)</span> <span class="n">f1</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-<span class="c1">// ...</span>
-    <span class="k">return</span> <span class="n">x</span><span class="p">;</span>    <span class="c1">// decltype(x) is int, so f1 returns int</span>
-<span class="p">}</span>
-<span class="k">decltype</span><span class="p">(</span><span class="k">auto</span><span class="p">)</span> <span class="n">f2</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-<span class="c1">// ...</span>
-    <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="p">);</span>    <span class="c1">// decltype((x)) is int&amp;, so f2 returns int&amp;</span>
-<span class="p">}</span>
-</pre></div>
-
-
-<p>在寻找相关资料的过程中，还看到了<code>decltype(a,b)</code>这样的用法，这时的类型等价于<code>decltype(b)</code>。总而言之，就是一个坑。</p>
-<p>要不是<code>auto</code>在返回值推导时无法得到正确结果，这个关键字早就废了。虽说能够正确运行了，广大人民群众对于上面的函数声明还是不满意：为什么要写后面那一大串，编译期不会自己写么。于是在C++14，之前的函数定义代码又升级了，引入了<code>decltype(auto)</code>。原有的代码变成了这样的最终形态：</p>
-<div class="highlight"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">Container</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Index</span><span class="o">&gt;</span>
-<span class="k">decltype</span><span class="p">(</span><span class="k">auto</span><span class="p">)</span> <span class="n">access</span><span class="p">(</span><span class="n">Container</span><span class="o">&amp;&amp;</span> <span class="n">c</span><span class="p">,</span> <span class="n">Index</span> <span class="n">i</span><span class="p">)</span>  <span class="c1">// final C++14 version</span>
-<span class="p">{</span>
-    <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">Container</span><span class="o">&gt;</span><span class="p">(</span><span class="n">c</span><span class="p">)[</span><span class="n">i</span><span class="p">];</span>
-<span class="p">}</span>
-</pre></div>
-
-
-<p>类似的，变量声明也可以使用<code>decltype(auto)</code>，如下所示：</p>
-<div class="highlight"><pre><span></span><span class="n">Widget</span> <span class="n">w</span><span class="p">;</span>
-<span class="k">const</span> <span class="n">Widget</span><span class="o">&amp;</span> <span class="n">cw</span> <span class="o">=</span> <span class="n">w</span><span class="p">;</span>
-<span class="k">auto</span> <span class="n">myWiget1</span> <span class="o">=</span> <span class="n">cw</span><span class="p">;</span>    <span class="c1">// auto type deduction:</span>
-<span class="c1">// myWidget1&#39;s type is Widget</span>
-<span class="k">decltype</span><span class="p">(</span><span class="k">auto</span><span class="p">)</span> <span class="n">myWidget2</span> <span class="o">=</span> <span class="n">cw</span><span class="p">;</span>  <span class="c1">// decltype type deduction:</span>
-<span class="c1">// myWidget2&#39;s type is const Widget&amp;</span>
-</pre></div>
-
-
-<p>我似乎看到了广大人民群众洋溢着笑容，拍手称快。但是后置返回类型语法并无法完全废除，在模板特化中仍然有其不可替代的地位，这将在下一篇中讲到。</p>
-<h1>参考链接</h1>
-<ul>
-<li>
-<p>知乎上关于类型系统的大概介绍：<a href="http://www.zhihu.com/question/19918532">http://www.zhihu.com/question/19918532</a></p>
-</li>
-<li>
-<p>Scott Meyers的新书<code>Effective Modern C++</code>的前3章，本文绝大部分内容抄袭自此：<a href="http://book.douban.com/subject/25923597/">http://book.douban.com/subject/25923597/</a></p>
-</li>
-<li>
-<p>热心网友Bitdewy对<code>Effective Modern C++</code>前几章的中文翻译，我厚颜无耻的抄了一部分：<a href="http://blog.bitdewy.me/">http://blog.bitdewy.me/</a></p>
-</li>
-<li>
-<p>C++标准中关于<code>decltype</code>的部分，链接中文档第153页：<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3242.pdf">http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3242.pdf</a></p>
-</li>
-</ul>                </article>
-            </aside><!-- /#featured -->
-        <section id="extras" class="body">
-                <div class="blogroll">
-                        <h2>links</h2>
-                        <ul>
-                            <li><a href="http://getpelican.com/">Pelican</a></li>
-                            <li><a href="http://python.org/">Python.org</a></li>
-                            <li><a href="http://jinja.pocoo.org/">Jinja2</a></li>
-                            <li><a href="#">You can modify those links in your config file</a></li>
-                        </ul>
-                </div><!-- /.blogroll -->
-                <div class="social">
-                        <h2>social</h2>
-                        <ul>
-
-                            <li><a href="#">You can add links in your config file</a></li>
-                            <li><a href="#">Another social link</a></li>
-                        </ul>
-                </div><!-- /.social -->
-        </section><!-- /#extras -->
-
-        <footer id="contentinfo" class="body">
-                <address id="about" class="vcard body">
-                Proudly powered by <a href="http://getpelican.com/">Pelican</a>, which takes great advantage of <a href="http://python.org">Python</a>.
-                </address><!-- /#about -->
-
-                <p>The theme is by <a href="http://coding.smashingmagazine.com/2009/08/04/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
-        </footer><!-- /#contentinfo -->
-
-</body>
+    <script type="text/javascript" src="http://spiritsaway.info/theme/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="http://spiritsaway.info/theme/js/niu2.min.js"></script>
+    <script type="text/javascript" src="http://spiritsaway.info/theme/js/bootstrap.min.js"></script>
+    <script type="text/javascript"></script>
+  </body>
 </html>

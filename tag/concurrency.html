@@ -1,474 +1,149 @@
 <!DOCTYPE html>
-<html lang="chinese (simplified)">
-<head>
-        <meta charset="utf-8" />
-        <title>SpiritsAway - Concurrency</title>
-        <link rel="stylesheet" href="/theme/css/main.css" />
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>标签 Concurrency - Spirits Away</title>
+    <link rel="shortcut icon" type="image/x-icon" href="\favicon.ico">
+    <link rel="stylesheet" href="http://spiritsaway.info/theme/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="http://spiritsaway.info/theme/font-icons/style.min.css" type="text/css" />
+    <link rel="stylesheet" href="http://spiritsaway.info/theme/css/niu2.min.css" type="text/css" />
+    
+    <script type="text/javascript">window.onload=function(){};</script>
+    <!--[if lt IE 9]>
+        <script src="http://spiritsaway.info/theme/js/html5shiv.js"></script>
+        <script src="http://spiritsaway.info/theme/js/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body> 
+    <div id="body-header">
+<div class="navbar navbar-inverse navbar-fixed-top">
+<div class="col-md-12">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="http://spiritsaway.info">
+            <i class="icon-home"></i>Spirits Away
+        </a>
+    </div>
+    <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+        <ul class="nav navbar-nav">
+            <li><a href="/about.html" title="about">
+                <i class="fa-anchor"></i>关于</a>
+            </li>
+            <li><a href="/archives.html" title="archives">
+                <i class="fa-archive"></i>存档</a>
+            </li>
+            <li><a href="/tag/" title="tags">
+                <i class="fa-tag"></i>标签</a>
+            </li>
+        <!-- category dropdown list -->
+        <li class="dropdown">
+           <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                <i class="icon-folder-open"></i>分类<b class="caret"></b>
+           </a>
+           <ul class="dropdown-menu">
+               <li><a href="http://spiritsaway.info/ai/index.html">
+                   <i class="icon-folder-close"></i>AI
+                      (3)</a></li>
+               <li><a href="http://spiritsaway.info/algorithm/index.html">
+                   <i class="icon-folder-close"></i>Algorithm
+                      (3)</a></li>
+               <li><a href="http://spiritsaway.info/code/index.html">
+                   <i class="icon-folder-close"></i>Code
+                      (3)</a></li>
+               <li><a href="http://spiritsaway.info/compiler/index.html">
+                   <i class="icon-folder-close"></i>Compiler
+                      (2)</a></li>
+               <li><a href="http://spiritsaway.info/cpp/index.html">
+                   <i class="icon-folder-close"></i>CPP
+                      (8)</a></li>
+               <li><a href="http://spiritsaway.info/math/index.html">
+                   <i class="icon-folder-close"></i>Math
+                      (4)</a></li>
+           </ul>
+        </li>
+        <!--  self defined dropdown list -->
+        </ul>
+        
+        <!-- right nav bar -->
+        <ul class="nav navbar-nav navbar-right">
+        <!-- google custom search -->
+       </ul>
+    </nav>
+</div>
+</div>    </div>
+    
+    <div id="body-content">
+<div class="col-md-8 col-md-offset-2">
 
-        <!--[if IE]>
-            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-        <![endif]-->
-</head>
+<h1 class="niu2-index-title">
+<i class="icon-tag icon-lg"></i>Concurrency
+</h1>
 
-<body id="index" class="home">
-        <header id="banner" class="body">
-                <h1><a href="/">SpiritsAway </a></h1>
-                <nav><ul>
-                    <li><a href="/pages/about.html">about</a></li>
-                    <li><a href="/category/ai.html">AI</a></li>
-                    <li><a href="/category/algorithm.html">Algorithm</a></li>
-                    <li><a href="/category/code.html">Code</a></li>
-                    <li><a href="/category/compiler.html">Compiler</a></li>
-                    <li><a href="/category/cpp.html">CPP</a></li>
-                    <li><a href="/category/math.html">Math</a></li>
-                </ul></nav>
-        </header><!-- /#banner -->
+</div>
 
-            <aside id="featured" class="body">
-                <article>
-                    <h1 class="entry-title"><a href="/concurrency-in-cpp.html">Concurrency in CPP</a></h1>
-<footer class="post-info">
-        <abbr class="published" title="2015-04-28T20:23:00+08:00">
-                Published: 周二 28 四月 2015
-        </abbr>
-
-        <address class="vcard author">
-                By                         <a class="url fn" href="/author/spiritsaway.html">SpiritsAway</a>
-        </address>
-<p>In <a href="/category/cpp.html">CPP</a>.</p>
-<p>tags: <a href="/tag/concurrency.html">Concurrency</a> <a href="/tag/cpp.html">CPP</a> </p>
-</footer><!-- /.post-info --><p>并行是一个非常fancy的词，在正确的实现并行的时候能够得到非常大的效率提高。但是，如何正确的实现并行一直陷阱重重。这之间的陷阱主要有如下三个：</p>
-<ul>
-<li>
-<p>并行读写竞争处理</p>
-</li>
-<li>
-<p>并行操作的异常处理</p>
-</li>
-<li>
-<p>缓存敏感的数据布局及访问设计</p>
-</li>
-</ul>
-<p>其中第三个问题被誉为CS里面中最难的两个问题之首。常言道：<code>There are only two hard things in Computer Science: cache invalidation and naming things.</code> 后面这个问题能够使整个论坛吵起来乃至血流成河，而前面这个问题只会造成男默女泪的局面。所以，当前就围绕着前两个问题进行讨论。首先解决访问读写竞争问题，然后讨论异常处理问题。</p>
-<h1>读写竞争：双线程</h1>
-<p>在并行程序中，最基本的进行访问仲裁的方法是使用<code>mutex</code>。但是在双线程的情况下，采用peterson算法比使用<code>mutex</code>代价小很多。下文就来介绍一个peterson方法。</p>
-<p>只有两个程序在访问同一个数据，所以数组大小为2。在下文中，flag[2]代表意向数组，分别为P1和P0，当为1时代表他们想去临界区或者已经在临界区中了,另外有一个turn来代表下一个该进入的程序号，turn可取的值为0或1。其用来仲裁访问争用的代码如下：</p>
-<div class="highlight"><pre><span></span><span class="cp">#define FALSE 0</span>
-<span class="cp">#define TRUE 1</span>
-<span class="cp">#define N 2</span><span class="c1">//这里代表进程数量</span>
-<span class="kt">int</span> <span class="n">turn</span><span class="p">;</span><span class="c1">//这里代表轮到谁了</span>
-<span class="kt">int</span> <span class="n">interested</span><span class="p">[</span><span class="n">N</span><span class="p">];</span><span class="c1">//这里是意向数组，初始化为FALSE </span>
-<span class="kt">void</span> <span class="nf">enter_region</span><span class="p">(</span><span class="kt">int</span> <span class="n">process</span><span class="p">)</span><span class="c1">//进程号为或者</span>
-<span class="p">{</span>
-    <span class="kt">int</span> <span class="n">other</span><span class="p">;</span><span class="c1">//代表另外的那个进程的号</span>
-    <span class="n">other</span><span class="o">=</span><span class="mi">1</span><span class="o">-</span><span class="n">process</span><span class="p">;</span>
-    <span class="n">interested</span><span class="p">[</span><span class="n">process</span><span class="p">]</span><span class="o">=</span><span class="n">TURE</span><span class="p">;</span><span class="c1">//设置当前进程的意向值为TURE 来表明感兴趣</span>
-    <span class="n">turn</span><span class="o">=</span><span class="n">process</span><span class="p">;</span><span class="c1">//设置标志位</span>
-    <span class="k">while</span><span class="p">(</span><span class="n">turn</span><span class="o">==</span><span class="n">process</span><span class="o">&amp;&amp;</span><span class="n">interested</span><span class="p">[</span><span class="n">other</span><span class="p">]</span><span class="o">==</span><span class="n">TURE</span><span class="p">);</span><span class="c1">//当互斥条件不满足即while里面的条件满足时忙等待</span>
-<span class="p">}</span>
-<span class="kt">void</span> <span class="nf">leave_region</span><span class="p">(</span><span class="kt">int</span> <span class="n">process</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">interested</span><span class="p">[</span><span class="n">process</span><span class="p">]</span><span class="o">=</span><span class="n">FALSE</span><span class="p">;</span><span class="c1">//设置意向值表示不感兴趣</span>
-<span class="p">}</span>
-</pre></div>
-
-
-<p>在下文的描述中我将用P0、P1、turn的顺序来描写三元组。</p>
-<p>当程序0想进入临界区的时候，将P0改写为1，并且将turn改为1，而程序1想进入时，则将P1改为1，turn改为0。然后再经过一个逻辑判断循环，如果满足条件则循环结束，开始进入临界区的指令，否则一直循环，类似于忙等待。这两者离开临界区后把相应的意向数组的元素改为0。</p>
-<p>首先对P0来进行分析。当P0运行到<code>while()</code>时，三元组的情况只有四种：</p>
-<ul>
-<li>
-<p>三元组为<code>1,1,0</code>时，这种情况只有可能出现在P0已经修改完了之后P1再进行修改。而P1在修改时无法判断P0是否已经进入：因为P1修改时P0的意向值为1，且turn为1，很有可能 0已经进入了临界区，P1不会进入临界区。所以此时P0可以进入临界区。</p>
-</li>
-<li>
-<p>三元组为<code>1,0,0</code>时，唯一的可行情况就是P1程序并没有进入临界区的企图。所以此时P0可以进入临界区。</p>
-</li>
-<li>
-<p>三元组为<code>1,1,1</code>时，这说明P1的修改被P0重写了，所以可能P1正在临界区。所以此时P0不得进入临界区。</p>
-</li>
-<li>
-<p>三元组为<code>1,0,1</code>时，此时是最简单的情况，即程序1不想也不在临界区，程序0可以进入。</p>
-</li>
-</ul>
-<p>所以总的条件就是三元组在全为1时，P0进入忙等待，直到条件打破才能进入临界区；其他情况下P0可以进入临界区。</p>
-<p>现在对P1来分析。跟上面的分析类似，当P1运行到<code>while()</code>时，三元组也只有四种可能：</p>
-<ul>
-<li>
-<p>三元组为<code>0,1,0</code>时。这时的唯一可能情形就是在P1修改<code>interested[1]</code>之后，P0尝试进入临界区并进入成功，然后退出了临界区。所以此时P1可以进入临界区。</p>
-</li>
-<li>
-<p>三元组为<code>1,1,0</code>时，可能P0正在尝试进入临界区，做了修改却被P1重新改掉了，所以不能确定P0是否已经进入了临界区，所以此时P1不得进入临界区。</p>
-</li>
-<li>
-<p>三元组为<code>0,1,1</code>时，P0并不在临界区内，同时P0并未试图进入临界区。所以，此时P1可以进入临界区。</p>
-</li>
-<li>
-<p>三元组为<code>1,1,1</code>时，此时P1的修改被程序0给覆盖了，而P0覆盖之后会发现此时的三元组是1、1、1，按照上面的分析P0在这个时候是不会进入临界区的，所以此时P1可以进入临界区。</p>
-</li>
-</ul>
-<p>综上只有1、1、0的时候P1才不能进入临界区，此时的判定条件为while((flag[0]\&amp;\&amp;!turn)==1),在这个时候不停的循环，直到条件打破。</p>
-<p>通过上面的分析，我们可以把这两个条件综合起来，从而得到了下面的这个判断语句：</p>
-<div class="highlight"><pre><span></span><span class="k">while</span><span class="p">(</span><span class="n">turn</span><span class="o">==</span><span class="n">process</span><span class="o">&amp;&amp;</span><span class="n">interested</span><span class="p">[</span><span class="n">other</span><span class="p">]</span><span class="o">==</span><span class="n">TURE</span><span class="p">)</span>
-</pre></div>
-
-
-<h1>读写竞争：多线程</h1>
-<p>在多线程时，peterson算法就无法使用了。此时，必须使用<code>mutex</code>来控制并发访问。下面便以多线程访问一个<code>list</code>为例来说明C++中使用<code>mutex</code>的方法。</p>
-<div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;mutex&gt;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&lt;thread&gt;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&lt;list&gt;</span><span class="cp"></span>
-<span class="n">std</span><span class="o">::</span><span class="n">list</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">some_list</span><span class="p">;</span>
-<span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">some_mutex</span><span class="p">;</span>
-<span class="kt">void</span> <span class="nf">add_to_list</span><span class="p">(</span><span class="kt">int</span> <span class="n">new_value</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">guard</span><span class="p">(</span><span class="n">some_mutex</span><span class="p">);</span>
-    <span class="n">some_list</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">new_value</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="kt">bool</span> <span class="nf">list_contains</span><span class="p">(</span><span class="kt">int</span> <span class="n">value_to_find</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">guard</span><span class="p">(</span><span class="n">some_mutex</span><span class="p">);</span>
-    <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">find</span><span class="p">(</span><span class="n">some_list</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">some_list</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">value_to_find</span><span class="p">)</span>
-        <span class="o">!=</span> <span class="n">some_list</span><span class="p">.</span><span class="n">end</span><span class="p">();</span>
-<span class="p">}</span>
-</pre></div>
+<div class="col-md-8 col-md-offset-2">
+    <div class="niu2-index-article">
+        <div class="niu2-index-article-title">
+            <span>
+                <a href="http://spiritsaway.info/cpp/concurrency-in-cpp.html">Concurrency in CPP</a>
+            </span>
+        </div>
+<div class="niu2-meta-index">
+    <span class="niu2-meta-date-index">
+        <i class="icon-calendar"></i>2015-04-28
+    </span>
+    <span class="niu2-meta-category-index">
+        <i class="icon-folder-open"></i>CPP
+    </span>
+    <span class="niu2-meta-tag-index">
+        <i class="icon-tag"></i>
+        <a href="http://spiritsaway.info/tag/concurrency.html">Concurrency</a>
+        <a href="http://spiritsaway.info/tag/cpp.html">CPP</a>
+    </span>
+</div>        <div class="niu2-article-summary">
+            
+        </div>
+    </div>
 
 
-<p>在上面的代码中，我们对于<code>list</code>的每一个操作都加了一个锁，从而实现了互斥访问。本来<code>mutex</code>需要<code>unlock</code>的，但是这里巧妙地利用了C++中的RAII，避免了每次获得锁之后都手工<code>unlock</code>。方法就是在<code>lock\_guard</code>的析构函数中进行<code>unlock</code>，这样就保证了互斥锁的正确释放。</p>
-<p>互斥锁是解决竞争的最基本方案，但是代价较高。有些操作之间是可以并行存在的，强制性的互斥访问可能会降低效率。例如<code>list\_contains</code>这个操作是非修改性操作，多个该操作的并行执行并不影响结果。所以，当前的互斥锁<code>mutex</code>对于大量的非修改操作来说并不是一个友好的方案，而读写锁(<code>reader writer mutex</code>)则应运而生。但是C++标准委员会拒绝了读写锁的提案，所以我们只能从Boost库中找到相应的解决方案，即<code>boost::shared\_mutex</code>。具体的使用代码如下：</p>
-<div class="highlight"><pre><span></span><span class="n">boost</span><span class="o">::</span><span class="n">shared_mutex</span> <span class="n">_access</span><span class="p">;</span>
-<span class="kt">void</span> <span class="nf">reader</span><span class="p">()</span>
-<span class="p">{</span>
-  <span class="n">boost</span><span class="o">::</span><span class="n">shared_lock</span><span class="o">&lt;</span> <span class="n">boost</span><span class="o">::</span><span class="n">shared_mutex</span> <span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">_access</span><span class="p">);</span>
-  <span class="c1">// do work here, without anyone having exclusive access</span>
-<span class="p">}</span>
-<span class="kt">void</span> <span class="nf">conditional_writer</span><span class="p">()</span>
-<span class="p">{</span>
-  <span class="n">boost</span><span class="o">::</span><span class="n">upgrade_lock</span><span class="o">&lt;</span> <span class="n">boost</span><span class="o">::</span><span class="n">shared_mutex</span> <span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">_access</span><span class="p">);</span>
-  <span class="c1">// do work here, without anyone having exclusive access</span>
-  <span class="k">if</span> <span class="p">(</span><span class="n">something</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">boost</span><span class="o">::</span><span class="n">upgrade_to_unique_lock</span><span class="o">&lt;</span> <span class="n">boost</span><span class="o">::</span><span class="n">shared_mutex</span> <span class="o">&gt;</span> <span class="n">uniqueLock</span><span class="p">(</span><span class="n">lock</span><span class="p">);</span>
-    <span class="c1">// do work here, but now you have exclusive access</span>
-  <span class="p">}</span>
-  <span class="c1">// do more work here, without anyone having exclusive access</span>
-<span class="p">}</span>
-<span class="kt">void</span> <span class="nf">unconditional_writer</span><span class="p">()</span>
-<span class="p">{</span>
-  <span class="n">boost</span><span class="o">::</span><span class="n">unique_lock</span><span class="o">&lt;</span> <span class="n">boost</span><span class="o">::</span><span class="n">shared_mutex</span> <span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">_access</span><span class="p">);</span>
-  <span class="c1">// do work here, with exclusive access</span>
-<span class="p">}</span>
-</pre></div>
 
+</div>
+    </div>
 
-<p>从上面的代码可以看出<code>boost::shared\_mutex</code>的使用有三种情况：共享锁，可升级锁，独占锁。这三种情况提供了一些灵活性，同时相对于C++标准来说又比较杂乱。如果bu'shi此外，读写锁还有两种策略：一种是在读者存在的情况下写者试图访问，会阻塞新来的读者；而另外一种则不会阻塞新来的读者。当前的读写锁好像木有说明它是哪一种模式，需要测试。</p>
-<h1>多线程接口设计</h1>
-<p>通过使用<code>mutex</code>我们解决了多线程之间对于共享内存的互斥访问问题，现在来处理多线程的异常问题。以下面的多线程栈为例，假设当前栈的接口如下：</p>
-<div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Container</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">deque</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&gt;</span>
-<span class="k">class</span> <span class="nc">stack</span>
-<span class="p">{</span>
-<span class="k">public</span><span class="o">:</span>
-    <span class="k">explicit</span> <span class="n">stack</span><span class="p">(</span><span class="k">const</span> <span class="n">Container</span><span class="o">&amp;</span><span class="p">);</span>
-    <span class="k">explicit</span> <span class="nf">stack</span><span class="p">(</span><span class="n">Container</span><span class="o">&amp;&amp;</span> <span class="o">=</span> <span class="n">Container</span><span class="p">());</span>
-    <span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">Alloc</span><span class="o">&gt;</span> <span class="k">explicit</span> <span class="n">stack</span><span class="p">(</span><span class="k">const</span> <span class="n">Alloc</span><span class="o">&amp;</span><span class="p">);</span>
-    <span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">Alloc</span><span class="o">&gt;</span> <span class="n">stack</span><span class="p">(</span><span class="k">const</span> <span class="n">Container</span><span class="o">&amp;</span><span class="p">,</span> <span class="k">const</span> <span class="n">Alloc</span><span class="o">&amp;</span><span class="p">);</span>
-    <span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">Alloc</span><span class="o">&gt;</span> <span class="n">stack</span><span class="p">(</span><span class="n">Container</span><span class="o">&amp;&amp;</span><span class="p">,</span> <span class="k">const</span> <span class="n">Alloc</span><span class="o">&amp;</span><span class="p">);</span>
-    <span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">Alloc</span><span class="o">&gt;</span> <span class="n">stack</span><span class="p">(</span><span class="n">stack</span><span class="o">&amp;&amp;</span><span class="p">,</span> <span class="k">const</span> <span class="n">Alloc</span><span class="o">&amp;</span><span class="p">);</span>
-    <span class="kt">bool</span> <span class="nf">empty</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
-    <span class="kt">size_t</span> <span class="nf">size</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
-    <span class="n">T</span><span class="o">&amp;</span> <span class="n">top</span><span class="p">();</span>
-    <span class="n">T</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">top</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
-    <span class="kt">void</span> <span class="nf">push</span><span class="p">(</span><span class="n">T</span> <span class="k">const</span><span class="o">&amp;</span><span class="p">);</span>
-    <span class="kt">void</span> <span class="nf">push</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;&amp;</span><span class="p">);</span>
-    <span class="kt">void</span> <span class="nf">pop</span><span class="p">();</span>
-    <span class="kt">void</span> <span class="nf">swap</span><span class="p">(</span><span class="n">stack</span><span class="o">&amp;&amp;</span><span class="p">);</span>
-<span class="p">};</span>
-</pre></div>
+<div class="niu2-footer">
+    <div id="body-footer" class="col-md-8 col-md-offset-2">
+<hr/>
+<p>
+    Powered by <a href="https://github.com/getpelican/pelican">Pelican</a>, 
+    <a href="https://github.com/mawenbao/niu-x2-sidebar">theme</a> built with <a href="http://getbootstrap.com">Bootstrap3</a>
+    by <a href="http://blog.atime.me">Ma Wenbao</a>, icons by 
+    <a href="http://fortawesome.github.io/Font-Awesome">Font Awesome</a>.
+</p>
+<p>
+    ©
+            2014-2016
+    <a class="niu2-footer-link" href="http://spiritsaway.info">Huiliang Huang</a>
+</p>
+<p class="niu2-icons">
+        <a class="niu2-footer-icon" href="mailto: spiritsaway@outlook.com" title="my email address">
+            <i class="fa-envelope-alt icon-lg"></i>
+        </a>
+        <a class="niu2-footer-icon" href="https://github.com/huangfeidian" title="my github page">
+            <i class="fa-github-alt icon-lg"></i>
+        </a>
+</p>    </div>
+</div>
+    
+    <div id="niu2-pygments" data-theme="github"></div>
 
-
-<p>假设我们利用了<code>mutex</code>保证了该栈接口都能保证线程之间互斥访问，此时并没有万事大吉。考虑下面的代码：</p>
-<div class="highlight"><pre><span></span><span class="n">stack</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">s</span><span class="p">;</span>
-<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">s</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span>
-<span class="p">{</span>
-    <span class="kt">int</span> <span class="k">const</span> <span class="n">value</span> <span class="o">=</span> <span class="n">s</span><span class="p">.</span><span class="n">top</span><span class="p">();</span>
-    <span class="n">s</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
-    <span class="n">do_something</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
-<span class="p">}</span>
-</pre></div>
-
-
-<p>该代码在单线程下是完美无缺的，但是在多线程下却有可能出现问题。因为在判断<code>empty</code>之后，可能有其他线程进行了<code>pop</code>操作导致栈空。此时如果再去<code>top</code>则会抛出异常。</p>
-<p><img alt="多线程栈竞争" src="{attach}image\CPP\stack_race.png"></p>
-<p>我们可以看出，虽然保证了接口是线程安全的，但是这样的一个简单操作却仍然无法保证正确性。这种错误根源在于接口设计的不合理性，我们需要把判断后访问栈顶元素的操作合并为一个操作。</p>
-<p>但是，在决定动手之前，我们还需要考虑更多的细节。例如，在<code>stack&lt;vector&lt;int&gt;&gt;</code>中，栈中的元素是一个<code>vector&lt;int&gt;</code>。如果我们通过拷贝构造的方式来返回<code>vector&lt;int&gt;</code>的话，需要临时构造一个相同大小的对象。新对象的构造需要牵涉到内存管理，从而潜在的包含了<code>bad\_alloc</code>异常。在该情况出现时，<code>pop</code>会造成栈已经被修改而无法返回正确的值的情形，从而造成值丢失。因此，我们不能使用直接返回值的方式来进行<code>pop</code>。下面是几种备选方案：</p>
-<ul>
-<li>
-<p>将目标对象以引用方式来传递，从而避免拷贝构造。此时我们需要增加一个接口<code>pop(T\&amp;)</code>，这个方案能解决很多问题。但是这个方案要求预先构造一个对象，并进行赋值。这些操作对于某些类型来说并不可行：需要明确参数的构造函数，赋值运算符被删除。</p>
-</li>
-<li>
-<p>强制要求拷贝构造函数不抛出异常，或者使用移动构造的形式来进行值返回。但是，同上面的原因，某些类型木有移动构造函数或者<code>noexcept</code>的拷贝构造函数。</p>
-</li>
-<li>
-<p>返回栈顶元素的指针，而不是栈顶元素的值。返回指针的好处是不会抛出异常，缺点是需要手工维护内存，这个非常危险。不过我们可以利用C++中的<code>std::share\_ptr</code>来自动管理指针。</p>
-</li>
-</ul>
-<p>三个方法各有优点，我们还可以把这三个优点都综合起来。最后的接口设计如下：</p>
-<div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;exception&gt;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&lt;memory&gt;</span><span class="cp"></span>
-<span class="k">struct</span> <span class="nl">empty_stack</span> <span class="p">:</span> <span class="n">std</span><span class="o">::</span><span class="n">exception</span>
-<span class="p">{</span>
-    <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">what</span><span class="p">()</span> <span class="k">const</span> <span class="k">throw</span><span class="p">();</span>
-<span class="p">};</span>
-<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<span class="k">class</span> <span class="nc">threadsafe_stack</span>
-<span class="p">{</span>
-<span class="k">public</span><span class="o">:</span>
-    <span class="n">threadsafe_stack</span><span class="p">();</span>
-    <span class="n">threadsafe_stack</span><span class="p">(</span><span class="k">const</span> <span class="n">threadsafe_stack</span><span class="o">&amp;</span><span class="p">);</span>
-    <span class="n">threadsafe_stack</span><span class="o">&amp;</span> <span class="k">operator</span><span class="o">=</span><span class="p">(</span><span class="k">const</span> <span class="n">threadsafe_stack</span><span class="o">&amp;</span><span class="p">)</span> <span class="o">=</span> <span class="k">delete</span><span class="p">;</span>
-    <span class="kt">void</span> <span class="nf">push</span><span class="p">(</span><span class="n">T</span> <span class="n">new_value</span><span class="p">);</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">pop</span><span class="p">();</span>
-    <span class="kt">void</span> <span class="nf">pop</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">);</span>
-    <span class="kt">bool</span> <span class="nf">empty</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
-<span class="p">};</span>
-</pre></div>
-
-
-<p>在这个新的接口设计中，我们禁止了赋值运算符，同时删除了<code>swap</code>函数。在该接口的指引下，我们可以得到下面的实现代码：</p>
-<div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">threadsafe_stack</span>
-<span class="p">{</span>
-<span class="k">private</span><span class="o">:</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">stack</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">data</span><span class="p">;</span>
-    <span class="k">mutable</span> <span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">m</span><span class="p">;</span>
-<span class="k">public</span><span class="o">:</span>
-    <span class="n">threadsafe_stack</span><span class="p">()</span>
-    <span class="p">{</span>
-    <span class="p">}</span>
-    <span class="n">threadsafe_stack</span><span class="p">(</span><span class="k">const</span> <span class="n">threadsafe_stack</span><span class="o">&amp;</span> <span class="n">other</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">other</span><span class="p">.</span><span class="n">m</span><span class="p">);</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">other</span><span class="p">.</span><span class="n">data</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="n">threadsafe_stack</span><span class="o">&amp;</span> <span class="k">operator</span><span class="o">=</span><span class="p">(</span><span class="k">const</span> <span class="n">threadsafe_stack</span><span class="o">&amp;</span><span class="p">)</span> <span class="o">=</span> <span class="k">delete</span><span class="p">;</span>
-    <span class="kt">void</span> <span class="nf">push</span><span class="p">(</span><span class="n">T</span> <span class="n">new_value</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">m</span><span class="p">);</span>
-        <span class="n">data</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">new_value</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">pop</span><span class="p">()</span>
-    <span class="p">{</span>
-        <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">m</span><span class="p">);</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">data</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span> <span class="k">throw</span> <span class="n">empty_stack</span><span class="p">();</span>
-        <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="k">const</span> <span class="n">res</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">data</span><span class="p">.</span><span class="n">top</span><span class="p">()));</span>
-        <span class="n">data</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
-        <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="kt">void</span> <span class="n">pop</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">m</span><span class="p">);</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">data</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span> <span class="k">throw</span> <span class="n">empty_stack</span><span class="p">();</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="n">data</span><span class="p">.</span><span class="n">top</span><span class="p">();</span>
-        <span class="n">data</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
-    <span class="p">}</span>
-    <span class="kt">bool</span> <span class="n">empty</span><span class="p">()</span> <span class="k">const</span>
-    <span class="p">{</span>
-        <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">m</span><span class="p">);</span>
-        <span class="k">return</span> <span class="n">data</span><span class="p">.</span><span class="n">empty</span><span class="p">();</span>
-    <span class="p">}</span>
-<span class="p">};</span>
-</pre></div>
-
-
-<p>在<code>pop</code>的实现中，即使<code>make\_shared</code>抛出了<code>bad\_alloc</code>异常，数据也不会丢失，因为真正意义上的<code>pop</code>的执行在该异常之后。在多线程程序中，尽量把数据修改操作延迟到可能的异常之后，以防止异常对整个数据结构的破坏。</p>
-<h1>死锁</h1>
-<p>很多时候，单独用一个锁来管理所有的资源会导致所谓的并行完全变成了串行（考虑为全内存加锁的极端情况）。为了增大并行的粒度，需要增加多个锁来管理不同部分的资源。但是多个锁的情况下会引起总所周知的死锁问题：线程1拥有锁A请求锁B，同时线程2拥有锁B请求锁A。对于预防死锁，解决方案有两个：</p>
-<ul>
-<li>
-<p>要求所有线程在开始时一次性获得所有的锁。</p>
-</li>
-<li>
-<p>要求所有线程按照同样的顺序来获得锁。</p>
-</li>
-</ul>
-<p>对于一次性对多个锁进行加锁的情况，C++内建了这种支持。如下代码：</p>
-<div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">some_big_object</span><span class="p">;</span>
-<span class="kt">void</span> <span class="nf">swap</span><span class="p">(</span><span class="n">some_big_object</span><span class="o">&amp;</span> <span class="n">lhs</span><span class="p">,</span> <span class="n">some_big_object</span><span class="o">&amp;</span> <span class="n">rhs</span><span class="p">);</span>
-<span class="k">class</span> <span class="nc">X</span>
-<span class="p">{</span>
-<span class="k">private</span><span class="o">:</span>
-    <span class="n">some_big_object</span> <span class="n">some_detail</span><span class="p">;</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">m</span><span class="p">;</span>
-<span class="k">public</span><span class="o">:</span>
-    <span class="n">X</span><span class="p">(</span><span class="n">some_big_object</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">sd</span><span class="p">)</span> <span class="o">:</span><span class="n">some_detail</span><span class="p">(</span><span class="n">sd</span><span class="p">)</span>
-    <span class="p">{</span>
-    <span class="p">}</span>
-    <span class="k">friend</span> <span class="kt">void</span> <span class="n">swap</span><span class="p">(</span><span class="n">X</span><span class="o">&amp;</span> <span class="n">lhs</span><span class="p">,</span> <span class="n">X</span><span class="o">&amp;</span> <span class="n">rhs</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">lhs</span> <span class="o">==</span> <span class="o">&amp;</span><span class="n">rhs</span><span class="p">)</span>
-            <span class="k">return</span><span class="p">;</span>
-        <span class="n">std</span><span class="o">::</span><span class="n">lock</span><span class="p">(</span><span class="n">lhs</span><span class="p">.</span><span class="n">m</span><span class="p">,</span> <span class="n">rhs</span><span class="p">.</span><span class="n">m</span><span class="p">);</span>
-        <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lock_a</span><span class="p">(</span><span class="n">lhs</span><span class="p">.</span><span class="n">m</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">adopt_lock</span><span class="p">);</span>
-        <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lock_b</span><span class="p">(</span><span class="n">rhs</span><span class="p">.</span><span class="n">m</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">adopt_lock</span><span class="p">);</span>
-        <span class="n">swap</span><span class="p">(</span><span class="n">lhs</span><span class="p">.</span><span class="n">some_detail</span><span class="p">,</span> <span class="n">rhs</span><span class="p">.</span><span class="n">some_detail</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">};</span>
-</pre></div>
-
-
-<p>在上面的代码中，<code>std::lock(lhs.m, rhs.m)</code>一次性获得了两个锁，而且是异常安全的。如果获得了一个锁之后出现异常，则会自动释放已经获得的锁。但是为了得到函数结束自动释放锁的要求，我们必须将所得到的锁分发给<code>std::lock\_guard</code>，并利用RAII来进行锁的释放。</p>
-<p>尽管<code>std::lock</code>能处理同时获得多个锁的情况，但是对于多个锁不是同时获得的情况无能为力（例如前面提到的读写锁中的<code>condition\_wirter</code>）。此时，唯一的解决方案就是为不同的所安排不同的层级：获得顺序中低等级的锁不能在高等级锁的前面，类似于IRQL。标准库之中并不存在所谓的等级锁，但是我们可以自己造啊。一个等级锁的实现如下：</p>
-<div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">hierarchical_mutex</span>
-<span class="p">{</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">internal_mutex</span><span class="p">;</span>
-    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="k">const</span> <span class="n">hierarchy_value</span><span class="p">;</span>
-    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">previous_hierarchy_value</span><span class="p">;</span>
-    <span class="k">static</span> <span class="k">thread_local</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">this_thread_hierarchy_value</span><span class="p">;</span>
-    <span class="kt">void</span> <span class="nf">check_for_hierarchy_violation</span><span class="p">()</span>
-    <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">this_thread_hierarchy_value</span> <span class="o">&lt;=</span> <span class="n">hierarchy_value</span><span class="p">)</span>
-        <span class="p">{</span>
-            <span class="k">throw</span> <span class="n">std</span><span class="o">::</span><span class="n">logic_error</span><span class="p">(</span><span class="err">“</span><span class="n">mutex</span> <span class="n">hierarchy</span> <span class="n">violated</span><span class="err">”</span><span class="p">);</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-    <span class="kt">void</span> <span class="nf">update_hierarchy_value</span><span class="p">()</span>
-    <span class="p">{</span>
-        <span class="n">previous_hierarchy_value</span> <span class="o">=</span> <span class="n">this_thread_hierarchy_value</span><span class="p">;</span>
-        <span class="n">this_thread_hierarchy_value</span> <span class="o">=</span> <span class="n">hierarchy_value</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="k">public</span><span class="o">:</span>
-    <span class="k">explicit</span> <span class="n">hierarchical_mutex</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">value</span><span class="p">)</span> <span class="o">:</span>
-        <span class="n">hierarchy_value</span><span class="p">(</span><span class="n">value</span><span class="p">),</span>
-        <span class="n">previous_hierarchy_value</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-    <span class="p">{</span>
-    <span class="p">}</span>
-    <span class="kt">void</span> <span class="n">lock</span><span class="p">()</span>
-    <span class="p">{</span>
-        <span class="n">check_for_hierarchy_violation</span><span class="p">();</span>
-        <span class="n">internal_mutex</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
-        <span class="n">update_hierarchy_value</span><span class="p">();</span>
-    <span class="p">}</span>
-    <span class="kt">void</span> <span class="n">unlock</span><span class="p">()</span>
-    <span class="p">{</span>
-        <span class="n">this_thread_hierarchy_value</span> <span class="o">=</span> <span class="n">previous_hierarchy_value</span><span class="p">;</span>
-        <span class="n">internal_mutex</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
-    <span class="p">}</span>
-    <span class="kt">bool</span> <span class="n">try_lock</span><span class="p">()</span>
-    <span class="p">{</span>
-        <span class="n">check_for_hierarchy_violation</span><span class="p">();</span>
-        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">internal_mutex</span><span class="p">.</span><span class="n">try_lock</span><span class="p">())</span>
-            <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
-        <span class="n">update_hierarchy_value</span><span class="p">();</span>
-        <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">};</span>
-<span class="k">thread_local</span> <span class="kt">unsigned</span> <span class="kt">long</span>
-<span class="n">hierarchical_mutex</span><span class="o">::</span><span class="n">this_thread_hierarchy_value</span><span class="p">(</span><span class="n">ULONG_MAX</span><span class="p">);</span>
-</pre></div>
-
-
-<p>注意最后的<code>thread\_local</code>关键字，该关键字是在C++11中引入的，意义是每一个线程都含有自己单独的一个变量。该变量初始为<code>ULONG\_MAX</code>，从而使得其他等级的锁都比当前优先级低，保证了第一次加锁的可行性。在多次加锁的过程中，会检查要获得的锁是否比当前线程所获得的锁优先级还高，这是通过<code>check\_for\_hierarchy\_violation</code>来完成的。当有违反的时候，直接爆异常。成功加锁时，记录上一个锁的优先级状态，从而使得在释放的时候能够回溯当前锁加锁前的优先级。通过这样的一个优先级记录保证了在加锁与释放锁的复合操作下仍然能够维持优先级顺序。</p>
-<h1>单例模式</h1>
-<p>单例模式(Singleton)：确保某一对象只有一个实例。单例模式要求目标对象仅仅构造一次，类似的还有某些对象构造资源消耗过大，我们只希望该对象在真正使用的时候才去构造，即所谓的延迟构造。为了实现延迟构造，我们需要执行类似于下面的代码：</p>
-<div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">some_resource</span><span class="o">&gt;</span> <span class="n">resource_ptr</span><span class="p">;</span>
-<span class="kt">void</span> <span class="nf">foo</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">resource_ptr</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="n">resource_ptr</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="k">new</span> <span class="n">some_resource</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="n">resource_ptr</span><span class="o">-&gt;</span><span class="n">do_something</span><span class="p">();</span>
-<span class="p">}</span>
-</pre></div>
-
-
-<p>该代码在单线程的时候是能够满足要求的，在多线程时则会有问题。为了处理多线程的情况，我们需要加锁：</p>
-<div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">some_resource</span><span class="o">&gt;</span> <span class="n">resource_ptr</span><span class="p">;</span>
-<span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">resource_mutex</span><span class="p">;</span>
-<span class="kt">void</span> <span class="nf">foo</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">unique_lock</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lk</span><span class="p">(</span><span class="n">resource_mutex</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">resource_ptr</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="n">resource_ptr</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="k">new</span> <span class="n">some_resource</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="n">lk</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
-    <span class="n">resource_ptr</span><span class="o">-&gt;</span><span class="n">do_something</span><span class="p">();</span>
-<span class="p">}</span>
-</pre></div>
-
-
-<p>正确性问题解决了，但是问题来了：每次操作都需要加锁，开销非常大。在第一次初始化完全之后，完全没有必要再去加锁。为了解决开销问题，有人发明了两次加锁法(double checked locking)，代码如下：</p>
-<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="nf">undefined_behaviour_with_double_checked_locking</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">resource_ptr</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lk</span><span class="p">(</span><span class="n">resource_mutex</span><span class="p">);</span>
-        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">resource_ptr</span><span class="p">)</span>
-        <span class="p">{</span>
-            <span class="n">resource_ptr</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="k">new</span> <span class="n">some_resource</span><span class="p">);</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-    <span class="n">resource_ptr</span><span class="o">-&gt;</span><span class="n">do_something</span><span class="p">();</span>
-<span class="p">}</span>
-</pre></div>
-
-
-<p>只有当初始值不存在的时候才去加锁，看上去很美。但是，有一个非常细微的bug：C++中的new是分两步执行的，一步是分配内存，一步是初始化对象。而指针的赋值即可能在分配内存之后，也可能在初始化对象之后。如果在分配内存之后初始完对象之前就对指针赋值，另外的线程可能会检查到指针不为空，并执行<code>resource\_ptr-&gt;do\_something()</code>，而此时对象并未构造完全。这种访问是C++中的未定义行为，整个程序都可能崩。由于<code>new</code>的这个特性，使得之前在C++中依靠<code>new</code>实现单例模式是不可能的。</p>
-<p>另外的一种方法是声明一个该类型的<code>static</code>变量，从而试图在运行前创建一个单一对象，摆脱了<code>new</code>的干扰。但是此时同样会有数据竞争：即多个线程都认为自己是第一个进行初始化的或者当一个线程正在初始化的时候另外一个线程对其进行使用。因此，在C++11之前，正确的实现单例模式是不可能的。为此，新标准中规定<code>static</code>修饰的变量保证了只会初始化一次,该特性是建立在<code>std::call\_once</code>之上的(这里先略去相关介绍)。所以，实现单例模式现在只需要下面的几行代码：</p>
-<div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">my_class</span><span class="p">;</span>
-<span class="n">my_class</span><span class="o">&amp;</span> <span class="n">get_my_class_instance</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="k">static</span> <span class="n">my_class</span> <span class="n">instance</span><span class="p">;</span>
-    <span class="k">return</span> <span class="n">instance</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
-
-
-<h1>参考链接</h1>
-<ul>
-<li>
-<p>最主要参考C++ Concurrency in Action :<a href="http://book.douban.com/subject/4130141/">http://book.douban.com/subject/4130141/</a></p>
-</li>
-<li>
-<p>peterson算法的wiki百科页面:<a href="http://zh.wikipedia.org/wiki/Peterson%E7%AE%97%E6%B3%95">http://zh.wikipedia.org/wiki/Peterson%E7%AE%97%E6%B3%95</a></p>
-</li>
-<li>
-<p>StackOverflow上关于<code>boost::shared\_lock</code>的讨论:<a href="http://stackoverflow.com/questions/989795/example-for-boost-shared-mutex-multiple-reads-one-write">http://stackoverflow.com/questions/989795/example-for-boost-shared-mutex-multiple-reads-one-write</a></p>
-</li>
-<li>
-<p>C++11中的thread_local关键字:<a href="http://en.cppreference.com/w/cpp/language/storage_duration">http://en.cppreference.com/w/cpp/language/storage_duration</a></p>
-</li>
-<li>
-<p>C++11中的<code>call\_once</code>，用来保证某个函数只执行一次:<a href="http://en.cppreference.com/w/cpp/thread/call_once">http://en.cppreference.com/w/cpp/thread/call_once</a></p>
-</li>
-</ul>                </article>
-            </aside><!-- /#featured -->
-        <section id="extras" class="body">
-                <div class="blogroll">
-                        <h2>links</h2>
-                        <ul>
-                            <li><a href="http://getpelican.com/">Pelican</a></li>
-                            <li><a href="http://python.org/">Python.org</a></li>
-                            <li><a href="http://jinja.pocoo.org/">Jinja2</a></li>
-                            <li><a href="#">You can modify those links in your config file</a></li>
-                        </ul>
-                </div><!-- /.blogroll -->
-                <div class="social">
-                        <h2>social</h2>
-                        <ul>
-
-                            <li><a href="#">You can add links in your config file</a></li>
-                            <li><a href="#">Another social link</a></li>
-                        </ul>
-                </div><!-- /.social -->
-        </section><!-- /#extras -->
-
-        <footer id="contentinfo" class="body">
-                <address id="about" class="vcard body">
-                Proudly powered by <a href="http://getpelican.com/">Pelican</a>, which takes great advantage of <a href="http://python.org">Python</a>.
-                </address><!-- /#about -->
-
-                <p>The theme is by <a href="http://coding.smashingmagazine.com/2009/08/04/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
-        </footer><!-- /#contentinfo -->
-
-</body>
+    <script type="text/javascript" src="http://spiritsaway.info/theme/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="http://spiritsaway.info/theme/js/niu2.min.js"></script>
+    <script type="text/javascript" src="http://spiritsaway.info/theme/js/bootstrap.min.js"></script>
+    <script type="text/javascript"></script>
+  </body>
 </html>
