@@ -62,7 +62,7 @@
     <div id="niu2-main-content">
         <h2 id="8b1772">相关概念</h2>
 <p>首先介绍一下Concurrency，因为如果没有concurrency的话，后面两个也就基本没啥意义。concurrency也就是并行，比较简单的描述就是多个线程（进程）同时运行，在并发环境下衍生除了一个非常重要的问题，就是mutable资源的共享问题， 主要是共享内存的读写问题。下面就是一个共享内存多线程读写的例子.</p>
-<p><img alt="share_memory_problem" src="/image/cpp/share_memory_problem.png" /></p>
+<p><img alt="share_memory_problem" src="/image/CPP/share_memory_problem.png" /></p>
 <p>在两个core分别执行完之后， r1和r2的值在不同的硬件环境下是不一样的， 甚至在相同硬件环境下都有可能出现各种结果，最奇葩的情况莫过于(0, 0),(0,NEW),(NEW, 0), (NEW, NEW)四种情况都可能出现。这种不确定性在于程序对内存的读写并不一定是瞬发完成的，可能是一个异步的过程。而且CPU甚至为了优化内存访问，可能对没有数据依赖的程序指令进行重新排序， 这种指令重排序对于单线程程序来说并没有多大影响，但是在多线程下很有可能造成错误的结果。</p>
 <p>共享内存可以简单的理解为一个server， 而每个线程则认为是一个client，server可以同时服务多个client，每个client发送消息到server是有延迟的，client的单个消息到达server之后只能一个一个处理，处理完成一个之后才能处理下一个。client可以对server发起的操作目前只有简单的load store， load操作会读取server存储的全局状态， 而store操作则会修改server存储的全局状态。每个client端发出的操作都带有一个时间戳， 而server端处理这个操作的时候也会有一个时间戳。x操作的client时间戳早于y操作的client时间戳并不意味着x操作的server时间戳早于y操作在的server时间戳，最松散的内存模型甚至并不保证x,y操作在client端发起之后会最终到达server。 这个是最基本的共享内存的结构，具体的内存模型基本都可以在这个client-server模型上做拓展。Consistency所面临的问题是如何正确对各个client呈现对server操作的顺序，也就是读写共享内存的时序， 以符合程序所期望的语义。这种内存系统对于维持访问顺序和写内存可见性所做出的一些规定，就是Consistency model， 也叫内存模型。</p>
 <p>而coherence的定义对象则是缓存cache line，并不是定义在内存之上的。cache的存在目的是为了对内存的读写进行加速，但是由于每个cpu都有自己专有的缓存，从而导致了更多的共享内存的问题。在带有缓存之后，我们就无法简单的保证client端发起的操作一定会到达server端， 可能每个client自己的缓存就处理了client的请求。coherence的目的则是让所有client的独立cache表现的如同所有client共享一个cache一样， 并最终达到将cache对client不可见的目的。</p>
@@ -83,7 +83,7 @@
 <li>LLC缓存控制器可以将读写请求拦截到本地，也可以将请求转发到内存</li>
 </ol>
 <p>具体的结构图如下：</p>
-<p><img alt="basic_memory_model" src="/image/cpp/basic_memory_model.png" /></p>
+<p><img alt="basic_memory_model" src="/image/CPP/basic_memory_model.png" /></p>
 <p>常见的内存一致性模型包括：</p>
 <ol>
 <li>Sequence Consistence  常见平台 MIPS</li>
@@ -165,8 +165,8 @@
 <p>同样，由于写缓冲的存在，load的语义跟TSO一致：</p>
 <div class="math">$$L(a) = Value\ of \ MAX_{&lt;_m}\{S(a) \vert S(a) &lt;_m L(a) \mathbb{or S(a) &lt;_p L(a)}\} $$</div>
 <p>由于Relaxed Memory Consistency的约束少，此时RMW不再具有SC的FENCE的功能，因为之前的同步原语RMW包含的load store现在可以被动态的调度到前面。 导致写多线程同步的代码需要插入很多的fence，下面便是几个典型的例子：</p>
-<p><img alt="notify_fence" src="/image/cpp/notify_fence.png" /></p>
-<p><img alt="critical_section_fence" src="/image/cpp/critical_section_fence.png" /></p>
+<p><img alt="notify_fence" src="/image/CPP/notify_fence.png" /></p>
+<p><img alt="critical_section_fence" src="/image/CPP/critical_section_fence.png" /></p>
 <h3 id="c5f5f0">Relaxed Memory Consistency 的实现</h3>
 <p>要实现这个Relaxed Memory Consistency需要对之前的FIFO写缓冲做一些修改，直接放弃FIFO的序列功能，直接合并写。对于读写操作，有如下规则：</p>
 <ol>
