@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Normal Distribution - spirits away</title>
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.png">
+    <link rel="stylesheet" href="./theme/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="./theme/font-icons/style.min.css" type="text/css" />
+    <link rel="stylesheet" href="./theme/css/niu2.min.css" type="text/css" />
+
+    <link rel="canonical" href="./normal-distribution.html" />
+    
+    <script type="text/javascript">window.onload=function(){};</script>
+    <!--[if lt IE 9]>
+        <script src="./theme/js/html5shiv.js"></script>
+        <script src="./theme/js/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body> 
+    <div id="body-header">
+<div class="navbar navbar-inverse navbar-fixed-top">
+<div class="col-md-12">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href=".">
+            <i class="icon-home"></i>spirits away
+        </a>
+    </div>
+    <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+        <ul class="nav navbar-nav">
+            <li><a href="/pages/about.html" title="about">
+                <i class="icon-anchor"></i>关于</a>
+            </li>
+            <li><a href="/archives.html" title="archives">
+                <i class="icon-archive"></i>存档</a>
+            </li>
+            <li><a href="/tags.html" title="tags">
+                <i class="icon-tag"></i>标签</a>
+            </li>
+        <!-- category dropdown list -->
+        <!--  self defined dropdown list -->
+        </ul>
+        
+        <!-- right nav bar -->
+        <ul class="nav navbar-nav navbar-right">
+        <!-- google custom search -->
+       </ul>
+    </nav>
+</div>
+</div>    </div>
+    
+    <div id="body-content">
+<div class="col-md-8 col-md-offset-2">
+    <h1 id="content-heading">Normal Distribution</h1>
+</div>
+<div id="niu2-left-container" class="col-md-6 col-md-offset-2 with-right-border">
+    <div id="niu2-main-content">
+        <h1 id="5860a4">正态分布介绍</h1>
+<p>神说，要有正态分布，就有了正态分布。</p>
+<p>神看正态分布是好的，就让随机误差就服从了正态分布.
+然而，对正太分布推动最大的是中心极限定理.设随机变量 <span class="math">\(X_n(n=1,2,\cdots)\)</span> 服从参数为 <span class="math">\(p\)</span> 的二项分布，则对任意的 <span class="math">\(x\)</span>, 恒有</p>
+<div class="math">$$\lim_{n\rightarrow\infty}P\{ \frac{X_n – np}{\sqrt{np(1-p)}} \le x \} \int_{-\infty}^x \frac{1}{\sqrt{2\pi}} e^{\frac{-t^2}{2}}dt$$</div>
+<p>中心极限定理后续又被其它数学家们推广到了其它任意分布的情形，而不限于二项分布。后续的统计学家发现，一系列的重要统计量，在样本量 N 趋于无穷的时候， 其极限分布都有正态的形式， 这构成了数理统计学中大样本理论的基础
+.除了中心界限定理的推动之外，高斯分布自己的一些特殊性质也使得该分布非常方便使用。</p>
+<h1 id="eee605">正态分布与熵</h1>
+<p>熵是混乱程度或者不确定度的度量。对于离散型分布来说，我们用<span class="math">\(H_n(p_1,p_2,\cdots,p_n)\)</span>来表示该离散分布的熵的数值度量。对于这个熵函数，我们要求该函数对于任意的<span class="math">\(p_i\)</span>是连续的。否则<span class="math">\(p_i\)</span>的微小变化会引起不确定度的剧烈改变，这与直觉是相违背的。同时在直觉的限定下，我们还有下式</p>
+<div class="math">\begin{equation}H_3(p_1,p_2,p_3)=H_2(p_1,p_2+p_3)+(p_2+p_3)H_2(\frac{p_2}{p_2+p_3},\frac{p_3}{p_2+p_3})\end{equation}</div>
+<p>
+这个等式相当于决策树的判定过程，此时我们把<span class="math">\(p_2,p_3\)</span>分在一组作为顶层判断，然后再去细分。由这个公式，我们可以推演到下面这个公式</p>
+<div class="math">\begin{equation}H(p_1,\cdots,p_n)=H(w_1,\cdots,w_r)+w_1H(\frac{p_1}{w_1},\cdots,\frac{p_k}{w_1})+w_2H(\frac{p_{k+1}}{w_2},\cdots,\frac{p_{k+m}}{w_2})+\cdots\end{equation}</div>
+<p>
+其中，每一个<span class="math">\(w_i\)</span>可以看作一组<span class="math">\(p_j\)</span>的聚合。当<span class="math">\(n\)</span>固定时，等概率分布不确定度最大，我们定义</p>
+<div class="math">\begin{equation}h(n)=H_n(\frac{1}{n},\frac{1}{n},\cdots,\frac{1}{n})\end{equation}</div>
+<p>
+又由于在离散分布的情况下<span class="math">\(p_i=\frac{n_i}{\sum{n_i}}\)</span>,此时我们可以根据上式来得到</p>
+<div class="math">\begin{equation}h(\sum{n_i})=H(p_1,\cdots,p_n)+\sum{p_ih(n_i)}\end{equation}</div>
+<p>
+根据之前的熵计算公式，我们考虑这种情况<span class="math">\(n_i=m\)</span>，在这种情况下有下面的结果</p>
+<div class="math">\begin{equation} h(m*n)=h(m)+h(n)\end{equation}</div>
+<p>
+很显然，我们可以得出下面这个结论</p>
+<div class="math">\begin{equation}h(n)=K ln(n)\end{equation}</div>
+<p>
+其中<span class="math">\(K\)</span>为任意的常数。由于我们只需要知道相对度量，而K的取值并不影响相对度量。此时熵函数也可以解析的表示出来</p>
+<div class="math">$$H(p_1,\cdots,p_n)=-K\sum_{i=1}^{n}{p_iln(p_i)}$$</div>
+<p>
+由于我们只需要知道相对度量，而<span class="math">\(K\)</span>的取值并不影响相对度量。我们可以把<span class="math">\(K\)</span>指定为1，此时得到</p>
+<div class="math">\begin{equation} H(p_1,\cdots,p_n)=-\sum_{i=1}^{n}{p_iln(p_i)}\end{equation}</div>
+<p>
+这就是脍炙人口的熵计算公式。</p>
+<p>虽然我们当前把熵定义在离散型分布上，但是其实熵公式对连续型分布也同样适用，此时熵公式变形为</p>
+<div class="math">\begin{equation}H[x]=-\int{p(x)ln(p(x))} dx\end{equation}</div>
+<p>这里顺带提一下相对熵。相对熵(relative entropy)，也叫做Kullback-Leibler divergence。这个量表征的是我们用概率分布函数<span class="math">\(p(x)\)</span>去近似概率分布函数<span class="math">\(q(x)\)</span>时所引起的偏差，其计算方法如下</p>
+<div class="math">\begin{equation}-\int{p(x)ln(\frac{q(x)}{p(x)}})dx\end{equation}</div>
+<p>
+这个值在<span class="math">\(p(x)=q(x)\)</span>时得到最小值0.在PRML中，对于这个最小值的证明，使用了<span class="math">\(−ln(x)\)</span>是凸函数这一性质。对于凸函数<span class="math">\(f\)</span>，我们有</p>
+<div class="math">\begin{equation} f(E[x])\leq E[f(x)]\end{equation}</div>
+<p>
+对于连续型变量，我们有</p>
+<div class="math">\begin{equation}f(\int{p(x)xdx})\leq\int{f(p(x))dx}\end{equation}</div>
+<p>
+所以</p>
+<div class="math">\begin{equation}-\int{p(x)ln(\frac{q(x)}{p(x)}}dx)\geq -ln \int{q(x)dx}=0\end{equation}</div>
+<p>
+其实这里还有一个更简单的证明，我们可以注意到有<span class="math">\(ln(x)\leq x-1\)</span>,等于号只有在<span class="math">\(x=1\)</span>的时候成立。所以，我们有</p>
+<div class="math">\begin{equation}-\int{p(x)ln(\frac{q(x)}{p(x)}}dx)\geq -\int{p(x)(\frac{q(x)}{p(x)}-1)dx}=\int{p(x)dx}-\int{q(x)dx}=0\end{equation}</div>
+<p>
+等式成立条件跟之前一样，即完全拟合。</p>
+<h1 id="7348ff">由熵到正态分布</h1>
+<p>对于某一<span class="math">\((-\infty ,+\infty)\)</span>,我们知道其期望<span class="math">\(\mu\)</span>和方差<span class="math">\(\delta ^2\)</span>，则其概率密度函数<span class="math">\(p(x)\)</span>满足下面的式子</p>
+<div class="math">\begin{equation}\begin{split}\int_{-\infty}^{+\infty}{p(x)dx}&amp;=1\\ \int_{-\infty}^{+\infty}{p(x)xdx}&amp;=\mu\\ \int_{-\infty}^{+\infty}{p(x){(x-\mu)}^2dx}&amp;={\sigma}^2\end{split}\end{equation}</div>
+<p>
+此时我们要求符合上述条件且使熵最大的<span class="math">\(p(x)\)</span>，根据拉格朗日乘子，原问题等价于使下式最大化</p>
+<div class="math">\begin{equation}-\int_{-\infty}^{+\infty}{p(x)ln(p(x))dx} +{\Lambda}_1(\int_{-\infty}^{+\infty}{p(x)dx}-1)+{\Lambda}_2(\int_{-\infty}^{+\infty}{p(x)xdx}-u)+{\Lambda}_3(\int_{-\infty}^{+\infty}{p(x){(x-\mu)}^2dx}-{\sigma}^2)\end{equation}</div>
+<p>
+使导数等于0，我们可以得到</p>
+<div class="math">\begin{equation} p(x)=e^{-1+{\Lambda}_1+{\Lambda}_2x+{\Lambda}_3(x-u)^2}\end{equation}</div>
+<p>
+将这个结果带入原来对<span class="math">\(p(x)\)</span>的三个积分限制，最终得到了高斯分布方程</p>
+<div class="math">\begin{equation}p(x)=\frac{1}{\sqrt{2\pi}\sigma}e^{-\frac{(x-\mu)^2}{2{\sigma}^2}}\end{equation}</div>
+<p>
+就这样，我们从最大熵原理变出了高斯分布公式。
+推导出高斯分布有好几种方法，其中最直观的推导是假设期望的最大似然估计为样本均值推导出高斯分布。关于高斯分布的前世今生，想了解更多的话，可以参考<a href="http://www.mysanco.cn/index.php?class=wenku&amp;action=wenku_item&amp;id=106">此链接</a>。事实上，这个链接所说的内容绝大部分都是在《Probility Theory The Logic of Science》中的直接翻译，这本书是一本非常好的书，对于概率论有非常深刻的了解,非常值得一看.</p>
+<h1 id="b98cbd">如何生成高斯分布</h1>
+<p>计算机中我们只能生成伪均匀分布的伪随机数，因为我们无法生成真随机数。Any one who considers arithmetical methods of producing random digits is ,of course,in a state of sin.（参见The Art of Computer Programming第二卷第一页）但是我们经常会有生成随机数的需求，生成高斯分布是其中比较常见的需求。最作死的方法莫过于<span class="math">\(k\)</span>次重复模拟<span class="math">\((0,1)\)</span>均匀分布，然后求均值。此均值在极限情况下服从<span class="math">\(N(0,1/{k^2})\)</span>的高斯分布。另外一种方法就是Box和muller在1958年给出的由均匀分布的随机变量生成高斯分布的随机变量的算法。假设<span class="math">\(u,v\)</span>是两个独立的随机变量，且都符合<span class="math">\((0,1)\)</span>均匀分布。则下面两个变量都是服从<span class="math">\(N(0,1)\)</span>分布的随机变量，且相互独立。</p>
+<div class="math">\begin{equation}\begin{split} x_1&amp;=\sqrt{(-2ln(u))}*cos(2\pi v) \\ x_2&amp;=\sqrt{(-2ln(v))}*cos(2\pi u)\end{split}\end{equation}</div>
+<h1 id="27e8f1">多元高斯分布</h1>
+<p>前面的高斯分布公式只是一元高斯分布，现在我们来看多元高斯分布。多元高斯分布的方程如下</p>
+<div class="math">\begin{equation}\mathcal{N}(x|\mu,{\tiny\sum})=\frac{1}{{(2\pi)}^{D/2}}\frac{1}{{|{\small\sum}|}^{1/2}}exp{-\frac{1}{2}(x-\mu)^T{{\tiny\sum}}^{-1}(x-\mu)}\end{equation}</div>
+<p>
+其中<span class="math">\(D\)</span>为维数。现在我们来验证这个方程的正确性，即验证下面的等式</p>
+<div class="math">\begin{equation}\begin{split}\int{\frac{1}{{(2\pi)}^{D/2}}\frac{1}{{|{\small\sum}|}^{1/2}}exp\{-\frac{1}{2}(x-\mu)^T{{\tiny\sum}}^{-1}(x-\mu)\}dx}=1\\\int{\frac{1}{{(2\pi)}^{D/2}}\frac{1}{{|{\small\sum}|}^{1/2}}exp\{-\frac{1}{2}(x-\mu)^T{{\tiny\sum}}^{-1}(x-\mu)\}xdx}=\mu\\\int{\frac{1}{{(2\pi)}^{D/2}}\frac{1}{{|{\small\sum}|}^{1/2}}exp\{-\frac{1}{2}(x-\mu)^T{{\tiny\sum}}^{-1}(x-\mu)\}(x-\mu)^T(x-\mu)dx}=|{\small\sum}|\end{split}\end{equation}</div>
+<p>
+对于这三个等式，PRML中已经证明过了，不过我还是想再去证明一下，以加强记忆。首先对<span class="math">\(\sum\)</span>进行谱分解。由于<span class="math">\(\sum\)</span>为协方差矩阵，所以是对称正定的，有<span class="math">\(D\)</span>个线性无关的特征向量<span class="math">\(u_i\)</span>，相应的特征值为<span class="math">\(\Lambda _i\)</span>。所以我们可以完成该协方差矩阵的谱分解</p>
+<div class="math">\begin{equation}{\tiny\sum}=\sum_{i=1}^{D}{{\Lambda}_i{u_i}{u_i}^T}=diag(\Lambda)[u_1,\cdots,u_D][u_1,\cdots,u_D]^T\end{equation}</div>
+<p>
+由于最后的三个矩阵都是方阵且可逆，所以我们可以非常简单的得到下式</p>
+<div class="math">\begin{equation}\begin{aligned}{{\tiny \sum}}^{-1}=[u_1,\cdots,u_D][u_1,\cdots,u_D]^Tdiag(\frac{1}{\Lambda})&amp;=diag(\frac{1}{\Lambda})[u_1,\cdots,u_D][u_1,\cdots,u_D]^T\\&amp;=[u_1,\cdots,u_D]diag(\frac{1}{\Lambda})[u_1,\cdots,u_D]^T\end{aligned}\end{equation}</div>
+<p>
+我们令<span class="math">\(U=[u_1,\cdots,u_D]\)</span>,所以</p>
+<div class="math">\begin{equation}(x-\mu)^T{{\tiny\sum}}^{-1}(x-\mu)=(x-\mu)^TUdiag(\frac{1}{\Lambda})U^T(x-\mu)=(U^T(x-\mu))^Tdiag(\frac{1}{\Lambda})(U^T(x-\mu))\end{equation}</div>
+<p>
+此时我们令<span class="math">\(y=U^T(x-\mu)\)</span>
+则<span class="math">\(dx=Udy\)</span>，此时<span class="math">\(y\)</span>对<span class="math">\(x\)</span>的Jacobian矩阵为<span class="math">\(Jacobian(x)=U^T\)</span>。根据多元积分的替代规则</p>
+<div class="math">\begin{equation}\int{f(x)dx}=\int{f(y)|Jacobian(x)|dy}\end{equation}</div>
+<p>
+又因为</p>
+<div class="math">\begin{equation}det(|{\small \sum}|)=\prod_{i=1}^{D}{{\Lambda}_i}\end{equation}</div>
+<p>
+所以</p>
+<div class="math">\begin{equation}p(y)=p(x)|U|=\prod_{i=1}^{D}{\frac{1}{{{({2\pi}{\Lambda}_i})}^{1/2}}exp\{-\frac{{y_i}^2}{2{\Lambda}_i}\}}\end{equation}</div>
+<p>
+所以我们最终得到了</p>
+<div class="math">\begin{equation}\begin{aligned}&amp;\int{\frac{1}{{(2\pi)}^{D/2}}\frac{1}{{|{\small\sum}|}^{1/2}}exp\{-\frac{1}{2}(x-\mu)^T{{\tiny\sum}}^{-1}(x-\mu)\}dx}\\=&amp;\int{\frac{1}{{(2\pi)}^{D/2}}\frac{1}{{|{\small\sum}|}^{1/2}}exp\{-\frac{1}{2}y^Tdiag(\frac{1}{\Lambda})y\}dy}=1\end{aligned}\end{equation}</div>
+<p>
+同理</p>
+<div class="math">\begin{equation}\begin{aligned}&amp;\int{\frac{1}{{(2\pi)}^{D/2}}\frac{1}{{|{\small\sum}|}^{1/2}}exp\{-\frac{1}{2}(x-\mu)^T{{\tiny\sum}}^{-1}(x-\mu)\}xdx}\\=&amp;\int{\frac{1}{{(2\pi)}^{D/2}}\frac{1}{{|{\small\sum}|}^{1/2}}exp\{-\frac{1}{2}y^Tdiag(\frac{1}{\Lambda})y\}(Uy+\mu)dy}\end{aligned}\end{equation}</div>
+<p>
+由<span class="math">\(y\)</span>的对称性可得</p>
+<div class="math">\begin{equation}\int{\frac{1}{{(2\pi)}^{D/2}}\frac{1}{{|{\small\sum}|}^{1/2}}exp\{-\frac{1}{2}y^Tdiag(\frac{1}{\Lambda})y\}Uydy}=0\end{equation}</div>
+<p>
+同样，我们可以证明</p>
+<div class="math">\begin{equation}\begin{split}&amp;\quad\int{\frac{1}{{(2\pi)}^{D/2}}\frac{1}{{|{\small\sum}|}^{1/2}}exp\{-\frac{1}{2}(x-\mu)^T{{\tiny\sum}}^{-1}(x-\mu)\}(x-\mu)^T(x-\mu)dx}\\&amp;=\int{\frac{1}{{(2\pi)}^{D/2}}\frac{1}{{|{\small\sum}|}^{1/2}}exp\{-\frac{1}{2}y^Tdiag(\Lambda)y\}y^2dy}\\&amp;=\frac{1}{{(2\pi)}^{D/2}}\frac{1}{{|{\small\sum}|}^{1/2}}\int{exp\{-\frac{1}{2}y^Tdiag(\Lambda)y\}y^2dy}\\&amp;=|{\small\sum}|\end{split}\end{equation}</div>
+<p>
+综上，我们证明了<span class="math">\(\mathcal{N}(x|\mu,{\tiny\sum})\)</span>的确是一个概率分布，且期望为<span class="math">\(\mu\)</span>，协方差为<span class="math">\(|\sum|\)</span>。</p>
+<h1 id="da747e">高斯分布的边际分布</h1>
+<p>高斯分布的边际分布形式为<span class="math">\(p(x_1)\)</span>，其中<span class="math">\(x_1\)</span>为一个或多个变量，且是总体变量的一部分。根据边际分布的计算公式，我们有</p>
+<div class="math">\begin{equation}p(x_1)=\int{p(x_1,x_2)dx_2}\end{equation}</div>
+<p>
+其中<span class="math">\(x_2\)</span>为一个或多个变量，<span class="math">\(x_1+x_2=x\)</span>。由于</p>
+<div class="math">\begin{equation}p(x_1,x_2)=\frac{1}{{(2\pi)}^{D/2}}\frac{1}{{|{\small\sum}|}^{1/2}}exp\{-\frac{1}{2}(x-\mu)^T{{\tiny\sum}}^{-1}(x-\mu)\}\end{equation}</div>
+<p>
+,所以这个积分直接计算比较困难，我们考虑分解<span class="math">\((x-\mu)^T{{\tiny\sum}}^{-1}(x-\mu)\)</span>.令 <span class="math">\(x=[x_1,x_2]\)</span>,此时可以把期望分解为<span class="math">\(\mu=[{\mu}_1,{\mu}_2]\)</span>,同时可以把协方差分解为</p>
+<div class="math">\begin{equation}{\small \sum}=\left[\begin{matrix} {\tiny \sum}_{11}&amp;{\tiny \sum}_{12}\\{\tiny \sum}_{21}&amp;{\tiny \sum}_{22}\end{matrix}\right]\end{equation}</div>
+<p>
+同时我们令</p>
+<div class="math">\begin{equation}\Lambda={\small \sum}^{-1}\end{equation}</div>
+<p>
+此时</p>
+<div class="math">\begin{equation}\begin{split}(x-\mu)^T{\tiny \sum}^{-1}(x-\mu)&amp;=(x-\mu)^T\Lambda(x-\mu)\\&amp;=(x_1-{\mu}_1)^T{\Lambda}_{11}(x_1-{\mu}_1)+(x_1-{\mu}_1)^T{\Lambda}_{12}(x_2-{\mu}_2)\\&amp;\quad +(x_2-{\mu}_2)^T{\Lambda}_{21}(x_1-{\mu}_1)+(x_2-{\mu}_2)^T{\Lambda}_{22}(x_2-{\mu}_2)\end{split}\end{equation}</div>
+<p>
+由于</p>
+<div class="math">\begin{equation}-\frac{1}{2}(x-\mu)^T{{\tiny\sum}}^{-1}(x-\mu)=-\frac{1}{2}x^T{{\tiny\sum}}^{-1}x+x^T{{\tiny\sum}}^{-1}\mu+-\frac{1}{2}{\mu}^T{{\tiny\sum}}^{-1}{\mu}\end{equation}</div>
+<p>
+所以我们考虑把前一条式子转换为这种形式，把与<span class="math">\(x_2\)</span>相关的都提取出来，类似于配方法，这样利用高斯分布的一些性质来简化积分。不过，这里我们先换元<span class="math">\(v_1=x_1-{\mu}_1,v_2=x_2-{\mu}_2\)</span>,所以</p>
+<div class="math">\begin{equation}\begin{split}&amp;\quad(x-\mu)^T{{\tiny\sum}}^{-1}(x-\mu)\\&amp;={v_1}^T{\Lambda}_{11}{v_1}+{v_1}^T{\Lambda}_{12}{v_2}+{v_2}^T{\Lambda}_{21}{v_1}+{v_2}^T{\Lambda}_{22}{v_2}\\&amp;={v_2}^T{\Lambda}_{22}{v_2}+2{v_2}^T{\Lambda}_{21}{v_1}+{v_1}^T{\Lambda}_{11}{v_1}\\&amp;={v_2}^T{\Lambda}_{22}{v_2}+2{v_2}^T{\Lambda}_{22}{{\Lambda}_{22}}^{-1}{\Lambda}_{21}v_1+{v_1}^T{\Lambda}_{11}{v_1}\\&amp;=(v_2+{{\Lambda}_{22}}^{-1}{\Lambda}_{21}v_1)^T{\Lambda}_{22}(v_2+{{\Lambda}_{22}}^{-1}{\Lambda}_{21}v_1)+const\end{split}\end{equation}</div>
+<p>
+其中</p>
+<div class="math">\begin{equation}const={v_1}^T{\Lambda}_{11}{v_1}-({{\Lambda}_{22}}^{-1}{\Lambda}_{21}v_1)^T{\Lambda}_{22}({{\Lambda}_{22}}^{-1}{\Lambda}_{21}v_1)\end{equation}</div>
+<p>
+此时假设<span class="math">\(v_1,v_2\)</span>分别为<span class="math">\(a,b\)</span>维的向量，所以</p>
+<div class="math">\begin{equation}\begin{split}p(v_1)&amp;=\int{\frac{1}{{(2\pi)}^{D/2}}\frac{1}{{|{\small\sum}|}^{1/2}}exp\{-\frac{1}{2}(x-\mu)^T{{\tiny\sum}}^{-1}(x-\mu)\}dx_2}\\&amp;=\frac{1}{{(2\pi)}^{D/2}}\frac{1}{{|{\small\sum}|}^{1/2}}exp\{const\}\int{exp\{-\frac{1}{2}(v_2+{{\Lambda}_{22}}^{-1}{\Lambda}_{21}v_1)^T{\Lambda}_{22}(v_2+{{\Lambda}_{22}}^{-1}{\Lambda}_{21}v_1)\}dv_2}\\&amp;=\frac{1}{{(2\pi)}^{D/2}}\frac{1}{{|{\small\sum}|}^{1/2}}(2\pi)^{b/2}{|{\tiny \sum}_{22}|}^{1/2}exp\{-\frac{1}{2}const\}\end{split}\end{equation}</div>
+<p>
+现在我们终于把与<span class="math">\(v_2\)</span>相关的项弄消失了，下一步就是重新表示<span class="math">\(const\)</span></p>
+<div class="math">\begin{equation}\begin{split}const&amp;={v_1}^T{\Lambda}_{11}{v_1}-({{\Lambda}_{22}}^{-1}{\Lambda}_{21}v_1)^T{\Lambda}_{22}({{\Lambda}_{22}}^{-1}{\Lambda}_{21}v_1)\\&amp;={v_1}^T{\Lambda}_{11}{v_1}-{v_1}^T{{\Lambda}_{21}}^T{{{\Lambda}_{22}}^{-1}}{\Lambda}_{22}{{\Lambda}_{22}}^{-1}{\Lambda}_{21}v_1\\&amp;={v_1}^T{\Lambda}_{11}{v_1}-{v_1}^T{\Lambda}_{12}{{\Lambda}_{22}}^{-1}{\Lambda}_{21}{v_1}={v_1}^T({\Lambda}_{11}-{\Lambda}_{12}{{\Lambda}_{22}}^{-1}{\Lambda}_{21}){v_1}\end{split}\end{equation}</div>
+<p>
+现在我们再用分块矩阵求逆来表示各个<span class="math">\(Λ\)</span>，由于</p>
+<div class="math">\begin{equation}\left[ \begin{matrix} A&amp;B\\C&amp;D\end{matrix}\right]=\left[ \begin{matrix}M&amp;-MBD^{-1}\\-D^{-1}CM&amp;D^{-1}+D^{-1}CMBD^{-1}\end{matrix}\right]\end{equation}</div>
+<p>
+其中<span class="math">\(M\)</span>是传说中的舒尔补</p>
+<div class="math">\begin{equation}M={(A-BD^{-1}C)}^{-1}\end{equation}</div>
+<p>
+所以我们可以得到</p>
+<div class="math">\begin{equation}{\Lambda}_{11}={({\tiny \sum}_{11}-{\tiny \sum}_{12}{{\tiny \sum}_{22}}^{-1}{\tiny \sum}_{21})}^{-1}\end{equation}</div>
+<p>
+将这个式子中的<span class="math">\(\Lambda,\sum\)</span>相替换，我们可以得到</p>
+<div class="math">\begin{equation}const={v_1}^T{{\tiny \sum}_{11}}^{-1}{v_1}\end{equation}</div>
+<p>
+。利用谱分解和Cholesky，我们可以得到</p>
+<div class="math">\begin{equation}|{\small \sum}|=|{\small \sum}_{11}|*|{\small \sum}_{22}|\end{equation}</div>
+<p>
+我操，不想再写了，反正最后可以得到<span class="math">\(\mathcal{N}(0,{\small \sum}_{11})\)</span>,不要问我为什么。。。。所以最终<span class="math">\(x_1\)</span>服从<span class="math">\(\mathcal{N}({\mu}_1,{\small \sum}_{11})\)</span></p>
+<h1 id="af3975">正态分布的条件分布</h1>
+<p>条件分布的形式为<span class="math">\(p(x_1|x_2)\)</span>，根据贝叶斯定理</p>
+<div class="math">\begin{equation}p(x_1|x_2)=\frac{p(x_1,x_2)}{\int{p(x_2)dx_2}}\end{equation}</div>
+<p>
+这里我们只讨论<span class="math">\(x_1,x_2\)</span>组成全集的情况，其他情况可以通过缩小全集的形式推广。根据我们之前求的边际分布公式</p>
+<div class="math">\begin{equation}\int{p(x_2)dx_2}=\frac{1}{{(2\pi)}^{b/2}}\frac{1}{{|{\small\sum}_{22}|}^{1/2}}exp\{-\frac{1}{2}(x_2-{\mu}_2)^T{{\tiny\sum}_{22}}^{-1}(x_2-{\mu}_2)\}\end{equation}</div>
+<p>
+所以我们有</p>
+<div class="math">\begin{equation}p(x_1|x_2)=\frac{1}{{(2\pi)}^{a/2}}\frac{1}{{|{\small\sum}_{11}|}^{1/2}}exp\{-\frac{1}{2}((x-\mu)^T{{\tiny\sum}}^{-1}(x-\mu)-(x_2-{\mu}_2)^T{{\tiny\sum}_{22}}^{-1}(x_2-{\mu}_2))\}\end{equation}</div>
+<p>
+再次利用之前的分块矩阵公式，并使用配方方法。这里我就不在去详细的算了，直接给出结果。此时的条件分布仍然是一个高斯分布，期望和条件方差为</p>
+<div class="math">\begin{equation}{\mu}_{1|2}={\mu}_1+{\tiny \sum}_{12}{{\tiny \sum}_{22}}^{-1}(x_2-{\mu}_2)\end{equation}</div>
+<div class="math">\begin{equation}{\tiny \sum}_{1|2}={\tiny \sum}_{11}-{\tiny \sum}_{12}{{\tiny \sum}_{22}}^{-1}{{\tiny \sum}_{21}}\end{equation}</div>
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+    mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
+        "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
+    </div>
+    <div id="content-comments">
+</div>
+
+</div>
+<div class="niu2-right-container col-md-2">
+    <div id="niu2-sidebar-meta" class="niu2-sidebar">
+        <div class="niu2-sidebar-label"><i class="icon-calendar"></i>Published:</div>
+        <div class="niu2-sidebar-value">2014-07-17 20:31</div>
+        <div class="niu2-sidebar-label"><i class="icon-open-folder"></i>Category:</div>
+        <div class="niu2-sidebar-value"><a href="./category/math.html">Math</a></div>
+        <div class="niu2-sidebar-label"><i class="icon-tag"></i>Tag:</div>
+ 
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="./tag/math.html">Math</a><sup>6</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="./tag/probability.html">Probability</a><sup>1</sup></div>
+    </div>
+
+    <div id="niu2-sidebar-toc" class="niu2-sidebar" data-status="closed">
+        <div class="niu2-sidebar-label">
+            <i id="niu2-sidebar-toc-ctrl" class="icon-open-tocs"></i>TOC
+        </div>
+        <ol id="niu2-sidebar-toc-list">
+            <li><a href="#content-heading">Normal Distribution</a></li>
+            <li><a href='#5860a4'>正态分布介绍</a></li><li><a href='#eee605'>正态分布与熵</a></li><li><a href='#7348ff'>由熵到正态分布</a></li><li><a href='#b98cbd'>如何生成高斯分布</a></li><li><a href='#27e8f1'>多元高斯分布</a></li><li><a href='#da747e'>高斯分布的边际分布</a></li><li><a href='#af3975'>正态分布的条件分布</a></li>
+        </ol>
+    </div>
+</div>    </div>
+
+    <div class="niu2-footer">
+        <div id="body-footer" class="col-md-6 col-md-offset-2">
+<hr/>
+<p>
+    Powered by <a href="https://github.com/getpelican/pelican">Pelican</a>, 
+    <a href="https://github.com/mawenbao/niu-x2-sidebar">theme</a> built with <a href="http://getbootstrap.com">Bootstrap3</a>
+    by <a href="http://blog.atime.me">Ma Wenbao</a>, icons by 
+    <a href="http://fortawesome.github.io/Font-Awesome">Font Awesome</a>.
+</p>
+<p>
+    ©
+            2014-2016
+    <a class="niu2-footer-link" href=".">Huiliang Huang</a>
+</p>
+<p class="niu2-icons">
+</p>        </div>
+    </div>
+    
+    <div id="niu2-pygments" data-theme="github"></div>
+
+    <script type="text/javascript" src="./theme/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="./theme/js/niu2.min.js"></script>
+    <script type="text/javascript" src="./theme/js/bootstrap.min.js"></script>
+    <script type="text/javascript">onContentLoaded();</script>
+  </body>
+</html>

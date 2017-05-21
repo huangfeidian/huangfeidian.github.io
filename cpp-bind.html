@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPP Bind - spirits away</title>
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.png">
+    <link rel="stylesheet" href="./theme/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="./theme/font-icons/style.min.css" type="text/css" />
+    <link rel="stylesheet" href="./theme/css/niu2.min.css" type="text/css" />
+
+    <link rel="canonical" href="./cpp-bind.html" />
+    
+    <script type="text/javascript">window.onload=function(){};</script>
+    <!--[if lt IE 9]>
+        <script src="./theme/js/html5shiv.js"></script>
+        <script src="./theme/js/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body> 
+    <div id="body-header">
+<div class="navbar navbar-inverse navbar-fixed-top">
+<div class="col-md-12">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href=".">
+            <i class="icon-home"></i>spirits away
+        </a>
+    </div>
+    <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+        <ul class="nav navbar-nav">
+            <li><a href="/pages/about.html" title="about">
+                <i class="icon-anchor"></i>关于</a>
+            </li>
+            <li><a href="/archives.html" title="archives">
+                <i class="icon-archive"></i>存档</a>
+            </li>
+            <li><a href="/tags.html" title="tags">
+                <i class="icon-tag"></i>标签</a>
+            </li>
+        <!-- category dropdown list -->
+        <!--  self defined dropdown list -->
+        </ul>
+        
+        <!-- right nav bar -->
+        <ul class="nav navbar-nav navbar-right">
+        <!-- google custom search -->
+       </ul>
+    </nav>
+</div>
+</div>    </div>
+    
+    <div id="body-content">
+<div class="col-md-8 col-md-offset-2">
+    <h1 id="content-heading">CPP Bind</h1>
+</div>
+<div id="niu2-left-container" class="col-md-6 col-md-offset-2 with-right-border">
+    <div id="niu2-main-content">
+        <p>bind是一组用于函数绑定的模板。在对某个函数进行绑定时，可以指定部分参数或全部参数，也可以不指定任何参数，还可以调整各个参数间的顺序。对于未指定的参数，可以使用占位符_1、_2、_3来表示。_1表示绑定后的函数的第1个参数，_2表示绑定后的函数的第2个参数，其他依次类推。在使用bind之后，会生成一个新的函数对象作为返回值。bind类似于curry或者偏应用，但是功能上来说更为强大。</p>
+<h1 id="dab804">Bind使用</h1>
+<p>bind可以绑定到普通函数、函数对象、类的成员函数和类的成员变量这四种类型。下面的代码介绍了这几种类型bind的形式(代码来自C++ STL 2ed，55页)：</p>
+<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;functional&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;memory&gt;</span><span class="cp"></span>
+<span class="kt">void</span> <span class="nf">func</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">)</span>
+<span class="p">{</span>
+
+<span class="p">}</span>
+<span class="k">auto</span> <span class="n">l</span> <span class="o">=</span> <span class="p">[](</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">)</span>
+<span class="p">{</span>
+
+<span class="p">};</span>
+<span class="n">std</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">void</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">)</span><span class="o">&gt;</span> <span class="n">func2</span> <span class="o">=</span> <span class="p">[](</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">)</span>
+<span class="p">{</span>
+
+<span class="p">};</span>
+
+<span class="k">class</span> <span class="nc">C</span>
+<span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+    <span class="kt">void</span> <span class="k">operator</span> <span class="p">()</span> <span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">)</span> <span class="k">const</span>
+    <span class="p">{</span>
+
+    <span class="p">}</span>
+    <span class="kt">void</span> <span class="n">memfunc</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">)</span> <span class="k">const</span>
+    <span class="p">{</span>
+
+    <span class="p">}</span>
+    <span class="kt">int</span> <span class="n">memobj</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">C</span> <span class="n">c</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">C</span><span class="o">&gt;</span> <span class="n">sp</span><span class="p">(</span><span class="k">new</span> <span class="n">C</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="n">a</span><span class="p">;</span>
+    <span class="c1">// bind() uses callable objects to bind arguments:</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="mi">77</span><span class="p">,</span> <span class="mi">33</span><span class="p">)();</span> <span class="c1">// calls: func(77,33)</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="mi">77</span><span class="p">,</span> <span class="mi">33</span><span class="p">)();</span> <span class="c1">// calls: l(77,33)</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="n">func2</span><span class="p">,</span> <span class="mi">33</span><span class="p">,</span> <span class="mi">44</span><span class="p">);</span><span class="c1">//calls: func2(33,22)</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="n">func2</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">placeholders</span><span class="o">::</span><span class="n">_2</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">placeholders</span><span class="o">::</span><span class="n">_1</span><span class="p">)(</span><span class="mi">22</span><span class="p">,</span> <span class="mi">33</span><span class="p">);</span><span class="c1">//calls func2(33,22)</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="n">C</span><span class="p">(),</span> <span class="mi">77</span><span class="p">,</span> <span class="mi">33</span><span class="p">)();</span> <span class="c1">// calls: C::operator()(77,33)</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="mi">77</span><span class="p">,</span> <span class="mi">33</span><span class="p">)();</span> <span class="c1">// calls: C::operator()(77,33)</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">*</span><span class="n">sp</span><span class="p">,</span> <span class="mi">77</span><span class="p">,</span> <span class="mi">33</span><span class="p">)();</span> <span class="c1">// calls: C::operator()(77,33)</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">C</span><span class="o">::</span><span class="n">memfunc</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="mi">77</span><span class="p">,</span> <span class="mi">33</span><span class="p">)();</span> <span class="c1">// calls: c.memfunc(77,33)</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">C</span><span class="o">::</span><span class="n">memfunc</span><span class="p">,</span> <span class="n">sp</span><span class="p">,</span> <span class="mi">77</span><span class="p">,</span> <span class="mi">33</span><span class="p">)();</span> <span class="c1">// calls: sp-&gt;memfunc(77,33)</span>
+    <span class="n">a</span><span class="o">=</span><span class="n">std</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">C</span><span class="o">::</span><span class="n">memobj</span><span class="p">,</span><span class="n">c</span><span class="p">)();</span><span class="c1">//just return the c-&gt;*memobj</span>
+    <span class="n">a</span><span class="o">=</span><span class="n">std</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">C</span><span class="o">::</span><span class="n">memobj</span><span class="p">,</span><span class="n">std</span><span class="o">::</span><span class="n">placeholders</span><span class="o">::</span><span class="n">_1</span><span class="p">)(</span><span class="n">c</span><span class="p">);</span><span class="c1">//return c-&gt;*memobj</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>在上面的代码中可以看出，<code>std::bind</code>有三种应用模式：</p>
+<ul>
+<li>
+<p>对于普通函数、匿名lambda、<code>std::function</code>和重载了函数操作符的对象，直接以名称或对象值传入，这些类型最终都会退化为函数指针，退化机制为<code>std::decay</code>；</p>
+</li>
+<li>
+<p>而对于类内部的函数，则需要获得函数的地址，然后传入类实例的指针；</p>
+</li>
+<li>
+<p>对于类内部成员的访问，也需要首先获得成员指针，然后再传入类实例的指针。这个功能看上去不像是函数调用，但是C++标准里面的确把这个定为可调用对象。</p>
+</li>
+</ul>
+<h1 id="8a4372">Bind主要任务</h1>
+<p>根据上面的代码说明，我们可以将<code>std::bind</code>的功能解构如下：</p>
+<ul>
+<li>
+<p>识别占位符</p>
+</li>
+<li>
+<p>保存所有参数的类型和值；</p>
+</li>
+<li>
+<p>根据所绑定的可调用对象的类型选择不同的实现</p>
+</li>
+<li>
+<p>生成一个新的可调用对象</p>
+</li>
+<li>
+<p>被生成的可调用对象在接受实参时，根据占位符调整实参的顺序</p>
+</li>
+<li>
+<p>返回调用结果</p>
+</li>
+</ul>
+<p>下面我们就分别对这几个功能进行实现。</p>
+<h1 id="604af6">占位符实现</h1>
+<p>占位符是<code>_1,_2</code>的形式，不过这种形式只是他们的简写，其实真正的标识符为<code>std::placeholders::_1,std::placeholders::_2</code>。下面的代码就完美实现了一个<code>placeholder</code>，这里我们就不考虑名字空间的问题了。</p>
+<div class="codehilite"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="kt">int</span> <span class="n">NUM</span><span class="o">&gt;</span> <span class="k">struct</span> <span class="n">placeholder</span>
+<span class="p">{</span>
+<span class="p">};</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="k">struct</span> <span class="n">is_placeholder</span><span class="p">;</span>
+<span class="k">template</span> <span class="o">&lt;</span><span class="kt">int</span> <span class="n">NUM</span><span class="o">&gt;</span> <span class="k">struct</span> <span class="n">is_placeholder</span><span class="o">&lt;</span><span class="n">placeholder</span><span class="o">&lt;</span><span class="n">NUM</span><span class="o">&gt;</span> <span class="o">&gt;</span>
+<span class="p">{</span>
+    <span class="k">enum</span>
+    <span class="p">{</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">NUM</span>
+    <span class="p">};</span>
+<span class="p">};</span>
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="k">struct</span> <span class="n">is_placeholder</span>
+<span class="p">{</span>
+    <span class="k">enum</span>
+    <span class="p">{</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="p">};</span>
+<span class="p">};</span>
+</pre></div>
+
+
+<p>这里的<code>struct is_placeholder</code>判断模板参数的类型利用了模板的特化。由于占位符是从1开始的，所以0作为非占位符类型的值是可取的。这样，我们利用了这个模板类完成了编译期占位符的类型识别。看到这里，读者可能会问：<code>_1,_2</code>呢。不要着急，要开心，我下面给你吃啊。</p>
+<div class="codehilite"><pre><span></span><span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span> <span class="n">_1</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">2</span><span class="o">&gt;</span> <span class="n">_2</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">3</span><span class="o">&gt;</span> <span class="n">_3</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">4</span><span class="o">&gt;</span> <span class="n">_4</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">5</span><span class="o">&gt;</span> <span class="n">_5</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">6</span><span class="o">&gt;</span> <span class="n">_6</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">7</span><span class="o">&gt;</span> <span class="n">_7</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">8</span><span class="o">&gt;</span> <span class="n">_8</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">9</span><span class="o">&gt;</span> <span class="n">_9</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">10</span><span class="o">&gt;</span> <span class="n">_10</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">11</span><span class="o">&gt;</span> <span class="n">_11</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">12</span><span class="o">&gt;</span> <span class="n">_12</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">13</span><span class="o">&gt;</span> <span class="n">_13</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">14</span><span class="o">&gt;</span> <span class="n">_14</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">15</span><span class="o">&gt;</span> <span class="n">_15</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">16</span><span class="o">&gt;</span> <span class="n">_16</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">17</span><span class="o">&gt;</span> <span class="n">_17</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">18</span><span class="o">&gt;</span> <span class="n">_18</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">19</span><span class="o">&gt;</span> <span class="n">_19</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">20</span><span class="o">&gt;</span> <span class="n">_20</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">21</span><span class="o">&gt;</span> <span class="n">_21</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">22</span><span class="o">&gt;</span> <span class="n">_22</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">23</span><span class="o">&gt;</span> <span class="n">_23</span><span class="p">;</span>
+<span class="k">extern</span> <span class="n">placeholder</span><span class="o">&lt;</span><span class="mi">24</span><span class="o">&gt;</span> <span class="n">_24</span><span class="p">;</span>
+</pre></div>
+
+
+<p>要多少占位符，有多少占位符，管饱。</p>
+<h1 id="3bdbbe">参数列表的保存</h1>
+<p>其实这个参数列表不仅仅可以保存<code>bind</code>参数的列表，而且可以保存绑定之后生成的可调用对象的实参列表。该参数列表可以直接采用<code>std::tuple</code>来保存，但是如何取出参数列表中的值就很麻烦了。因为最终在返回的可调用对象在执行函数调用的时候，实参顺序并不一定是从左到右的，同时内部还夹杂着被绑定的非占位符参数。为了得到所期望的参数顺序，我们需要利用下面的代码来实现：</p>
+<div class="codehilite"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="kt">int</span> <span class="p">...</span><span class="n">N</span><span class="o">&gt;</span> <span class="k">struct</span> <span class="n">seq</span>
+<span class="p">{</span>
+<span class="p">};</span>
+<span class="k">template</span> <span class="o">&lt;</span><span class="kt">unsigned</span> <span class="n">N</span><span class="p">,</span> <span class="kt">unsigned</span><span class="p">...</span><span class="n">S</span><span class="o">&gt;</span> <span class="k">struct</span> <span class="n">gen</span><span class="p">;</span>
+<span class="k">template</span> <span class="o">&lt;</span><span class="kt">unsigned</span> <span class="n">N</span><span class="p">,</span> <span class="kt">unsigned</span><span class="p">...</span><span class="n">S</span><span class="o">&gt;</span> <span class="k">struct</span> <span class="nl">gen</span> <span class="p">:</span> <span class="n">gen</span><span class="o">&lt;</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">S</span><span class="p">...</span><span class="o">&gt;</span>
+<span class="p">{</span>
+<span class="p">};</span>
+<span class="k">template</span> <span class="o">&lt;</span><span class="kt">unsigned</span><span class="p">...</span><span class="n">S</span><span class="o">&gt;</span> <span class="k">struct</span> <span class="n">gen</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">,</span> <span class="n">S</span><span class="p">...</span><span class="o">&gt;</span>
+<span class="p">{</span>
+    <span class="k">typedef</span> <span class="n">seq</span><span class="o">&lt;</span><span class="n">S</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">type</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="kt">int</span> <span class="n">N</span><span class="p">,</span> <span class="k">typename</span> <span class="n">B</span><span class="p">,</span> <span class="k">typename</span> <span class="n">C</span><span class="o">&gt;</span>
+<span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple_element</span><span class="o">&lt;</span><span class="n">N</span><span class="p">,</span><span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">decay</span><span class="o">&lt;</span><span class="n">B</span><span class="o">&gt;::</span><span class="n">type</span><span class="o">&gt;::</span><span class="n">type</span>
+<span class="n">select</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">false_type</span><span class="p">,</span> <span class="n">B</span><span class="o">&amp;&amp;</span> <span class="n">b</span><span class="p">,</span> <span class="n">C</span><span class="o">&amp;&amp;</span> <span class="n">c</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">get</span><span class="o">&lt;</span><span class="n">N</span><span class="o">&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="kt">int</span> <span class="n">N</span><span class="p">,</span> <span class="k">typename</span> <span class="n">B</span><span class="p">,</span> <span class="k">typename</span> <span class="n">C</span><span class="o">&gt;</span>
+<span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple_element</span>
+<span class="o">&lt;</span>
+    <span class="n">is_placeholder</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple_element</span><span class="o">&lt;</span><span class="n">N</span><span class="p">,</span><span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">decay</span><span class="o">&lt;</span><span class="n">B</span><span class="o">&gt;::</span><span class="n">type</span><span class="o">&gt;::</span><span class="n">type</span><span class="o">&gt;::</span><span class="n">value</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">decay</span><span class="o">&lt;</span><span class="n">C</span><span class="o">&gt;::</span><span class="n">type</span>
+<span class="o">&gt;::</span><span class="n">type</span>
+<span class="n">select</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">true_type</span><span class="p">,</span> <span class="n">B</span><span class="o">&amp;&amp;</span> <span class="n">b</span><span class="p">,</span> <span class="n">C</span><span class="o">&amp;&amp;</span> <span class="n">c</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">get</span><span class="o">&lt;</span>
+        <span class="n">is_placeholder</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple_element</span><span class="o">&lt;</span><span class="n">N</span><span class="p">,</span><span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">decay</span><span class="o">&lt;</span><span class="n">B</span><span class="o">&gt;::</span><span class="n">type</span><span class="o">&gt;::</span><span class="n">type</span><span class="o">&gt;::</span><span class="n">value</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="o">&gt;</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>首先来解释一下<code>seq</code>和<code>gen</code>这两个结构。<code>seq</code>这个模板类完完全全是用来存储类型来用的；而<code>gen</code>这个模板类是用来生成一个整数序列。如果我们人工来展开的话，可以得到这样的结果：<code>gen&lt;N&gt;::type</code>与<code>seq&lt;0,1,...,N-1&gt;</code>的类型是相同的。我们可以利用<code>std::is_same</code>来检查我们这个推论：</p>
+<div class="codehilite"><pre><span></span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="n">gen</span><span class="o">&lt;</span><span class="mi">5</span><span class="o">&gt;::</span><span class="n">type</span><span class="p">,</span> <span class="n">seq</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="o">&gt;</span> <span class="o">&gt;::</span><span class="n">value</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">;</span>
+</pre></div>
+
+
+<p>而剩下的<code>select</code>模板函数则负责了从两个参数列表中提取出最后的原始函数的应用参数列表。要想理解这一点，我们首先要明确：绑定参数的列表长度等于最后函数应用的参数个数。所以得到了绑定参数列表的长度<code>N</code>之后，我们就可以利用<code>gen&lt;N&gt;::type</code>来生成一个<code>seq&lt;0,1,...,N-1&gt;</code>的类型。通过这个<code>seq</code>，我们可以利用<code>0,1,...N-1</code>和<code>select&lt;x&gt;</code>来获得最终的应用参数。这里<code>select</code>中的参数<code>b</code>代表的是<code>std::bind</code>中绑定的参数列表（包括占位符），<code>c</code>是绑定之后的函数在调用时的参数列表，<code>B,C</code>是各自的类型，都是<code>std::tuple</code>。在执行<code>select&lt;x&gt;</code>的调用时，我们还需要提供一个参数来表明<code>B</code>中的第<code>x</code>个参数的类型是否是占位符，即等价于</p>
+<div class="codehilite"><pre><span></span><span class="n">is_placeholder</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">tuple_element</span><span class="o">&lt;</span><span class="n">x</span><span class="p">,</span><span class="n">std</span><span class="o">::</span><span class="n">decay</span><span class="o">&lt;</span><span class="n">B</span><span class="o">&gt;::</span><span class="n">type</span><span class="o">&gt;::</span><span class="n">type</span><span class="o">&gt;::</span><span class="n">value</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">;</span>
+</pre></div>
+
+
+<p>上面这条语句的值存入一个<code>std::integral_constant&lt;bool,bool a&gt;</code>类型中：如果是占位符，则<code>a=true</code>，该类型为<code>std::true_type</code>；否则<code>a=false</code>，该类型为<code>std::false_type</code>。这样通过模板的重载，我们实现了用<code>select</code>函数获得正确的函数调用参数：</p>
+<ul>
+<li>
+<p>当<code>std::get&lt;x&gt;(b)</code>是占位符<code>placeholder&lt;a&gt;</code>的时候，返回<code>std::get&lt;a-1&gt;(c)</code>；</p>
+</li>
+<li>
+<p>当<code>std::get&lt;x&gt;(b)</code>不是占位符的时候，直接返回<code>std::get&lt;x&gt;(b)</code>。</p>
+</li>
+</ul>
+<h1 id="3c3fc3">函数返回值的推导</h1>
+<p>我们在生成绑定之后的可调用对象的时候，要为其生成函数签名。参数列表的类型我们在上节中已经解决了，而返回值的类型还没解决。为了推导出返回值的类型，我们可以使用下面的代码：</p>
+<div class="codehilite"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">Fun</span><span class="o">&gt;</span> <span class="k">struct</span> <span class="n">GetResult</span>
+<span class="p">{</span>
+    <span class="k">typedef</span> <span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">enable_if</span><span class="o">&lt;</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">is_class</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">decay</span><span class="o">&lt;</span><span class="n">Fun</span><span class="o">&gt;::</span><span class="n">type</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">,</span>
+        <span class="k">typename</span> <span class="n">GetResult</span><span class="o">&lt;</span><span class="k">decltype</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Fun</span><span class="o">::</span><span class="k">operator</span><span class="p">())</span><span class="o">&gt;::</span><span class="n">result_type</span>
+    <span class="o">&gt;::</span><span class="n">type</span> <span class="n">result_type</span><span class="p">;</span>
+<span class="p">};</span><span class="c1">//如果Fun本身是一个类，则返回其函数操作符的返回值类型</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">R</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="k">struct</span> <span class="n">GetResult</span><span class="o">&lt;</span><span class="n">R</span><span class="p">(</span><span class="n">Args</span><span class="p">...)</span><span class="o">&gt;</span>
+<span class="p">{</span>
+    <span class="k">typedef</span> <span class="n">R</span> <span class="n">result_type</span><span class="p">;</span>
+<span class="p">};</span><span class="c1">//简单函数</span>
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">C</span><span class="p">,</span> <span class="k">typename</span> <span class="n">R</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="k">struct</span> <span class="n">GetResult</span><span class="o">&lt;</span><span class="n">R</span><span class="p">(</span><span class="n">C</span><span class="o">::*</span><span class="p">)(</span><span class="n">Args</span><span class="p">...)</span><span class="o">&gt;</span>
+<span class="p">{</span>
+    <span class="k">typedef</span> <span class="n">R</span> <span class="n">result_type</span><span class="p">;</span>
+<span class="p">};</span><span class="c1">//类内部函数</span>
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">C</span><span class="p">,</span> <span class="k">typename</span> <span class="n">R</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="k">struct</span> <span class="n">GetResult</span><span class="o">&lt;</span><span class="n">R</span><span class="p">(</span><span class="n">C</span><span class="o">::*</span><span class="p">)(</span><span class="n">Args</span><span class="p">...)</span><span class="k">const</span><span class="o">&gt;</span>
+<span class="p">{</span>
+    <span class="k">typedef</span> <span class="n">R</span> <span class="n">result_type</span><span class="p">;</span>
+<span class="p">};</span><span class="c1">//类内部const函数</span>
+<span class="k">struct</span> <span class="n">GetResult</span><span class="o">&lt;</span><span class="n">R</span><span class="p">(</span><span class="n">C</span><span class="o">::*</span><span class="p">)</span><span class="o">&gt;</span>
+<span class="p">{</span>
+    <span class="k">typedef</span> <span class="n">R</span> <span class="n">result_type</span><span class="p">;</span>
+<span class="p">};</span><span class="c1">//类内部成员的指针</span>
+</pre></div>
+
+
+<p>在上面的代码中，<code>GetResult</code>的作用就是编译期确定返回值的类型，唯一需要的就是被绑定的函数的类型。被绑定的函数如前文所说有四种类型：</p>
+<ul>
+<li>
+<p>简单函数；</p>
+</li>
+<li>
+<p>对象对象类型（包括lambda对象，function对象和重载了函数操作符的对象）；</p>
+</li>
+<li>
+<p>类内部的函数指针；</p>
+</li>
+<li>
+<p>类内部的成员指针。</p>
+</li>
+</ul>
+<p>其中，类内部函数是否是const的能继续细分。总的来说，这样我们可以得到绑定函数的返回值类型了。</p>
+<h1 id="6ba7d8">绑定函数的生成</h1>
+<p>为了表示最后生成的绑定函数，我们利用<code>bind_t</code>类型来存储我们的<code>std::bind</code>绑定结果。该<code>bind_t</code>类型的基本定义如下：</p>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">F</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="k">class</span> <span class="nc">bind_t</span>
+<span class="p">{</span>
+    <span class="k">typedef</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">decay</span><span class="o">&lt;</span><span class="n">Args</span><span class="o">&gt;::</span><span class="n">type</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">BindArgs</span><span class="p">;</span>
+    <span class="k">typedef</span> <span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">decay</span><span class="o">&lt;</span><span class="n">F</span><span class="o">&gt;::</span><span class="n">type</span> <span class="n">CallFun</span><span class="p">;</span>
+    <span class="k">enum</span> <span class="k">class</span> <span class="nc">BindType</span>
+    <span class="p">{</span>
+        <span class="n">MemberFunction</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">MemberObject</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">Other</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="p">};</span>
+
+<span class="k">public</span><span class="o">:</span>
+    <span class="k">typedef</span> <span class="k">typename</span> <span class="n">GetResult</span><span class="o">&lt;</span>
+        <span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">remove_pointer</span><span class="o">&lt;</span>
+        <span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">remove_reference</span><span class="o">&lt;</span><span class="n">F</span><span class="o">&gt;::</span><span class="n">type</span>
+        <span class="o">&gt;::</span><span class="n">type</span>
+    <span class="o">&gt;::</span><span class="n">result_type</span> <span class="n">result_type</span><span class="p">;</span>
+
+    <span class="n">bind_t</span><span class="p">(</span><span class="n">F</span> <span class="n">fun</span><span class="p">,</span> <span class="n">Args</span><span class="p">...</span> <span class="n">args</span><span class="p">)</span> <span class="o">:</span><span class="n">_fun</span><span class="p">(</span><span class="n">fun</span><span class="p">),</span> <span class="n">_bindArgs</span><span class="p">(</span><span class="n">args</span><span class="p">...)</span>
+    <span class="p">{</span>
+    <span class="p">}</span>
+    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="p">...</span> <span class="n">CArgs</span><span class="o">&gt;</span>
+        <span class="n">result_type</span> <span class="k">operator</span><span class="p">()(</span><span class="n">CArgs</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">c</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>在这个<code>bind_t</code>类型中，使用<code>BindArgs</code>来存储<code>std::bind</code>中的参数列表，使用<code>CallFun</code>来存储绑定的函数的指针，<code>result_type</code>存储返回值的类型，函数操作符<code>operator()</code>来执行最后的实际调用（为了理解这些声明，读者应该了解一下<code>std::decay</code>）。此外，这里还使用<code>BindType</code>来表示绑定函数的类型：0为成员函数，1为成员对象，其他的为2。这个<code>BindType</code>的值是由下面的语句确定的（后文中并没有显示使用<code>BindType</code>，而是直接采用值）：</p>
+<div class="codehilite"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">is_member_function_pointer</span><span class="o">&lt;</span><span class="n">CallFun</span><span class="o">&gt;::</span><span class="n">value</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="n">std</span><span class="o">::</span><span class="n">is_member_object_pointer</span><span class="o">&lt;</span><span class="n">CallFun</span><span class="o">&gt;::</span><span class="n">value</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">2</span><span class="p">;</span>
+</pre></div>
+
+
+<p>而完整的函数操作符重载的定义如下：</p>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="p">...</span> <span class="n">CArgs</span><span class="o">&gt;</span>
+<span class="n">result_type</span> <span class="k">operator</span><span class="p">()(</span><span class="n">CArgs</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">c</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">tuple</span><span class="o">&lt;</span><span class="n">CArgs</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">cargs</span><span class="p">(</span><span class="n">c</span><span class="p">...);</span>
+    <span class="k">return</span> <span class="nf">callFunc</span><span class="p">(</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span>
+        <span class="kt">int</span><span class="p">,</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">is_member_function_pointer</span><span class="o">&lt;</span><span class="n">CallFun</span><span class="o">&gt;::</span><span class="n">value</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="n">std</span><span class="o">::</span><span class="n">is_member_object_pointer</span><span class="o">&lt;</span><span class="n">CallFun</span><span class="o">&gt;::</span><span class="n">value</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">2</span>
+        <span class="o">&gt;</span><span class="p">(),</span>
+        <span class="n">cargs</span><span class="p">,</span>
+        <span class="k">typename</span> <span class="n">gen</span><span class="o">&lt;</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">tuple_size</span><span class="o">&lt;</span><span class="n">BindArgs</span><span class="o">&gt;::</span><span class="n">value</span> <span class="o">-</span> <span class="n">std</span><span class="o">::</span><span class="n">is_member_function_pointer</span><span class="o">&lt;</span><span class="n">CallFun</span><span class="o">&gt;::</span><span class="n">value</span>
+        <span class="o">&gt;::</span><span class="n">type</span><span class="p">()</span>
+        <span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>虽然我们当前还没有给出<code>callFunc</code>的定义，但是从该函数的使用形式可以猜出其形式有三种：</p>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="kt">int</span> <span class="p">...</span><span class="n">S</span><span class="o">&gt;</span>
+<span class="n">result_type</span> <span class="n">callFunc</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">t</span><span class="p">,</span> <span class="n">seq</span><span class="o">&lt;</span><span class="n">S</span><span class="p">...</span><span class="o">&gt;</span><span class="p">);</span>
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="kt">int</span> <span class="p">...</span><span class="n">S</span><span class="o">&gt;</span>
+<span class="n">result_type</span> <span class="n">callFunc</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">t</span><span class="p">,</span> <span class="n">seq</span><span class="o">&lt;</span><span class="n">S</span><span class="p">...</span><span class="o">&gt;</span><span class="p">);</span>
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="kt">int</span> <span class="p">...</span><span class="n">S</span><span class="o">&gt;</span>
+<span class="n">result_type</span> <span class="n">callFunc</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="mi">0</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">t</span><span class="p">,</span> <span class="n">seq</span><span class="o">&lt;</span><span class="n">S</span><span class="p">...</span><span class="o">&gt;</span><span class="p">);</span>
+</pre></div>
+
+
+<h1 id="e2c0f1">函数体的定义</h1>
+<p>现在是最重要的一步，定义<code>callFunc</code>的函数体。我们先从<code>callFunc(&lt;int, 2&gt;, T\&amp;\&amp; t, seq&lt;S...&gt;)</code>这个最简单的讲起，代码如下：</p>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="kt">int</span> <span class="p">...</span><span class="n">S</span><span class="o">&gt;</span>
+<span class="n">result_type</span> <span class="n">callFunc</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">t</span><span class="p">,</span> <span class="n">seq</span><span class="o">&lt;</span><span class="n">S</span><span class="p">...</span><span class="o">&gt;</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">_fun</span><span class="p">(</span>
+        <span class="n">select</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&gt;</span><span class="p">(</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">,</span>
+        <span class="n">is_placeholder</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple_element</span><span class="o">&lt;</span><span class="n">S</span><span class="p">,</span> <span class="n">BindArgs</span><span class="o">&gt;::</span><span class="n">type</span><span class="o">&gt;::</span><span class="n">value</span> <span class="o">!=</span> <span class="mi">0</span>
+        <span class="o">&gt;</span><span class="p">(),</span>
+        <span class="n">_bindArgs</span><span class="p">,</span>
+        <span class="n">t</span><span class="p">)...</span>
+        <span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>这里我们要注意到最后一个闭括号前面的<code>...</code>，这代表生成一个参数包<code>parameter_pack</code>。对于<code>S...</code>中的每一个值<code>S</code>，<code>select&lt;S&gt;</code>的结果都存在于该参数包中。每一次<code>select&lt;S&gt;</code>的结果都是<code>_func</code>的第<code>S</code>个调用参数（以0开始计数）。同时我们注意到，<code>seq&lt;S...&gt;</code>是<code>seq&lt;0,1,...N-1&gt;</code>的形式。所以，在所有的<code>select&lt;S&gt;</code>执行完之后，我们就能得到所有的最终调用参数，并拥有正确顺序。</p>
+<p>然后再来围观<code>callFunc(&lt;int, 0&gt;, T\&amp;\&amp; t, seq&lt;S...&gt;)</code>，这个是类内部函数指针的绑定。该函数的代码如下：</p>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="kt">int</span> <span class="p">...</span><span class="n">S</span><span class="o">&gt;</span>
+<span class="n">result_type</span> <span class="n">callFunc</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="mi">0</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">t</span><span class="p">,</span> <span class="n">seq</span><span class="o">&lt;</span><span class="n">S</span><span class="p">...</span><span class="o">&gt;</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">select</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span>  <span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">,</span>
+        <span class="n">is_placeholder</span><span class="o">&lt;</span>
+        <span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple_element</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">,</span><span class="n">BindArgs</span><span class="o">&gt;::</span><span class="n">type</span>
+        <span class="o">&gt;::</span><span class="n">value</span> <span class="o">!=</span> <span class="mi">0</span>
+        <span class="o">&gt;</span><span class="p">()</span><span class="err">，</span><span class="n">_bindArgs</span><span class="err">，</span><span class="n">t</span><span class="p">)</span><span class="o">-&gt;*</span><span class="n">_fun</span>
+        <span class="p">)</span>
+        <span class="p">(</span>
+        <span class="n">select</span><span class="o">&lt;</span><span class="n">S</span> <span class="o">+</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">,</span>
+        <span class="n">is_placeholder</span><span class="o">&lt;</span>
+        <span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple_element</span><span class="o">&lt;</span><span class="n">S</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span><span class="n">BindArgs</span><span class="o">&gt;::</span><span class="n">type</span>
+        <span class="o">&gt;::</span><span class="n">value</span> <span class="o">!=</span> <span class="mi">0</span>
+        <span class="o">&gt;</span><span class="p">(),</span>
+        <span class="n">_bindArgs</span><span class="p">,</span>
+        <span class="n">t</span>
+        <span class="p">)...</span>
+        <span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>此时参数<code>bindArgs</code>的第一个参数是<code>this</code>指针，最终函数调用形式为<code>this-&gt;_func（realArgs)</code>，其中<code>realArgs</code>中参数的个数为<code>bindArgs</code>的个数减1。所以在获得最终参数时，需要往右偏移一个单位，所以是<code>select&lt;S+1&gt;</code>而不是<code>select&lt;S&gt;</code>。</p>
+<p>最后，<code>callFunc(&lt;int, 1&gt;, T\&amp;\&amp; t, seq&lt;S...&gt;)</code>，这个绑定的是类内部的数据成员指针。代码如下：</p>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="kt">int</span> <span class="p">...</span><span class="n">S</span><span class="o">&gt;</span>
+<span class="n">result_type</span> <span class="n">callFunc</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">t</span><span class="p">,</span> <span class="n">seq</span><span class="o">&lt;</span><span class="n">S</span><span class="p">...</span><span class="o">&gt;</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">select</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span>
+            <span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">,</span>
+        <span class="n">is_placeholder</span><span class="o">&lt;</span>
+        <span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple_element</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">,</span><span class="n">BindArgs</span><span class="o">&gt;::</span><span class="n">type</span>
+        <span class="o">&gt;::</span><span class="n">value</span> <span class="o">!=</span> <span class="mi">0</span>
+        <span class="o">&gt;</span><span class="p">(),</span><span class="n">_bindArgs</span><span class="p">,</span><span class="n">t</span><span class="p">)</span><span class="o">-&gt;*</span><span class="n">_fun</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>简而言之，就是一个<code>this-&gt;*_fun</code>,一个数据成员获取操作。</p>
+<h1 id="458a58">Bind实现</h1>
+<p>经过这么多的前奏，我们可以用下面的代码来实现<code>bind</code>:</p>
+<div class="codehilite"><pre><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">F</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="n">bind_t</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">decay</span><span class="o">&lt;</span><span class="n">F</span><span class="o">&gt;::</span><span class="n">type</span><span class="p">,</span> <span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">decay</span><span class="o">&lt;</span><span class="n">Args</span><span class="o">&amp;&amp;&gt;::</span><span class="n">type</span><span class="p">...</span><span class="o">&gt;</span>
+<span class="n">bind</span><span class="p">(</span><span class="n">F</span> <span class="n">f</span><span class="p">,</span> <span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">args</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">bind_t</span><span class="o">&lt;</span>
+        <span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">decay</span><span class="o">&lt;</span><span class="n">F</span><span class="o">&gt;::</span><span class="n">type</span><span class="p">,</span>
+        <span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">decay</span><span class="o">&lt;</span><span class="n">Args</span><span class="o">&amp;&amp;&gt;::</span><span class="n">type</span><span class="p">...</span>
+    <span class="o">&gt;</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">args</span><span class="p">...);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>不过，总的来说，当前的一些实现有很多问题，主要是没使用完美转发<code>std::forward</code>。不过，作为原理解释，点都点到了。先将就着看吧，后期在慢慢修改。如果发现文中的错误，欢迎指出。</p>
+<h1 id="ea6f3b">参考链接</h1>
+<ul>
+<li>
+<p><code>C++</code>11标准中对于可调用对象的规定20.8.2：<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3242.pdf">http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3242.pdf</a></p>
+</li>
+<li>
+<p>本文的代码来源：<a href="http://www.cnblogs.com/xusd-null/p/3693817.html#2934538">http://www.cnblogs.com/xusd-null/p/3693817.html#2934538</a></p>
+</li>
+<li>
+<p><code>bind</code>的图解：<a href="http://www.cnblogs.com/xusd-null/p/3698969.html">http://www.cnblogs.com/xusd-null/p/3698969.html</a></p>
+</li>
+<li>
+<p>另外一个<code>bind</code>的详解，采用了数组操作符重载：<a href="http://www.outsky.org/article.php?id=3">http://www.outsky.org/article.php?id=3</a></p>
+</li>
+</ul>
+    </div>
+    <div id="content-comments">
+</div>
+
+</div>
+<div class="niu2-right-container col-md-2">
+    <div id="niu2-sidebar-meta" class="niu2-sidebar">
+        <div class="niu2-sidebar-label"><i class="icon-calendar"></i>Published:</div>
+        <div class="niu2-sidebar-value">2015-04-17 21:31</div>
+        <div class="niu2-sidebar-label"><i class="icon-open-folder"></i>Category:</div>
+        <div class="niu2-sidebar-value"><a href="./category/cpp.html">CPP</a></div>
+        <div class="niu2-sidebar-label"><i class="icon-tag"></i>Tag:</div>
+ 
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="./tag/cpp.html">CPP</a><sup>11</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="./tag/bind.html">Bind</a><sup>1</sup></div>
+    </div>
+
+    <div id="niu2-sidebar-toc" class="niu2-sidebar" data-status="closed">
+        <div class="niu2-sidebar-label">
+            <i id="niu2-sidebar-toc-ctrl" class="icon-open-tocs"></i>TOC
+        </div>
+        <ol id="niu2-sidebar-toc-list">
+            <li><a href="#content-heading">CPP Bind</a></li>
+            <li><a href='#dab804'>Bind使用</a></li><li><a href='#8a4372'>Bind主要任务</a></li><li><a href='#604af6'>占位符实现</a></li><li><a href='#3bdbbe'>参数列表的保存</a></li><li><a href='#3c3fc3'>函数返回值的推导</a></li><li><a href='#6ba7d8'>绑定函数的生成</a></li><li><a href='#e2c0f1'>函数体的定义</a></li><li><a href='#458a58'>Bind实现</a></li><li><a href='#ea6f3b'>参考链接</a></li>
+        </ol>
+    </div>
+</div>    </div>
+
+    <div class="niu2-footer">
+        <div id="body-footer" class="col-md-6 col-md-offset-2">
+<hr/>
+<p>
+    Powered by <a href="https://github.com/getpelican/pelican">Pelican</a>, 
+    <a href="https://github.com/mawenbao/niu-x2-sidebar">theme</a> built with <a href="http://getbootstrap.com">Bootstrap3</a>
+    by <a href="http://blog.atime.me">Ma Wenbao</a>, icons by 
+    <a href="http://fortawesome.github.io/Font-Awesome">Font Awesome</a>.
+</p>
+<p>
+    ©
+            2014-2016
+    <a class="niu2-footer-link" href=".">Huiliang Huang</a>
+</p>
+<p class="niu2-icons">
+</p>        </div>
+    </div>
+    
+    <div id="niu2-pygments" data-theme="github"></div>
+
+    <script type="text/javascript" src="./theme/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="./theme/js/niu2.min.js"></script>
+    <script type="text/javascript" src="./theme/js/bootstrap.min.js"></script>
+    <script type="text/javascript">onContentLoaded();</script>
+  </body>
+</html>

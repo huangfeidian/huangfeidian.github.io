@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMO - spirits away</title>
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.png">
+    <link rel="stylesheet" href="./theme/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="./theme/font-icons/style.min.css" type="text/css" />
+    <link rel="stylesheet" href="./theme/css/niu2.min.css" type="text/css" />
+
+    <link rel="canonical" href="./smo.html" />
+    
+    <script type="text/javascript">window.onload=function(){};</script>
+    <!--[if lt IE 9]>
+        <script src="./theme/js/html5shiv.js"></script>
+        <script src="./theme/js/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body> 
+    <div id="body-header">
+<div class="navbar navbar-inverse navbar-fixed-top">
+<div class="col-md-12">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href=".">
+            <i class="icon-home"></i>spirits away
+        </a>
+    </div>
+    <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+        <ul class="nav navbar-nav">
+            <li><a href="/pages/about.html" title="about">
+                <i class="icon-anchor"></i>关于</a>
+            </li>
+            <li><a href="/archives.html" title="archives">
+                <i class="icon-archive"></i>存档</a>
+            </li>
+            <li><a href="/tags.html" title="tags">
+                <i class="icon-tag"></i>标签</a>
+            </li>
+        <!-- category dropdown list -->
+        <!--  self defined dropdown list -->
+        </ul>
+        
+        <!-- right nav bar -->
+        <ul class="nav navbar-nav navbar-right">
+        <!-- google custom search -->
+       </ul>
+    </nav>
+</div>
+</div>    </div>
+    
+    <div id="body-content">
+<div class="col-md-8 col-md-offset-2">
+    <h1 id="content-heading">SMO</h1>
+</div>
+<div id="niu2-left-container" class="col-md-6 col-md-offset-2 with-right-border">
+    <div id="niu2-main-content">
+        <h1 id="615262">SVM基础</h1>
+<p>SVM是vapnik发明的线性分类器，处理的是标签为{-1,1}的数据，其理论支持为经验风险最小化。经验风险最小化就是VC维最小化，在SVM中的体现为最大化分类间隔，因为线性分类器的VC维与最大分类间隔的平方成反比。具体的VC维表示为下公式</p>
+<div class="math">\begin{equation}VC-dimension\leq min\{\frac{R^2}{M^2},n\}+1\end{equation}</div>
+<p>
+其中，R为包围所有数据点的最小球半径，M为分类间隔的一半，n为样本数目大小。下图就比较形象的说明了SVM是干什么用的。</p>
+<p><img alt="SVM目标" src="./image/SVM/svm分类间隔.png" /></p>
+<p>最终SVM得到的线性分类器的公式如下</p>
+<div class="math">\begin{equation}u=w^Tx-b\end{equation}</div>
+<p>
+而参数<span class="math">\(w,b\)</span>所遵循的条件为</p>
+<div class="math">\begin{equation}\forall i \, y_i(w^Tx_i-b)\geq 1\end{equation}</div>
+<p>
+对于任何一个测试点<span class="math">\(x\)</span>，如果<span class="math">\(u\)</span>的值大于等于1，则这个点被标注为1。否则如果<span class="math">\(u\)</span>小于等于-1，则这个点标注为-1.这个分类器的分类间隔为</p>
+<div class="math">\begin{equation}\frac{1}{w^Tw}\end{equation}</div>
+<p>
+所以我们如果要最大化分类间隔，则需要最小化<span class="math">\(\frac{1}{2}w^Tw\)</span>。所以当前问题转变为一个凸优化问题</p>
+<div class="math">\begin{equation}\begin{split}minimize \quad &amp; \frac{1}{2}w^Tw\\subject\,to \quad &amp;\forall i: y_i(w^Tx_i-b)\geq 1\end{split}\end{equation}</div>
+<p>
+我们可以得到等价的对偶问题</p>
+<div class="math">\begin{equation}\begin{split}minimize \quad &amp;\frac{1}{2}w^Tw-\sum{a_i(y_i(w^Tx_i-b)-1)}\\subject \, to \quad &amp; \forall i \  a_i\geq 0\\&amp;\forall i \ y_i(w^Tx_i-b)-1\geq 0\\&amp; \forall i \  a_i(y_i(w^Tx_i-b)-1)=0\end{split}\end{equation}</div>
+<p>
+此时得到最小值的KKT条件为</p>
+<div class="math">\begin{equation}\begin{split}w^T-\sum{a_iy_i{x_i}^T}&amp;=0\\\sum{a_iy_i}&amp;=0\\\forall i \  a_i&amp;\geq 0\\\forall i \ y_i(w^Tx_i-b)-1&amp;\leq 0\\\forall i \  a_i(y_i(w^Tx_i-b)-1)&amp;=0\end{split}\end{equation}</div>
+<p>
+将上面的两个等式带入到对偶问题中，从而得到了下面的简化形式,不过问题仍然是等价的。</p>
+<div class="math">\begin{equation}\begin{split}minimize \quad &amp;\frac{1}{2}\sum_{i=1}^{n}{}\sum_{j=1}^{n}{y_iy_j{x_i}^Tx_ja_ia_j} -\sum_{i=1}^{n}{a_i}\\subject \ to\quad &amp; \forall i \ a_i\geq 0\\&amp;\sum_{i=1}^{n}y_ia_i=0\end{split}\end{equation}</div>
+<p>
+在得出上述问题的最优解中<span class="math">\(a_i\)</span>的取值之后，我们可以得到<span class="math">\(w,b\)</span>的表达式.</p>
+<div class="math">\begin{equation}\begin{split}w&amp;=\sum{a_iy_ix_i}\\b&amp;=w^Tx_k-y_k\quad for\  a_k&gt;0\end{split}\end{equation}</div>
+<p>
+上面所陈述的是线性可分的情况，如果数据并不是线性可分的，则我们需要引入松弛变量<span class="math">\(\xi\)</span>来代表偏离程度。</p>
+<div class="math">\begin{equation}\begin{split}minimize \quad &amp; \frac{1}{2}w^Tw+C\sum{{\xi}_i}\\subject\,to \quad &amp;\forall i\  y_i(w^Tx_i-b)\geq 1-{\xi}_i\\&amp;\forall i\  {\xi}_i\geq0\end{split}\end{equation}</div>
+<p>
+上面问题的对偶问题为</p>
+<div class="math">\begin{equation}\begin{split}minimize \quad &amp;\frac{1}{2}w^Tw+C\sum{{\xi}_i}-\sum{a_i(y_i(w^Tx_i-b)-1+{\xi}_i)}+\sum{{\mu}_i{\xi}_i}\\subject \, to \quad &amp; \forall i \  a_i\geq 0\\&amp;\forall i \ y_i(w^Tx_i-b)-1+{\xi}_i\geq 0\\&amp; \forall i \  a_i(y_i(w^Tx_i-b)-1+{\xi}_i)=0\\&amp;\forall i\  {\xi}_i\geq0\\&amp;\forall i\ {\mu}_i{\xi}_i=0\\&amp;\forall i \ {\mu}_i\geq 0\end{split}\end{equation}</div>
+<p>
+此时我们根据KKT的最小值条件，可以得到而外的三个等式。</p>
+<div class="math">\begin{equation}\begin{split}w&amp;=\sum{a_iy_ix_i}\\0&amp;= \sum{a_iy_i}\\a_i&amp;=C-{\mu}_i\end{split}\end{equation}</div>
+<p>
+将这些等式带入，可以得到下面的等价问题。</p>
+<div class="math">\begin{equation}\begin{split}minimize \quad &amp;\frac{1}{2}\sum_{i=1}^{n}{}\sum_{j=1}^{n}{y_iy_j{x_i}^Tx_ja_ia_j} -\sum_{i=1}^{n}{a_i}\\subject \ to\quad &amp; \forall i \ 0\leq\ a_i\leq C\\&amp;\sum_{i=1}^{n}y_ia_i=0\end{split}\end{equation}</div>
+<p>
+可以看出，引入松弛变量与未引入松弛变量所得到的问题基本差不多。令<span class="math">\(u=w^Tx-b\)</span>，从得到的结果逆向推理，我们可以得到下面的式子。</p>
+<div class="math">\begin{equation}\begin{split}a_i=0&amp;\rightarrow{\mu}_i=C\rightarrow {\xi}_i=0\rightarrow\ u-1+{\xi}_i\geq 0\rightarrow y_iu_i \geq 1\\0&lt; a_i&lt;C&amp;\rightarrow {\mu}_i\neq 0\rightarrow {\xi}_i=0\rightarrow\ u-1+{\xi}_i= 0 \rightarrow y_iu_i=1\\a_i=C&amp;\rightarrow {\mu}_i=0\rightarrow{\xi}_i\geq 0\rightarrow u-1+{\xi}_i= 0\rightarrow y_iu_i \leq 1\end{split}\end{equation}</div>
+<p>
+上面这个性质非常重要，是理解SMO算法的关键（其实是可以左右推导的，这里没有写出来，忘了那个符号怎么写了）。</p>
+<h1 id="2a2f3e">SMO优化方法</h1>
+<p>现在我们的问题就是，如何快速的求解下面这个优化问题。</p>
+<div class="math">\begin{equation}\begin{split}minimize \quad &amp;\frac{1}{2}\sum_{i=1}^{n}{}\sum_{j=1}^{n}{y_iy_j{x_i}^Tx_ja_ia_j} -\sum_{i=1}^{n}{a_i}\\subject \ to\quad &amp; \forall i \ 0\leq\ a_i\leq C\\&amp;\sum_{i=1}^{n}y_ia_i=0\end{split}\end{equation}</div>
+<p>
+解决带不等式限制的凸优化问题，采取的一般都是内点法。但是内点法的代价太大，需要存储一个<span class="math">\(n^2\)</span>的矩阵，在内存有限的条件下不可行，且每次求全局导数花费时间很多，此外还牵涉到数值问题。而SMO是解决二次优化问题的神器。他每次选择两个拉格朗日乘子 <span class="math">\(a_i,a_j\)</span>来求条件最小值，然后更新<span class="math">\(a_i,a_j\)</span>。由于在其他拉格朗日乘子固定的情况下，<span class="math">\(a_i,a_j\)</span>有如下关系</p>
+<div class="math">\begin{equation}\sum{a_iy_i}=0\rightarrow a_iy_i+a_jy_j=t\end{equation}</div>
+<p>
+这样<span class="math">\(a_i\)</span>就可以通过<span class="math">\(a_j\)</span>表示出来，此时优化问题可以转变为一个变量的二次优化问题，这个问题的计算量非常少。所以SMO包括两个过程，一个过程选择两个拉格朗日乘子，这是一个外部循环，一个过程来求解这两个变量的二次优化问题，这个是循环内过程。我们先来解决两个变量的lagrange multipliers问题，然后再去解决乘子的选择问题。</p>
+<h1 id="691d04">Two Lagrange Multiplier</h1>
+<p>为了计算两个lagrange Multiplier的优化问题，SMO首先计算这两个乘子的取值范围，然后再这个范围限制下解决二次优化问题。为了书写方便，现在用<span class="math">\(1,2\)</span>来代替<span class="math">\(i,j\)</span>。这两个变量之间的关系我们之前已经给出了<span class="math">\(a_1y_1+a_2y_2=k\)</span>,下面这幅图生动形象的解释了这两个变量的关系。</p>
+<p><img alt="双变量关系" src="./image/SVM/序列最小化.png" /></p>
+<p>现在我们来讨论在进行双变量二次优化时<span class="math">\(a_2\)</span>的取值范围。如果<span class="math">\(y_1!=y_2\)</span>，则<span class="math">\(a_2\)</span>的下界<span class="math">\(L\)</span>和上界<span class="math">\(H\)</span>可以表示为</p>
+<div class="math">\begin{equation}L=max(0,a_2-a_1),\quad H=min(C,C+a_2-a_1)\end{equation}</div>
+<p>
+反之，如果<span class="math">\(y_1=y_2\)</span>，则<span class="math">\(a_2\)</span>的下界<span class="math">\(L\)</span>和上界<span class="math">\(H\)</span>可以表示为</p>
+<div class="math">\begin{equation}L=max(0,a_2+a_1-C),\quad H=min(C,a_2+a_2)\end{equation}</div>
+<p>
+而此时的优化目标为</p>
+<div class="math">\begin{equation}\begin{split}&amp; minimize \quad \frac{1}{2}\sum_{i=1}^{n}{}\sum_{j=1}^{n}{y_iy_j{x_i}^Tx_ja_ia_j} -\sum_{i=1}^{n}{a_i}\\&amp;=2{x_1}^Tx_2y_1y_2a_1a_2+a_1y_1{x_1}^TR_1+a_2y_2{x_2}^TR_1-C(a_1+a_2)-R_2\end{split}\end{equation}</div>
+<p>
+这里的<span class="math">\(R_1,R_2\)</span>都是与<span class="math">\(a_1,a_2\)</span>无关的项。事实上，在SVM中经常使用核函数来将输入映射到高维空间，内积只是核函数的一种。在这里，我们做三个步骤：替换内积为核函数，用<span class="math">\(a_2\)</span>表示<span class="math">\(a_1\)</span>，同时对目标函数求<span class="math">\(a_2\)</span>的二阶导数。这里我就省略一下过程，最后可以得到下面这个结果。</p>
+<div class="math">\begin{equation}\eta=K(x_1,x_1)+K(x_2,x_2)-2K(x_1,x_2)\end{equation}</div>
+<p>
+在一般情况下，目标函数是正定的。因此在<span class="math">\(a_2\)</span>的变动范围内，目标函数可以取到极小值，而且<span class="math">\(\eta\)</span>会大于0.在这种情况下，SMO可以得到使得目标函数最小的<span class="math">\(a_2^{new}\)</span></p>
+<div class="math">\begin{equation}a_2^{new}=a_2+\frac{y_2(E_1-E_2)}{\eta}\end{equation}</div>
+<p>
+其中<span class="math">\(E_i=u_i-y_i\)</span>，即第<span class="math">\(i\)</span>个训练样本的偏移。但是，我们还需要考虑<span class="math">\(a_2\)</span>的取值范围，所以我们最后得到的<span class="math">\(a_2\)</span>的新值为</p>
+<div class="math">\begin{equation}a_2^{\text{new,clip}}=\left \{\begin{aligned}H\quad &amp; if \quad a_2^{\text{new}}\geq H\\a_2^{\text{new}} \quad &amp; if\  L&lt;a_2^{\text{new}}&lt;H\\L\quad &amp; if \quad a_2^{\text{new}}\leq L\end{aligned}\right.\end{equation}</div>
+<p>
+同时，我们可以更新<span class="math">\(a_1\)</span>，令<span class="math">\(s=y_1y_2\)</span></p>
+<div class="math">\begin{equation}a_1^{\text{new}}=a_1+s(a_2-a_2^{\text{new,clip}})\end{equation}</div>
+<p>
+至此，双变量的二次规划问题基本解决，现在唯一一个遗留的问题就是，如果核矩阵不是正定，那么这个时候怎么办。
+当然，有效的核函数所构建的核矩阵一定是正定的，这个是核函数有效的Mercer条件。对于坑爹的非正定核的情况，我们需要手工计算在直线两端的目标函数的值，通过比较来确定如何更新这两个变量。这里我就懒得去写公式了，直接照搬SMO那篇paper里面的说明。</p>
+<p>![非正定条件更新]{{attach}image\SVM\anormal_kernal.png}</p>
+<h1 id="29bc20">乘子选择问题</h1>
+<p>由于对于任何两个乘子，只要其中一个乘子违反了KKT条件，则我们总能通过双变量二次优化使目标函数减小。因此，收敛是一定的，现在需要考虑的是收敛的速度，及如何选取候选的两个乘子来加快收敛。</p>
+<p>目前有两种启发式的方法，一种用来寻找第一个乘子，另外一种用来寻找第二个乘子。第一个启发方法构成了SMO的外部循环。这个启发方法首先对整个训练集合进行搜索，寻找那些违反下式KKT条件的样例。</p>
+<div class="math">\begin{equation}\begin{split}a_i=0&amp;\rightarrow{\mu}_i=C\rightarrow {\xi}_i=0\rightarrow\ u-1+{\xi}_i\geq 0\rightarrow y_iu_i \geq 1\\0&lt; a_i&lt;C&amp;\rightarrow {\mu}_i\neq 0\rightarrow {\xi}_i=0\rightarrow\ u-1+{\xi}_i= 0 \rightarrow y_iu_i=1\\a_i=C&amp;\rightarrow {\mu}_i=0\rightarrow{\xi}_i\geq 0\rightarrow u-1+{\xi}_i= 0\rightarrow y_iu_i \leq 1\end{split}\end{equation}</div>
+<p>
+如果一个数据样例违反了上述KKT条件，则我们将这个样例数据加入到候选集合。通过这样的判别条件，我们对所有的乘子不为0或<span class="math">\(C\)</span>的数据进行扫描，得到了一个待优化的候选集合。</p>
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+    mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
+        "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
+    </div>
+    <div id="content-comments">
+</div>
+
+</div>
+<div class="niu2-right-container col-md-2">
+    <div id="niu2-sidebar-meta" class="niu2-sidebar">
+        <div class="niu2-sidebar-label"><i class="icon-calendar"></i>Published:</div>
+        <div class="niu2-sidebar-value">2015-04-28 20:09</div>
+        <div class="niu2-sidebar-label"><i class="icon-open-folder"></i>Category:</div>
+        <div class="niu2-sidebar-value"><a href="./category/ai.html">AI</a></div>
+        <div class="niu2-sidebar-label"><i class="icon-tag"></i>Tag:</div>
+ 
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="./tag/svm.html">SVM</a><sup>1</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="./tag/ai.html">AI</a><sup>5</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="./tag/math.html">Math</a><sup>6</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="./tag/converge.html">Converge</a><sup>5</sup></div>
+    </div>
+
+    <div id="niu2-sidebar-toc" class="niu2-sidebar" data-status="closed">
+        <div class="niu2-sidebar-label">
+            <i id="niu2-sidebar-toc-ctrl" class="icon-open-tocs"></i>TOC
+        </div>
+        <ol id="niu2-sidebar-toc-list">
+            <li><a href="#content-heading">SMO</a></li>
+            <li><a href='#615262'>SVM基础</a></li><li><a href='#2a2f3e'>SMO优化方法</a></li><li><a href='#691d04'>Two Lagrange Multiplier</a></li><li><a href='#29bc20'>乘子选择问题</a></li>
+        </ol>
+    </div>
+</div>    </div>
+
+    <div class="niu2-footer">
+        <div id="body-footer" class="col-md-6 col-md-offset-2">
+<hr/>
+<p>
+    Powered by <a href="https://github.com/getpelican/pelican">Pelican</a>, 
+    <a href="https://github.com/mawenbao/niu-x2-sidebar">theme</a> built with <a href="http://getbootstrap.com">Bootstrap3</a>
+    by <a href="http://blog.atime.me">Ma Wenbao</a>, icons by 
+    <a href="http://fortawesome.github.io/Font-Awesome">Font Awesome</a>.
+</p>
+<p>
+    ©
+            2014-2016
+    <a class="niu2-footer-link" href=".">Huiliang Huang</a>
+</p>
+<p class="niu2-icons">
+</p>        </div>
+    </div>
+    
+    <div id="niu2-pygments" data-theme="github"></div>
+
+    <script type="text/javascript" src="./theme/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="./theme/js/niu2.min.js"></script>
+    <script type="text/javascript" src="./theme/js/bootstrap.min.js"></script>
+    <script type="text/javascript">onContentLoaded();</script>
+  </body>
+</html>
