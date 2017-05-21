@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concurrency Consistency and Coherence - spirits away</title>
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.png">
+    <link rel="stylesheet" href="./theme/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="./theme/font-icons/style.min.css" type="text/css" />
+    <link rel="stylesheet" href="./theme/css/niu2.min.css" type="text/css" />
+
+    <link rel="canonical" href="./concurrency-consistency-and-coherence.html" />
+    
+    <script type="text/javascript">window.onload=function(){};</script>
+    <!--[if lt IE 9]>
+        <script src="./theme/js/html5shiv.js"></script>
+        <script src="./theme/js/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body> 
+    <div id="body-header">
+<div class="navbar navbar-inverse navbar-fixed-top">
+<div class="col-md-12">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href=".">
+            <i class="icon-home"></i>spirits away
+        </a>
+    </div>
+    <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+        <ul class="nav navbar-nav">
+            <li><a href="/pages/about.html" title="about">
+                <i class="icon-anchor"></i>关于</a>
+            </li>
+            <li><a href="/archives.html" title="archives">
+                <i class="icon-archive"></i>存档</a>
+            </li>
+            <li><a href="/tags.html" title="tags">
+                <i class="icon-tag"></i>标签</a>
+            </li>
+        <!-- category dropdown list -->
+        <!--  self defined dropdown list -->
+        </ul>
+        
+        <!-- right nav bar -->
+        <ul class="nav navbar-nav navbar-right">
+        <!-- google custom search -->
+       </ul>
+    </nav>
+</div>
+</div>    </div>
+    
+    <div id="body-content">
+<div class="col-md-8 col-md-offset-2">
+    <h1 id="content-heading">Concurrency Consistency and Coherence</h1>
+</div>
+<div id="niu2-left-container" class="col-md-6 col-md-offset-2 with-right-border">
+    <div id="niu2-main-content">
+        <h2 id="8b1772">相关概念</h2>
+<p>首先介绍一下Concurrency，因为如果没有concurrency的话，后面两个也就基本没啥意义。concurrency也就是并行，比较简单的描述就是多个线程（进程）同时运行，在并发环境下衍生除了一个非常重要的问题，就是mutable资源的共享问题， 主要是共享内存的读写问题。下面就是一个共享内存多线程读写的例子.</p>
+<p><img alt="share_memory_problem" src="/image/cpp/share_memory_problem.png" /></p>
+<p>在两个core分别执行完之后， r1和r2的值在不同的硬件环境下是不一样的， 甚至在相同硬件环境下都有可能出现各种结果，最奇葩的情况莫过于(0, 0),(0,NEW),(NEW, 0), (NEW, NEW)四种情况都可能出现。这种不确定性在于程序对内存的读写并不一定是瞬发完成的，可能是一个异步的过程。而且CPU甚至为了优化内存访问，可能对没有数据依赖的程序指令进行重新排序， 这种指令重排序对于单线程程序来说并没有多大影响，但是在多线程下很有可能造成错误的结果。</p>
+<p>共享内存可以简单的理解为一个server， 而每个线程则认为是一个client，server可以同时服务多个client，每个client发送消息到server是有延迟的，client的单个消息到达server之后只能一个一个处理，处理完成一个之后才能处理下一个。client可以对server发起的操作目前只有简单的load store， load操作会读取server存储的全局状态， 而store操作则会修改server存储的全局状态。每个client端发出的操作都带有一个时间戳， 而server端处理这个操作的时候也会有一个时间戳。x操作的client时间戳早于y操作的client时间戳并不意味着x操作的server时间戳早于y操作在的server时间戳，最松散的内存模型甚至并不保证x,y操作在client端发起之后会最终到达server。 这个是最基本的共享内存的结构，具体的内存模型基本都可以在这个client-server模型上做拓展。Consistency所面临的问题是如何正确对各个client呈现对server操作的顺序，也就是读写共享内存的时序， 以符合程序所期望的语义。这种内存系统对于维持访问顺序和写内存可见性所做出的一些规定，就是Consistency model， 也叫内存模型。</p>
+<p>而coherence的定义对象则是缓存cache line，并不是定义在内存之上的。cache的存在目的是为了对内存的读写进行加速，但是由于每个cpu都有自己专有的缓存，从而导致了更多的共享内存的问题。在带有缓存之后，我们就无法简单的保证client端发起的操作一定会到达server端， 可能每个client自己的缓存就处理了client的请求。coherence的目的则是让所有client的独立cache表现的如同所有client共享一个cache一样， 并最终达到将cache对client不可见的目的。</p>
+<p>缓存系统维持coherence就需要实现两点：</p>
+<ol>
+<li>单写者多读者的机制，也就是常见的读写锁。这种读写锁最简单的实现方式就是对内存的访问分为了epoch， 就是断代访问， 每个core对于同一个cache line都拥有一把锁，读取一个变量只需要本地锁，而写一个变量则需要获取所有core对应cache line的锁，这样每个epoch期间对于同一个cache line最多只能有一次写操作。</li>
+<li>当前epoch对内存做的修改在下个epoch时对所有core都可见。不加上这个修改传播的话，我们可以在每个epoch保证对一个cache line只写一次的同时在epoch的末尾将这个写操作留在当前core，其他core在下一个epoch仍然看不到最新的修改。</li>
+</ol>
+<p>至于coherence与consistency的关系，只能说coherence基本都是consistency的基础，但不是必要的。 特定的内存模型允许一定的incoherence，甚至都不需要cache系统内存系统也可以存在，但是这样带来的后果就是慢。简而言之，coherence是consistency必须要考虑的一个因素，甚至是最重要的因素。</p>
+<h2 id="ab3e33">基础模型</h2>
+<p>为了描述cpu、缓存、内存之间的消息通信，通过归纳现有的硬件平台抽象出了如下的一个带有两层缓存结构模型：</p>
+<ol>
+<li>每个cpu都有一个专属的cache</li>
+<li>所有cpu共享一个last level cache</li>
+<li>LLC（last level cache）直接与内存相连</li>
+<li>每个cpu对内存的读写都需要经过专属的缓存控制器</li>
+<li>专属缓存控制器可以将读写请求拦截在本地， 也可以将请求转发到LLC</li>
+<li>LLC缓存控制器可以将读写请求拦截到本地，也可以将请求转发到内存</li>
+</ol>
+<p>具体的结构图如下：</p>
+<p><img alt="basic_memory_model" src="/image/cpp/basic_memory_model.png" /></p>
+<p>常见的内存一致性模型包括：</p>
+<ol>
+<li>Sequence Consistence  常见平台 MIPS</li>
+<li>Total Store Order  常见平台X86</li>
+<li>Relaxed Model 常见平台Power</li>
+</ol>
+<p>下面对着三种内存一致性模型做一下介绍。</p>
+<h2 id="f20996">Sequence Consistency</h2>
+<h3 id="43cca2">Sequence Consistency定义</h3>
+<p>Sequence Consistency也被称作为序列一致性，顾名思义，就是每个core发起的操作都保持有序的到达memory， 所有的core在同一时刻看到的memory格局都是一样的，这样就要求任何在内存上的操作维持了一个全序。</p>
+<p>为了定义这个序列的概念， 我们引入两个新的概念，程序序和内存序。程序序<span class="math">\(&lt;_p\)</span>表示的是在同一个线程里两个内存操作指令在执行时的顺序关系，而内存序<span class="math">\(&lt;_m\)</span>则表示两个内存操作在内存系统处理时的顺序关系，也就是之前谈到的client时间戳和server时间戳。对于操作<span class="math">\(a,b\)</span> ，如果<span class="math">\(a &lt;_p b\)</span>则表示在同一个线程中<span class="math">\(a\)</span>操作先于<span class="math">\(b\)</span>操作执行， 如果<span class="math">\(a &lt;_m b $ 则表示在内存系统中\)</span>a<span class="math">\(操作先于\)</span>b$操作执行。 </p>
+<p>在这两个记号的辅助下， 我们可以对序列一致性做一下形式化的规定：</p>
+<ol>
+<li>所有的cpu core都顺序的提交任何内存相关操作， 同时内存系统保证在处理来自同一个core发出的请求时，都维持这些请求的顺序。对于任意的两个内存地址<span class="math">\(a,b\)</span>， 不管<span class="math">\(a,b\)</span>是否相等，下面的公式都成立。</li>
+<li><span class="math">\(L(a) &lt;_p L(b) \Rightarrow L(a) &lt;_m L(b)\)</span></li>
+<li><span class="math">\(L(a) &lt;_p S(b) \Rightarrow L(a) &lt;_m S(b)\)</span></li>
+<li><span class="math">\(S(a) &lt;_p S(b) \Rightarrow S(a) &lt;_m S(b)\)</span></li>
+<li><span class="math">\(S(a) &lt;_p L(b) \Rightarrow S(a) &lt;_m L(b)\)</span></li>
+<li>每次load的时候都会获得在内存序中早于这个load且最晚发生的对应内存区域的store的值，也就是
+<span class="math">\(L(a) = Value\ of \ MAX_{&lt;_m}\{S(a) \vert S(a) &lt;_m L(a)\}\)</span> </li>
+<li>对于原子的(RMW)read-modify-write操作来说，可以拆分为一个load和一个save操作，这两个操作在<span class="math">\(&lt;_m\)</span>中是相邻的</li>
+</ol>
+<p>在这些限制条件下，cpu完全就没有了乱序执行的能力，</p>
+<h3 id="f45003">Sequence Consistency 实现</h3>
+<p>在我们定义的基础模型上，实现序列一致性有两种naive方案：</p>
+<ol>
+<li>彻底废除掉多核，每个线程只能允许到同一个核上执行</li>
+<li>令牌机制，每个线程在执行内存访问之前都需要首先获得一个全局的令牌，执行完一次内存访问之后释放这个令牌。</li>
+</ol>
+<p>反正不管怎么实现都看起来特别的蠢，too simple , too naive。</p>
+<p>要对这个加速的话，需要加入之前的带读写锁的缓存系统。在这个缓存系统上我们定义两个操作来处理读写:</p>
+<ol>
+<li>GetM 获得对特定cache line的读写权限， 之后这个cache line在当前core上的状态是M, 并且将其他core上的对应cache line evict掉， </li>
+<li>GetS 获得特定cache line的读权限， 之后这个cache line在当前core上的状态是S， 如果之前是M状态，则释放锁</li>
+</ol>
+<p>在这两个操作的辅助下，我们来处理load和save和RMW：</p>
+<ol>
+<li>load 首先查询该cache line 在当前core的状态，如果不在则发起GetS操作</li>
+<li>save 首先查询该cache line在当前core的状态是不是M， 如果不是则发起GetM操作，写完之后再getS来释放锁</li>
+<li>RMW 跟save一样</li>
+</ol>
+<p>而缓存控制器则可以同时处理多个get请求，只要这个请求在不同的地址之上。如果有相同地址且有一个getM操作，则getM操作后的同一地址的任何操作都需要等待。</p>
+<h2 id="5c5551">Total Store Order</h2>
+<h3 id="54b45e">Total Store Order 定义</h3>
+<p>Total store order是spark采用的内存模型，同时由于x86的内存模型跟这个模型很相似，所以这个内存模型可以说用处最广。这个内存模型使用一个FIFO的写缓冲区来处理save操作。所以对于本文最早的那个图才会出现(0,0)的结果， 因为两次写都被缓存住了，并没有进入到内存之中。total store order的形式化定义与sequence consistency基本一致，除了缺少下面的这条规则：</p>
+<p><span class="math">\(S(a) &lt;_p L(b) \Rightarrow S(a) &lt;_m L(b)\)</span></p>
+<p>这条规则也就是人们常说的写后读，RAW（read after write）。同时因为这个写缓冲的存在，load操作的语义也需要修改;</p>
+<div class="math">$$L(a) = Value\ of \ MAX_{&lt;_m}\{S(a) \vert S(a) &lt;_m L(a) \mathbb{or S(a) &lt;_p L(a)}\} $$</div>
+<p>现在load的语义变为了要么读取全局序的最近修改值，要么读取当前core的最近修改值。</p>
+<p>为了在必要的时候实现RAW的一致性，TSO平台基本都会有一条叫做FENCE的指令（也就是传说中的memory barrier)。在全局内存序上：FENCE之前的指令在内存序上不会出现在FENCE之后的指令的后面。在接入FENCE之后，一致性定义也需要做对应的修改：</p>
+<ol>
+<li><span class="math">\(L(a) &lt;_p FENCE \Rightarrow L(a) &lt;_m FENCE\)</span></li>
+<li><span class="math">\(S(a) &lt;_p FENCE \Rightarrow S(a) &lt;_m FENCE\)</span></li>
+<li>$FENCE(A) &lt;_p FENCE(B) \Rightarrow FENCE(A) &lt;_m FENCE(B) $</li>
+<li>$FENCE &lt;_p L(a) \Rightarrow FENCE &lt;_m L(a) $</li>
+<li><span class="math">\(FENCE &lt;_p S(a) \Rightarrow FENCE &lt;_m S(a)\)</span></li>
+</ol>
+<h3 id="47850e">Total Store Order 实现</h3>
+<p>目前我们需要处理的就是新加入的FIFO 写缓冲，为此我们定义以下四个规则：</p>
+<ol>
+<li>load 和store在当前core上维持<span class="math">\(&lt;_p\)</span></li>
+<li>一次load， 如果写缓冲里有对应地址的写，则返回最新的关于对应地址的写，否则尝试去请求内存</li>
+<li>一次store，如果已经满了则等待这个写缓冲刷新到主内存，然后将这个store放在FIFO写缓冲的队尾</li>
+<li>当内存调度器将调度权转移到当前core时，这个core要么执行下一次的load，要么对当前写缓冲的头部store进行写回</li>
+</ol>
+<p>对于RMW之类的原子操作，最简单的维护一致性的方法就是每次在这个指令前都把当前core的写缓冲都写回。而对于FENCE指令，也可以采取这个简单粗暴的做法。</p>
+<h2 id="d8a439">Relaxed Memory Consistency</h2>
+<p>TSO是相对于SC的一种妥协，使用写缓冲来避免所有缓存的同步操作。Relaxed Memory Consistency则更进一步，或者说得寸进尺，认为如非必要则一切都可以乱序。此时只维持对相同地址的内存操作序和FENCE序：</p>
+<ol>
+<li><span class="math">\(L(a) &lt;_p L(a) \Rightarrow L(a) &lt;_m L(a)\)</span></li>
+<li><span class="math">\(L(a) &lt;_p S(a) \Rightarrow L(a) &lt;_m S(a)\)</span></li>
+<li><span class="math">\(S(a) &lt;_p S(a) \Rightarrow S(a) &lt;_m S(a)\)</span></li>
+<li><span class="math">\(L(a) &lt;_p FENCE \Rightarrow L(a) &lt;_m FENCE\)</span></li>
+<li><span class="math">\(S(a) &lt;_p FENCE \Rightarrow S(a) &lt;_m FENCE\)</span></li>
+<li><span class="math">\(FENCE(A) &lt;_p FENCE(B) \Rightarrow FENCE(A) &lt;_m FENCE(B)\)</span></li>
+<li><span class="math">\(FENCE &lt;_p L(a) \Rightarrow FENCE &lt;_m L(a)\)</span></li>
+<li><span class="math">\(FENCE &lt;_p S(a) \Rightarrow FENCE &lt;_m S(a)\)</span></li>
+</ol>
+<p>同样，由于写缓冲的存在，load的语义跟TSO一致：</p>
+<div class="math">$$L(a) = Value\ of \ MAX_{&lt;_m}\{S(a) \vert S(a) &lt;_m L(a) \mathbb{or S(a) &lt;_p L(a)}\} $$</div>
+<p>由于Relaxed Memory Consistency的约束少，此时RMW不再具有SC的FENCE的功能，因为之前的同步原语RMW包含的load store现在可以被动态的调度到前面。 导致写多线程同步的代码需要插入很多的fence，下面便是几个典型的例子：</p>
+<p><img alt="notify_fence" src="/image/cpp/notify_fence.png" /></p>
+<p><img alt="critical_section_fence" src="/image/cpp/critical_section_fence.png" /></p>
+<h3 id="c5f5f0">Relaxed Memory Consistency 的实现</h3>
+<p>要实现这个Relaxed Memory Consistency需要对之前的FIFO写缓冲做一些修改，直接放弃FIFO的序列功能，直接合并写。对于读写操作，有如下规则：</p>
+<ol>
+<li>load store 和fence 都会进入到当前core的重编排单元中去调度</li>
+<li>重编排单元按照前面规定的八个规则去安插新进入的请求，</li>
+<li>当内存调度器选择当前core去执行的时候，选择当前调度队列的头节点去load或者store，如果遇到的是fence，则抛弃并选择下一个节点</li>
+</ol>
+<p>对于调度器，需要遵守如下原则：</p>
+<ol>
+<li>保持fence的有序</li>
+<li>保持对同一地址的相关操作有序，Store Load操作除外</li>
+<li>当load的时候，如果写缓冲里有对应地址的值，则直接读取这个值</li>
+</ol>
+<h2 id="4bccfd">关于FENCE</h2>
+<p>前面的三个内存模型中，我们对于fence的定义都是barrier，在这之前的操作永远<span class="math">\(&lt;_m\)</span>于在这之后的操作。但是有些体系结构里还是觉得这个FENCE太重了，因此又定义了几种新的fence。</p>
+<ol>
+<li>sequence fence 这种fence就是我们最初设计的fence， 其语义就是<span class="math">\(a&lt;_p seq\_cst &lt;_p b \Rightarrow a&lt;_m seq\_cst &lt;_m b\)</span>，每次使用之后都会将写缓冲写回</li>
+<li>acquire fence 其语义为<span class="math">\(acquire &lt;_p a \Rightarrow acquire&lt;_m a\)</span> </li>
+<li>release fence 其语义为 <span class="math">\(a&lt;_p release \Rightarrow a&lt;_m release\)</span></li>
+</ol>
+<h2 id="729b7f">memory order in c++ 11</h2>
+<p>在c++11中引入了6种应用于原子变量的内存次序：</p>
+<ol>
+<li>memory_order_relaxed 这是约束最低的次序 只要求保证单个线程内的原子操作不会被cpu乱序，不关心这些操作在其他线程内的可见顺序，只保证原子性，只关系单个操作。举个例子来说：</li>
+</ol>
+<div class="codehilite"><pre><span></span><span class="c1">// Thread 1:</span>
+<span class="n">r1</span> <span class="o">=</span> <span class="n">y</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">memory_order_relaxed</span><span class="p">);</span> <span class="c1">// A</span>
+<span class="n">x</span><span class="p">.</span><span class="n">store</span><span class="p">(</span><span class="n">r1</span><span class="p">,</span> <span class="n">memory_order_relaxed</span><span class="p">);</span> <span class="c1">// B</span>
+<span class="c1">// Thread 2:</span>
+<span class="n">r2</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">memory_order_relaxed</span><span class="p">);</span> <span class="c1">// C </span>
+<span class="n">y</span><span class="p">.</span><span class="n">store</span><span class="p">(</span><span class="mi">42</span><span class="p">,</span> <span class="n">memory_order_relaxed</span><span class="p">);</span> <span class="c1">// D</span>
+</pre></div>
+
+
+<p>最终执行完成之后可能会出现r1=r2=42这种荒谬的结果。因为当前的内存序并没有规定同步关系。虽然AB操作在线程1里保证了先后顺序，但是在线程2种，可能B出现在C之前， A出现在D之后。cppreference里说这个relaxed目前只用在shared_ptr里的自增操作上， 因为反正不需要其他地方可见，也不会触发任何函数，不像自减操作需要与析构函数同步所以采用了acquire-release语义。后面的五个内存序都包含了不可被当前core乱序这个保证。</p>
+<ol>
+<li>
+<p>memory_order_seq_cst 这个要求所有以此标记的原子操作在全局有唯一顺序，且原子操作前后的指令不可越过当前指令，基本相当于sequence fence。</p>
+</li>
+<li>
+<p>memory_order_acquire  类似于一个acquire fence 这个是与memory_order_release共同使用的，线程A内的release如果与线程B内的acquire配对了，则在A的release之前的所有写操作都在B的acquire操作之前可见。只能用在load上。在cppreference里说标准库的mutex和spin_lock使用了acquire和release。</p>
+</li>
+<li>
+<p>memory_order_release 类似于一个release fence， 与acquire配套使用，只能用在store上。</p>
+</li>
+<li>
+<p>memory_order_acq_rel 类似于这条语句的前面加了一个acquire fence， 后面加了一个release fence。</p>
+</li>
+<li>
+<p>memory_order_consume 这个跟acquire有点相似，但是他的副作用没有acquire强，只会对与当前修饰的变量有依赖关系的读写进行fence，避免乱序。也是与release一起配对使用的。只能用于load。</p>
+</li>
+</ol>
+<p>上述六个选项其实表示的是三种内存模型:</p>
+<ol>
+<li>sequential consistent(memory_order_seq_cst) 此模型下对于原子变量的操作在每个线程下看到的顺序一致，同时维持单线程内原子操作不能乱序</li>
+<li>relaxed(memory_order_relaxed) 此模型下只保证本线程中对于原子变量的操作不会乱序，并不涉及到多线程的同步</li>
+<li>acquire release(memory_order_consume, memory_order_acquire, memory_order_release, memory_order_acq_rel) </li>
+</ol>
+<p>上面这些内容最让人疑惑的莫过于memory_order_acq_rel 与memory_order_seq_cst 之间的差异，从直觉上来说这两个是差不多的，但是的确是有差异的。seq_cst保证了所有相关的原子操作在全局维持一个唯一序列，而acq_rel只能保证在同一个变量上的操作在全局维持一个唯一序列。因此对于下面这段代码，只有在采取seq_cst的时候才能获得正确的结果。</p>
+<div class="codehilite"><pre><span></span><span class="kt">bool</span> <span class="n">x</span><span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="kt">bool</span> <span class="n">y</span><span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">z</span><span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="n">a</span><span class="p">()</span> <span class="p">{</span> <span class="n">x</span><span class="o">=</span> <span class="nb">true</span><span class="p">;</span> <span class="p">}</span>
+<span class="n">b</span><span class="p">()</span> <span class="p">{</span> <span class="n">y</span><span class="o">=</span> <span class="nb">true</span><span class="p">;</span> <span class="p">}</span>
+<span class="n">c</span><span class="p">()</span> <span class="p">{</span> <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">x</span><span class="p">);</span> <span class="k">if</span> <span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="n">z</span><span class="o">++</span><span class="p">;</span> <span class="p">}</span>
+<span class="n">d</span><span class="p">()</span> <span class="p">{</span> <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">y</span><span class="p">);</span> <span class="k">if</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="n">z</span><span class="o">++</span><span class="p">;</span> <span class="p">}</span>
+
+<span class="c1">// kick off a, b, c, d, join all threads</span>
+<span class="n">assert</span><span class="p">(</span><span class="n">z</span><span class="o">!=</span><span class="mi">0</span><span class="p">);</span>
+</pre></div>
+
+
+<p>下面我们来分析为什么。设a()中对x的操作为x，b()中对y的操作为y， c()中对x的操作为C_x，对y的操作为C_y，d()中对y的操作为D_y， 对x的操作为D_x。如果想让11行的assert fire，则需要在c()看到的全局序列中x&lt;C_x&lt;C_y&lt;y，同时d()中看到的序列为y&lt;D_y&lt;D_x&lt;x，这样我们可以构造出C_y&lt;y&lt;D_y且D_x&lt;x&lt;C_x的序列来满足这种条件。这个序列并不与acq_rel相关规定起冲突。所以对于这六个内存序，我们需要记住的是除了seq_cst之外，其他的处理都不能维持一个全局序。如果要在多个线程之间对多个单次操作做同步，最好使用seq_cst。</p>
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+    mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
+        "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
+    </div>
+    <div id="content-comments">
+</div>
+
+</div>
+<div class="niu2-right-container col-md-2">
+    <div id="niu2-sidebar-meta" class="niu2-sidebar">
+        <div class="niu2-sidebar-label"><i class="icon-calendar"></i>Published:</div>
+        <div class="niu2-sidebar-value">2017-05-21 22:24</div>
+        <div class="niu2-sidebar-label"><i class="icon-open-folder"></i>Category:</div>
+        <div class="niu2-sidebar-value"><a href="./category/concurrent.html">Concurrent</a></div>
+        <div class="niu2-sidebar-label"><i class="icon-tag"></i>Tag:</div>
+ 
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="./tag/concurrency.html">Concurrency</a><sup>2</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="./tag/cpp.html">CPP</a><sup>12</sup></div>
+    </div>
+
+    <div id="niu2-sidebar-toc" class="niu2-sidebar" data-status="closed">
+        <div class="niu2-sidebar-label">
+            <i id="niu2-sidebar-toc-ctrl" class="icon-open-tocs"></i>TOC
+        </div>
+        <ol id="niu2-sidebar-toc-list">
+            <li><a href="#content-heading">Concurrency Consistency and Coherence</a></li>
+            <li><a href='#8b1772'>相关概念</a></li><li><a href='#ab3e33'>基础模型</a></li><li><a href='#f20996'>Sequence Consistency</a><ol><li><a href='#43cca2'>Sequence Consistency定义</a></li><li><a href='#f45003'>Sequence Consistency 实现</a></li></ol></li><li><a href='#5c5551'>Total Store Order</a><ol><li><a href='#54b45e'>Total Store Order 定义</a></li><li><a href='#47850e'>Total Store Order 实现</a></li></ol></li><li><a href='#d8a439'>Relaxed Memory Consistency</a><ol><li><a href='#c5f5f0'>Relaxed Memory Consistency 的实现</a></li></ol></li><li><a href='#4bccfd'>关于FENCE</a></li><li><a href='#729b7f'>memory order in c++ 11</a></li>
+        </ol>
+    </div>
+</div>    </div>
+
+    <div class="niu2-footer">
+        <div id="body-footer" class="col-md-6 col-md-offset-2">
+<hr/>
+<p>
+    Powered by <a href="https://github.com/getpelican/pelican">Pelican</a>, 
+    <a href="https://github.com/mawenbao/niu-x2-sidebar">theme</a> built with <a href="http://getbootstrap.com">Bootstrap3</a>
+    by <a href="http://blog.atime.me">Ma Wenbao</a>, icons by 
+    <a href="http://fortawesome.github.io/Font-Awesome">Font Awesome</a>.
+</p>
+<p>
+    ©
+            2014-2017
+    <a class="niu2-footer-link" href=".">Huiliang Huang</a>
+</p>
+<p class="niu2-icons">
+</p>        </div>
+    </div>
+    
+    <div id="niu2-pygments" data-theme="github"></div>
+
+    <script type="text/javascript" src="./theme/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="./theme/js/niu2.min.js"></script>
+    <script type="text/javascript" src="./theme/js/bootstrap.min.js"></script>
+    <script type="text/javascript">onContentLoaded();</script>
+  </body>
+</html>
