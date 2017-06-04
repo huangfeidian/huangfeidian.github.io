@@ -103,7 +103,7 @@
 <li><span class="math">\(S(a) &lt;_p S(b) \Rightarrow S(a) &lt;_m S(b)\)</span></li>
 <li><span class="math">\(S(a) &lt;_p L(b) \Rightarrow S(a) &lt;_m L(b)\)</span></li>
 <li>每次load的时候都会获得在内存序中早于这个load且最晚发生的对应内存区域的store的值，也就是
-<span class="math">\(L(a) = Value\ of \ MAX_{&lt;_m}\{S(a) \vert S(a) &lt;_m L(a)\}\)</span> </li>
+  <span class="math">\(L(a) = Value\ of \ MAX_{&lt;_m}\{S(a) \vert S(a) &lt;_m L(a)\}\)</span> </li>
 <li>对于原子的(RMW)read-modify-write操作来说，可以拆分为一个load和一个save操作，这两个操作在<span class="math">\(&lt;_m\)</span>中是相邻的</li>
 </ol>
 <p>在这些限制条件下，cpu完全就没有了乱序执行的能力，</p>
@@ -151,6 +151,7 @@
 </ol>
 <p>对于RMW之类的原子操作，最简单的维护一致性的方法就是每次在这个指令前都把当前core的写缓冲都写回。而对于FENCE指令，也可以采取这个简单粗暴的做法。</p>
 <h2 id="d8a439">Relaxed Memory Consistency</h2>
+<h3 id="b14719">Relaxed Memory Consistency定义</h3>
 <p>TSO是相对于SC的一种妥协，使用写缓冲来避免所有缓存的同步操作。Relaxed Memory Consistency则更进一步，或者说得寸进尺，认为如非必要则一切都可以乱序。此时只维持对相同地址的内存操作序和FENCE序：</p>
 <ol>
 <li><span class="math">\(L(a) &lt;_p L(a) \Rightarrow L(a) &lt;_m L(a)\)</span></li>
@@ -180,17 +181,24 @@
 <li>保持对同一地址的相关操作有序，Store Load操作除外</li>
 <li>当load的时候，如果写缓冲里有对应地址的值，则直接读取这个值</li>
 </ol>
-<h2 id="4bccfd">关于FENCE</h2>
+<h2 id="839157">FENCE与Atomic</h2>
 <p>前面的三个内存模型中，我们对于fence的定义都是barrier，在这之前的操作永远<span class="math">\(&lt;_m\)</span>于在这之后的操作。但是有些体系结构里还是觉得这个FENCE太重了，因此又定义了几种新的fence。</p>
 <ol>
-<li>sequence fence 这种fence就是我们最初设计的fence， 其语义就是<span class="math">\(a&lt;_p seq\_cst &lt;_p b \Rightarrow a&lt;_m seq\_cst &lt;_m b\)</span>，每次使用之后都会将写缓冲写回</li>
+<li>sequence fence 这种fence就是我们最初设计的fence， 其语义就是<span class="math">\(a&lt;_p seq\_cst &lt;_p b \Rightarrow a&lt;_m seq\_cst &lt;_m b\)</span>，每次使用之后都会将写缓冲写回。由于每次都写回缓冲区，同时这个写回操作在内存控制器里是独占的，因此可以推论出使用了sequence fence的atomic操作维持了一个全局唯一的序列。</li>
 <li>acquire fence 其语义为<span class="math">\(acquire &lt;_p a \Rightarrow acquire&lt;_m a\)</span> </li>
 <li>release fence 其语义为 <span class="math">\(a&lt;_p release \Rightarrow a&lt;_m release\)</span></li>
 </ol>
+<p>手工来添加fence是比较危险的，主要是容易忘记。为了便利程序员和编译器来处理fence相关的代码，c++还提出了atomic来简化fence的使用。atomic顾名思义就是原子变量，他包含了两个重要的性质:</p>
+<ol>
+<li>单个线程内对于相同的原子变量的读写操作不会被编译器和cpu重排</li>
+<li>对于同一个原子变量的多线程操作，保证在全局维持一个统一的modification sequence，即每次修改都会直接通知其他cpu的缓存系统进行更新，而不会放在本地的写缓冲之中，这个性质保证了每次对于原子变量的读取都获得了最近一次修改的值。以例子来说，如果我们有一个原子的counter，初始为10，多个线程去fetch_sub这个counter来分配工作，则这些线程读取的counter值的序列一定是10-9-8...1单调递减的。如果使用print来打印读取出来的值，这个序列的顺序可能会打乱（因为输出流在多线程下是无序的），但是仍然会保证所有数字都会出现且只会出现一次。</li>
+</ol>
+<p>atomic包括三种操作，load, save和read-modify-write。这三个操作都可以使用对应的fence来标记处理，在生成代码时会对应的内存操作之前或之后加入对应的fence。有些时候会在之前和之后都加入fence，例如前面是acquire后面是release 的read-modify_write操作，或者是sequence fence操作。</p>
+<p>在c++中，fence的存在有两种形式：atomic_thread_fence和atomic_signal_fence。thread_fence是用来警告编译器和cpu不要乱排序，而signal_fence是用来警告编译器不要乱排序。</p>
 <h2 id="729b7f">memory order in c++ 11</h2>
 <p>在c++11中引入了6种应用于原子变量的内存次序：</p>
 <ol>
-<li>memory_order_relaxed 这是约束最低的次序 只要求保证单个线程内的原子操作不会被cpu乱序，不关心这些操作在其他线程内的可见顺序，只保证原子性，只关系单个操作。举个例子来说：</li>
+<li>memory_order_relaxed 这是约束最低的次序 只要求保证单个线程内的对相同原子变量的操作不会被编译器和cpu乱序，不关心这些操作在其他线程内的可见顺序，只保证原子性，只关系单个操作。举个例子来说：</li>
 </ol>
 <div class="codehilite"><pre><span></span><span class="c1">// Thread 1:</span>
 <span class="n">r1</span> <span class="o">=</span> <span class="n">y</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">memory_order_relaxed</span><span class="p">);</span> <span class="c1">// A</span>
@@ -241,6 +249,7 @@
 
 
 <p>下面我们来分析为什么。设a()中对x的操作为x，b()中对y的操作为y， c()中对x的操作为C_x，对y的操作为C_y，d()中对y的操作为D_y， 对x的操作为D_x。如果想让11行的assert fire，则需要在c()看到的全局序列中x&lt;C_x&lt;C_y&lt;y，同时d()中看到的序列为y&lt;D_y&lt;D_x&lt;x，这样我们可以构造出C_y&lt;y&lt;D_y且D_x&lt;x&lt;C_x的序列来满足这种条件。这个序列并不与acq_rel相关规定起冲突。所以对于这六个内存序，我们需要记住的是除了seq_cst之外，其他的处理都不能维持一个全局序。如果要在多个线程之间对多个单次操作做同步，最好使用seq_cst。</p>
+<h2 id="d41d8c"></h2>
 <script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
     var align = "center",
         indent = "0em",
@@ -319,7 +328,7 @@
         </div>
         <ol id="niu2-sidebar-toc-list">
             <li><a href="#content-heading">Concurrency Consistency and Coherence</a></li>
-            <li><a href='#8b1772'>相关概念</a></li><li><a href='#ab3e33'>基础模型</a></li><li><a href='#f20996'>Sequence Consistency</a><ol><li><a href='#43cca2'>Sequence Consistency定义</a></li><li><a href='#f45003'>Sequence Consistency 实现</a></li></ol></li><li><a href='#5c5551'>Total Store Order</a><ol><li><a href='#54b45e'>Total Store Order 定义</a></li><li><a href='#47850e'>Total Store Order 实现</a></li></ol></li><li><a href='#d8a439'>Relaxed Memory Consistency</a><ol><li><a href='#c5f5f0'>Relaxed Memory Consistency 的实现</a></li></ol></li><li><a href='#4bccfd'>关于FENCE</a></li><li><a href='#729b7f'>memory order in c++ 11</a></li>
+            <li><a href='#8b1772'>相关概念</a></li><li><a href='#ab3e33'>基础模型</a></li><li><a href='#f20996'>Sequence Consistency</a><ol><li><a href='#43cca2'>Sequence Consistency定义</a></li><li><a href='#f45003'>Sequence Consistency 实现</a></li></ol></li><li><a href='#5c5551'>Total Store Order</a><ol><li><a href='#54b45e'>Total Store Order 定义</a></li><li><a href='#47850e'>Total Store Order 实现</a></li></ol></li><li><a href='#d8a439'>Relaxed Memory Consistency</a><ol><li><a href='#b14719'>Relaxed Memory Consistency定义</a></li><li><a href='#c5f5f0'>Relaxed Memory Consistency 的实现</a></li></ol></li><li><a href='#839157'>FENCE与Atomic</a></li><li><a href='#729b7f'>memory order in c++ 11</a></li><li><a href='#d41d8c'></a></li>
         </ol>
     </div>
 </div>    </div>
