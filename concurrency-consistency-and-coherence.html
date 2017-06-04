@@ -249,7 +249,28 @@
 
 
 <p>下面我们来分析为什么。设a()中对x的操作为x，b()中对y的操作为y， c()中对x的操作为C_x，对y的操作为C_y，d()中对y的操作为D_y， 对x的操作为D_x。如果想让11行的assert fire，则需要在c()看到的全局序列中x&lt;C_x&lt;C_y&lt;y，同时d()中看到的序列为y&lt;D_y&lt;D_x&lt;x，这样我们可以构造出C_y&lt;y&lt;D_y且D_x&lt;x&lt;C_x的序列来满足这种条件。这个序列并不与acq_rel相关规定起冲突。所以对于这六个内存序，我们需要记住的是除了seq_cst之外，其他的处理都不能维持一个全局序。如果要在多个线程之间对多个单次操作做同步，最好使用seq_cst。</p>
-<h2 id="d41d8c"></h2>
+<p>经过上面的分析，我们可以看出所有的原子操作都以用memory_order_relaxed和一个或两个对应的thread_fence来实现。为了安全起见还是不要手动拆分比较好，除非性能需要选择性的加入fence，具体例子见下:</p>
+<div class="codehilite"><pre><span></span><span class="k">const</span> <span class="kt">int</span> <span class="n">num_mailboxes</span> <span class="o">=</span> <span class="mi">32</span><span class="p">;</span>
+<span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">mailbox_receiver</span><span class="p">[</span><span class="n">num_mailboxes</span><span class="p">];</span>
+<span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">mailbox_data</span><span class="p">[</span><span class="n">num_mailboxes</span><span class="p">];</span>
+
+<span class="c1">// The writer threads update non-atomic shared data </span>
+<span class="c1">// and then update mailbox_receiver[i] as follows</span>
+<span class="n">mailbox_data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">...;</span>
+<span class="n">std</span><span class="o">::</span><span class="n">atomic_store_explicit</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mailbox_receiver</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">receiver_id</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_release</span><span class="p">);</span>
+
+<span class="c1">// Reader thread needs to check all mailbox[i], but only needs to sync with one</span>
+<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">num_mailboxes</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">atomic_load_explicit</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mailbox_receiver</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">)</span> <span class="o">==</span> <span class="n">my_id</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">atomic_thread_fence</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">);</span> <span class="c1">// synchronize with just one writer</span>
+        <span class="n">do_work</span><span class="p">(</span> <span class="n">mailbox_data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">);</span> <span class="c1">// guaranteed to observe everything done in the writer thread before</span>
+                    <span class="c1">// the atomic_store_explicit()</span>
+    <span class="p">}</span>
+ <span class="p">}</span>
+</pre></div>
+
+
+<p>这里 的12行在读取mailbox_receiver的时候使用的是relaxed，在判断条件通过的时候才使用<code>acquire_fence</code>, 用来避免不必要的同步。</p>
 <script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
     var align = "center",
         indent = "0em",
@@ -328,7 +349,7 @@
         </div>
         <ol id="niu2-sidebar-toc-list">
             <li><a href="#content-heading">Concurrency Consistency and Coherence</a></li>
-            <li><a href='#8b1772'>相关概念</a></li><li><a href='#ab3e33'>基础模型</a></li><li><a href='#f20996'>Sequence Consistency</a><ol><li><a href='#43cca2'>Sequence Consistency定义</a></li><li><a href='#f45003'>Sequence Consistency 实现</a></li></ol></li><li><a href='#5c5551'>Total Store Order</a><ol><li><a href='#54b45e'>Total Store Order 定义</a></li><li><a href='#47850e'>Total Store Order 实现</a></li></ol></li><li><a href='#d8a439'>Relaxed Memory Consistency</a><ol><li><a href='#b14719'>Relaxed Memory Consistency定义</a></li><li><a href='#c5f5f0'>Relaxed Memory Consistency 的实现</a></li></ol></li><li><a href='#839157'>FENCE与Atomic</a></li><li><a href='#729b7f'>memory order in c++ 11</a></li><li><a href='#d41d8c'></a></li>
+            <li><a href='#8b1772'>相关概念</a></li><li><a href='#ab3e33'>基础模型</a></li><li><a href='#f20996'>Sequence Consistency</a><ol><li><a href='#43cca2'>Sequence Consistency定义</a></li><li><a href='#f45003'>Sequence Consistency 实现</a></li></ol></li><li><a href='#5c5551'>Total Store Order</a><ol><li><a href='#54b45e'>Total Store Order 定义</a></li><li><a href='#47850e'>Total Store Order 实现</a></li></ol></li><li><a href='#d8a439'>Relaxed Memory Consistency</a><ol><li><a href='#b14719'>Relaxed Memory Consistency定义</a></li><li><a href='#c5f5f0'>Relaxed Memory Consistency 的实现</a></li></ol></li><li><a href='#839157'>FENCE与Atomic</a></li><li><a href='#729b7f'>memory order in c++ 11</a></li>
         </ol>
     </div>
 </div>    </div>
