@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>lean Tricks - spirits away</title>
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.png">
+    <link rel="stylesheet" href="./theme/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="./theme/font-icons/style.min.css" type="text/css" />
+    <link rel="stylesheet" href="./theme/css/niu2.min.css" type="text/css" />
+
+    <link rel="canonical" href="./lean-tricks.html" />
+    
+    <script type="text/javascript">window.onload=function(){};</script>
+    <!--[if lt IE 9]>
+        <script src="./theme/js/html5shiv.js"></script>
+        <script src="./theme/js/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body> 
+    <div id="body-header">
+<div class="navbar navbar-inverse navbar-fixed-top">
+<div class="col-md-12">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href=".">
+            <i class="icon-home"></i>spirits away
+        </a>
+    </div>
+    <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+        <ul class="nav navbar-nav">
+            <li><a href="/pages/about.html" title="about">
+                <i class="icon-anchor"></i>关于</a>
+            </li>
+            <li><a href="/archives.html" title="archives">
+                <i class="icon-archive"></i>存档</a>
+            </li>
+            <li><a href="/tags.html" title="tags">
+                <i class="icon-tag"></i>标签</a>
+            </li>
+        <!-- category dropdown list -->
+        <!--  self defined dropdown list -->
+        </ul>
+        
+        <!-- right nav bar -->
+        <ul class="nav navbar-nav navbar-right">
+        <!-- google custom search -->
+       </ul>
+    </nav>
+</div>
+</div>    </div>
+    
+    <div id="body-content">
+<div class="col-md-8 col-md-offset-2">
+    <h1 id="content-heading">lean Tricks</h1>
+</div>
+<div id="niu2-left-container" class="col-md-6 col-md-offset-2 with-right-border">
+    <div id="niu2-main-content">
+        <h1 id="cc270f">lean tricks</h1>
+<p>这里记录一下一些简短有效的代码，值得参考。</p>
+<h2 id="563d9e">计算对齐</h2>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">U</span><span class="o">&gt;</span>
+    <span class="k">static</span> <span class="kr">inline</span> <span class="kt">char</span><span class="o">*</span> <span class="n">align_for</span><span class="p">(</span><span class="kt">char</span><span class="o">*</span> <span class="n">ptr</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">alignment</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">alignment_of</span><span class="o">&lt;</span><span class="n">U</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+        <span class="k">return</span> <span class="n">ptr</span> <span class="o">+</span> <span class="p">(</span><span class="n">alignment</span> <span class="o">-</span> <span class="p">(</span><span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kt">uintptr_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">ptr</span><span class="p">)</span> <span class="o">%</span> <span class="n">alignment</span><span class="p">))</span> <span class="o">%</span> <span class="n">alignment</span><span class="p">;</span>
+    <span class="p">}</span>
+</pre></div>
+
+
+<h2 id="1aa6cf">获得最接近且不小于当前数的二次幂</h2>
+<p>这个是获得比最小的不小于<code>x</code>的<span class="math">\(2^n\)</span> 。</p>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+    <span class="k">static</span> <span class="kr">inline</span> <span class="n">T</span> <span class="n">ceil_to_pow_2</span><span class="p">(</span><span class="n">T</span> <span class="n">x</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">static_assert</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_integral</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">value</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">std</span><span class="o">::</span><span class="n">numeric_limits</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">is_signed</span><span class="p">,</span> <span class="s">&quot;ceil_to_pow_2 is intended to be used only with unsigned integer types&quot;</span><span class="p">);</span>
+
+        <span class="c1">// Adapted from http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2</span>
+        <span class="o">--</span><span class="n">x</span><span class="p">;</span>
+        <span class="n">x</span> <span class="o">|=</span> <span class="n">x</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="n">x</span> <span class="o">|=</span> <span class="n">x</span> <span class="o">&gt;&gt;</span> <span class="mi">2</span><span class="p">;</span>
+        <span class="n">x</span> <span class="o">|=</span> <span class="n">x</span> <span class="o">&gt;&gt;</span> <span class="mi">4</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">);</span> <span class="n">i</span> <span class="o">&lt;&lt;=</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">x</span> <span class="o">|=</span> <span class="n">x</span> <span class="o">&gt;&gt;</span> <span class="p">(</span><span class="n">i</span> <span class="o">&lt;&lt;</span> <span class="mi">3</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="o">++</span><span class="n">x</span><span class="p">;</span>
+        <span class="k">return</span> <span class="n">x</span><span class="p">;</span>
+    <span class="p">}</span>
+</pre></div>
+
+
+<h2 id="efe5d1">三个数获得最小值或最大值</h2>
+<p>避免判断分支的<code>stall</code>，于是直接用标志位来计算了。出处见pbrt。</p>
+<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="n">a</span><span class="p">[</span><span class="mi">3</span><span class="p">];</span>
+<span class="kt">int</span> <span class="n">bits</span> <span class="o">=</span> <span class="p">((</span><span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&lt;&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">((</span><span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">a</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">a</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> 
+<span class="k">const</span> <span class="kt">int</span> <span class="n">smallest</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">=</span>  <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="kt">int</span> <span class="n">smallest_v</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">smallest</span><span class="p">[</span><span class="n">bits</span><span class="p">]]</span>
+<span class="kt">int</span> <span class="n">bits</span> <span class="o">=</span> <span class="p">((</span><span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&lt;&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">((</span><span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">a</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">a</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> 
+<span class="k">const</span> <span class="kt">int</span> <span class="n">biggest</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="kt">int</span> <span class="n">biggest_v</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">biggest</span><span class="p">[</span><span class="n">bits</span><span class="p">]]</span>
+</pre></div>
+
+
+<h2 id="bbdc7c">整数常量除法优化</h2>
+<p>Intel Haswell 架构的 DIV 32位除法指令的延迟（latency）是 28 个周期，吞吐率是 10 个周期。作为比较，同一架构下 MUL 32位乘法指令的延迟只是 4 个周期，吞吐率只是半个周期。所以对于常见的除以10的计算更好的方法是转化为乘法。</p>
+<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">3728463</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">b</span> <span class="o">=</span> <span class="n">a</span><span class="o">/</span><span class="mi">10</span><span class="p">;</span>
+<span class="kt">int64_t</span> <span class="n">c</span> <span class="o">=</span> <span class="mi">3435973837</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">d</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int32_t</span><span class="o">&gt;</span><span class="p">((</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int64_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="n">c</span><span class="p">)</span><span class="o">&gt;&gt;</span><span class="mi">35</span><span class="p">)</span>
+<span class="n">assert</span><span class="p">(</span> <span class="n">b</span> <span class="o">==</span> <span class="n">d</span><span class="p">)</span>
+</pre></div>
+
+
+<p>这里的<code>b == d</code>之所以会成立是因为<code>c&gt;&gt;35 = 0.10000000058</code> ，在精度范围内没有误差。编译器内部维护了很多小整数的除法优化表，对于常量整数的除法都可以转换为64位乘法然后右移的方式。所以下面的这段代码的两个除法热点就可以被优化了：</p>
+<div class="codehilite"><pre><span></span><span class="kt">uint32_t</span> <span class="n">p1</span> <span class="o">=</span> <span class="cm">/*...*/</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">kappa</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+<span class="kt">uint32_t</span> <span class="n">div</span> <span class="o">=</span> <span class="mi">1000000000</span><span class="p">;</span>
+<span class="k">while</span> <span class="p">(</span><span class="n">kappa</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">p1</span> <span class="o">/</span> <span class="n">div</span><span class="p">;</span> <span class="c1">// 第一个除法</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">d</span> <span class="o">||</span> <span class="o">*</span><span class="n">len</span><span class="p">)</span>
+        <span class="n">buffer</span><span class="p">[(</span><span class="o">*</span><span class="n">len</span><span class="p">)</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span><span class="p">(</span><span class="sc">&#39;0&#39;</span> <span class="o">+</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span><span class="p">(</span><span class="n">d</span><span class="p">));</span>
+    <span class="n">p1</span> <span class="o">%=</span> <span class="n">div</span><span class="p">;</span>
+    <span class="n">kappa</span><span class="o">--</span><span class="p">;</span>
+    <span class="n">div</span> <span class="o">/=</span> <span class="mi">10</span><span class="p">;</span>    <span class="c1">// 第二个除法</span>
+    <span class="c1">// ...</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>这里的<code>div</code>并不是常量，在循环过程中会变，转化为常量之后就可以很大程度的提高性能。</p>
+<div class="codehilite"><pre><span></span><span class="k">while</span> <span class="p">(</span><span class="n">kappa</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">uint32_t</span> <span class="n">d</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">switch</span> <span class="p">(</span><span class="n">kappa</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">case</span>  <span class="mi">9</span><span class="o">:</span> <span class="n">d</span> <span class="o">=</span> <span class="n">p1</span> <span class="o">/</span>  <span class="mi">100000000</span><span class="p">;</span> <span class="n">p1</span> <span class="o">%=</span>  <span class="mi">100000000</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span>  <span class="mi">8</span><span class="o">:</span> <span class="n">d</span> <span class="o">=</span> <span class="n">p1</span> <span class="o">/</span>   <span class="mi">10000000</span><span class="p">;</span> <span class="n">p1</span> <span class="o">%=</span>   <span class="mi">10000000</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span>  <span class="mi">7</span><span class="o">:</span> <span class="n">d</span> <span class="o">=</span> <span class="n">p1</span> <span class="o">/</span>    <span class="mi">1000000</span><span class="p">;</span> <span class="n">p1</span> <span class="o">%=</span>    <span class="mi">1000000</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span>  <span class="mi">6</span><span class="o">:</span> <span class="n">d</span> <span class="o">=</span> <span class="n">p1</span> <span class="o">/</span>     <span class="mi">100000</span><span class="p">;</span> <span class="n">p1</span> <span class="o">%=</span>     <span class="mi">100000</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span>  <span class="mi">5</span><span class="o">:</span> <span class="n">d</span> <span class="o">=</span> <span class="n">p1</span> <span class="o">/</span>      <span class="mi">10000</span><span class="p">;</span> <span class="n">p1</span> <span class="o">%=</span>      <span class="mi">10000</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span>  <span class="mi">4</span><span class="o">:</span> <span class="n">d</span> <span class="o">=</span> <span class="n">p1</span> <span class="o">/</span>       <span class="mi">1000</span><span class="p">;</span> <span class="n">p1</span> <span class="o">%=</span>       <span class="mi">1000</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span>  <span class="mi">3</span><span class="o">:</span> <span class="n">d</span> <span class="o">=</span> <span class="n">p1</span> <span class="o">/</span>        <span class="mi">100</span><span class="p">;</span> <span class="n">p1</span> <span class="o">%=</span>        <span class="mi">100</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span>  <span class="mi">2</span><span class="o">:</span> <span class="n">d</span> <span class="o">=</span> <span class="n">p1</span> <span class="o">/</span>         <span class="mi">10</span><span class="p">;</span> <span class="n">p1</span> <span class="o">%=</span>         <span class="mi">10</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span>  <span class="mi">1</span><span class="o">:</span> <span class="n">d</span> <span class="o">=</span> <span class="n">p1</span><span class="p">;</span>              <span class="n">p1</span> <span class="o">=</span>           <span class="mi">0</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+        <span class="k">default</span><span class="o">:</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">d</span> <span class="o">||</span> <span class="o">*</span><span class="n">len</span><span class="p">)</span>
+        <span class="n">buffer</span><span class="p">[(</span><span class="o">*</span><span class="n">len</span><span class="p">)</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span><span class="p">(</span><span class="sc">&#39;0&#39;</span> <span class="o">+</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span><span class="p">(</span><span class="n">d</span><span class="p">));</span>
+    <span class="n">kappa</span><span class="o">--</span><span class="p">;</span>
+    <span class="c1">// ...</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>这里不需要担心<code>case</code>里的两个除法，现代的编译器针对取模运算和除法运算右边的数相同时，会优化为一条指令。相关资料来自于<a href="http://www.cnblogs.com/miloyip/p/4610111.html">Milo 的blog</a></p>
+<h2 id="a1a747">utf8的parse优化</h2>
+<p>utf8 的字节编码是变长的，实际使用过程中经常需要<code>parse</code>之后转变为定长的来处理。这里的热点就是扫描分割边长编码， 这里我们为了简单起见只处理最长为4字节的变长编码。最简单的实现是这样的：</p>
+<div class="codehilite"><pre><span></span>        <span class="n">vector</span><span class="o">&lt;</span><span class="kt">uint32_t</span><span class="o">&gt;</span> <span class="n">utf8_to_uint</span><span class="p">(</span><span class="k">const</span> <span class="n">string</span><span class="o">&amp;</span> <span class="n">text</span><span class="p">)</span> <span class="k">const</span>
+        <span class="p">{</span>
+            <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">;</span>
+            <span class="n">vector</span><span class="o">&lt;</span><span class="kt">uint32_t</span><span class="o">&gt;</span> <span class="n">utf8_result</span><span class="p">;</span>
+            <span class="kt">int</span> <span class="n">num_chars</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+            <span class="kt">uint32_t</span> <span class="n">num_bytes</span> <span class="o">=</span> <span class="n">text</span><span class="p">.</span><span class="n">length</span><span class="p">();</span>
+            <span class="kt">long</span> <span class="n">iii</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+            <span class="k">while</span> <span class="p">(</span><span class="n">iii</span> <span class="o">&lt;</span> <span class="n">num_bytes</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">uint32_t</span> <span class="n">cur_utf8_char</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+                <span class="n">z</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">iii</span><span class="p">];</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">z</span> <span class="o">&lt;=</span> <span class="mi">127</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">cur_utf8_char</span> <span class="o">=</span> <span class="n">z</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">z</span> <span class="o">&gt;=</span> <span class="mi">192</span> <span class="o">&amp;&amp;</span> <span class="n">z</span> <span class="o">&lt;=</span> <span class="mi">223</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">iii</span><span class="o">++</span><span class="p">;</span>
+                    <span class="n">y</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">iii</span><span class="p">];</span>
+                    <span class="n">cur_utf8_char</span> <span class="o">=</span> <span class="p">(</span><span class="n">z</span> <span class="o">-</span> <span class="mi">192</span><span class="p">)</span> <span class="o">*</span> <span class="mi">64</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="mi">128</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">z</span> <span class="o">&gt;=</span> <span class="mi">224</span> <span class="o">&amp;&amp;</span> <span class="n">z</span> <span class="o">&lt;=</span> <span class="mi">239</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">iii</span><span class="o">++</span><span class="p">;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">iii</span><span class="p">];</span>
+                    <span class="n">iii</span><span class="o">++</span><span class="p">;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">iii</span><span class="p">];</span>
+                    <span class="n">cur_utf8_char</span> <span class="o">=</span> <span class="p">(</span><span class="n">z</span> <span class="o">-</span> <span class="mi">224</span><span class="p">)</span> <span class="o">*</span> <span class="mi">4096</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="mi">128</span><span class="p">)</span> <span class="o">*</span> <span class="mi">64</span> <span class="o">+</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="mi">128</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">if</span> <span class="p">((</span><span class="mi">240</span> <span class="o">&lt;=</span> <span class="n">z</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">iii</span><span class="o">++</span><span class="p">;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">iii</span><span class="p">];</span>
+                    <span class="n">iii</span><span class="o">++</span><span class="p">;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">iii</span><span class="p">];</span>
+                    <span class="n">iii</span><span class="o">++</span><span class="p">;</span> <span class="n">w</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">iii</span><span class="p">];</span>
+                    <span class="n">cur_utf8_char</span> <span class="o">=</span> <span class="p">(</span><span class="n">z</span> <span class="o">-</span> <span class="mi">240</span><span class="p">)</span> <span class="o">*</span> <span class="mi">262144</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="mi">128</span><span class="p">)</span> <span class="o">*</span> <span class="mi">4096</span> <span class="o">+</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="mi">128</span><span class="p">)</span> <span class="o">*</span> <span class="mi">64</span> <span class="o">+</span> <span class="p">(</span><span class="n">w</span> <span class="o">-</span> <span class="mi">128</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="n">utf8_result</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">cur_utf8_char</span><span class="p">);</span>
+                <span class="n">iii</span><span class="o">++</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="n">utf8_result</span><span class="p">;</span>
+        <span class="p">}</span>
+</pre></div>
+
+
+<p>下面有一些比较好的代码可以参考：</p>
+<div class="codehilite"><pre><span></span><span class="k">do</span> <span class="p">{</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">pStr</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span> <span class="k">if</span> <span class="p">(</span><span class="n">globals</span><span class="o">::</span><span class="n">s_parse_flags</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">{</span> <span class="o">++</span><span class="n">pStr</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span> <span class="p">}</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">pStr</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span> <span class="k">if</span> <span class="p">(</span><span class="n">globals</span><span class="o">::</span><span class="n">s_parse_flags</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">{</span> <span class="n">pStr</span> <span class="o">+=</span> <span class="mi">2</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span> <span class="p">}</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">pStr</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span> <span class="k">if</span> <span class="p">(</span><span class="n">globals</span><span class="o">::</span><span class="n">s_parse_flags</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">{</span> <span class="n">pStr</span> <span class="o">+=</span> <span class="mi">3</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span> <span class="p">}</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">pStr</span><span class="p">[</span><span class="mi">3</span><span class="p">];</span>
+    <span class="n">pStr</span> <span class="o">+=</span> <span class="mi">4</span><span class="p">;</span>
+<span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="n">globals</span><span class="o">::</span><span class="n">s_parse_flags</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">));</span>
+</pre></div>
+
+
+<p>这段代码粗看起来很诡异，事实上他利用了循环展开，直接让<code>cpu</code>有了一次性装载四个字节并判断的能力。对于第一个版本的改动就是对<code>z &lt;= 127</code>进行循环展开，也试图判断四个字节。</p>
+<h2 id="4bb27e">空白字符的parse优化</h2>
+<p>在很多<code>lex</code>程序中都需要跳过空白字符，例如<code>\t \n  \r</code>这四个。简单的实现会涉及到很多的<code>branch</code>，例如下面的代码:</p>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">InputStream</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">SkipWhitespace</span><span class="p">(</span><span class="n">InputStream</span><span class="o">&amp;</span> <span class="n">is</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">internal</span><span class="o">::</span><span class="n">StreamLocalCopy</span><span class="o">&lt;</span><span class="n">InputStream</span><span class="o">&gt;</span> <span class="n">copy</span><span class="p">(</span><span class="n">is</span><span class="p">);</span>
+    <span class="n">InputStream</span><span class="o">&amp;</span> <span class="n">s</span><span class="p">(</span><span class="n">copy</span><span class="p">.</span><span class="n">s</span><span class="p">);</span>
+<span class="k">while</span> <span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">Peek</span><span class="p">()</span> <span class="o">==</span> <span class="sc">&#39; &#39;</span>  <span class="o">||</span>
+           <span class="n">s</span><span class="p">.</span><span class="n">Peek</span><span class="p">()</span> <span class="o">==</span> <span class="sc">&#39;\n&#39;</span> <span class="o">||</span>
+           <span class="n">s</span><span class="p">.</span><span class="n">Peek</span><span class="p">()</span> <span class="o">==</span> <span class="sc">&#39;\r&#39;</span> <span class="o">||</span>
+           <span class="n">s</span><span class="p">.</span><span class="n">Peek</span><span class="p">()</span> <span class="o">==</span> <span class="sc">&#39;\t&#39;</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">s</span><span class="p">.</span><span class="n">Take</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>此时可以利用<code>intel sse4.2 pcmpistrm</code>指令来加速比较，这个指令可以一次对一组16个字符与另外一组字符做比较，最多支持16<em>16， 虽然对于空白字符来说我们只有16 </em>4, 不过也算加速很大了。具体实现如下:</p>
+<div class="codehilite"><pre><span></span><span class="kr">inline</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="nf">SkipWhitespace_SIMD</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">p</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// ... 非对齐处理</span>
+<span class="k">static</span> <span class="k">const</span> <span class="kt">char</span> <span class="n">whitespace</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot; </span><span class="se">\n\r\t</span><span class="s">&quot;</span><span class="p">;</span>
+    <span class="k">const</span> <span class="kr">__m128i</span> <span class="n">w</span> <span class="o">=</span> <span class="n">_mm_load_si128</span><span class="p">((</span><span class="k">const</span> <span class="kr">__m128i</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">whitespace</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+<span class="k">for</span> <span class="p">(;;</span> <span class="n">p</span> <span class="o">+=</span> <span class="mi">16</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">const</span> <span class="kr">__m128i</span> <span class="n">s</span> <span class="o">=</span> <span class="n">_mm_load_si128</span><span class="p">((</span><span class="k">const</span> <span class="kr">__m128i</span> <span class="o">*</span><span class="p">)</span><span class="n">p</span><span class="p">);</span>
+        <span class="k">const</span> <span class="kt">unsigned</span> <span class="n">r</span> <span class="o">=</span> <span class="n">_mm_cvtsi128_si32</span><span class="p">(</span><span class="n">_mm_cmpistrm</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> 
+            <span class="n">_SIDD_UBYTE_OPS</span> <span class="o">|</span> <span class="n">_SIDD_CMP_EQUAL_ANY</span> <span class="o">|</span>
+            <span class="n">_SIDD_BIT_MASK</span> <span class="o">|</span> <span class="n">_SIDD_NEGATIVE_POLARITY</span><span class="p">));</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">r</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>   <span class="c1">// some of characters is non-whitespace</span>
+<span class="cp">#ifdef _MSC_VER         </span><span class="c1">// Find the index of first non-whitespace</span>
+            <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">offset</span><span class="p">;</span>
+            <span class="n">_BitScanForward</span><span class="p">(</span><span class="o">&amp;</span><span class="n">offset</span><span class="p">,</span> <span class="n">r</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">p</span> <span class="o">+</span> <span class="n">offset</span><span class="p">;</span>
+<span class="cp">#else</span>
+            <span class="k">return</span> <span class="n">p</span> <span class="o">+</span> <span class="n">__builtin_ffs</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+<span class="cp">#endif</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>这里还有一个可以优化的地方，就是第一个字符串已经是非空白字符了，此时再去调用<code>sse</code>其实消耗很大，所以可以优化第一个字节的判断：</p>
+<div class="codehilite"><pre><span></span><span class="kr">inline</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="nf">SkipWhitespace_SIMD</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">p</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// Fast return for single non-whitespace</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">*</span><span class="n">p</span> <span class="o">==</span> <span class="sc">&#39; &#39;</span> <span class="o">||</span> <span class="o">*</span><span class="n">p</span> <span class="o">==</span> <span class="sc">&#39;\n&#39;</span> <span class="o">||</span> <span class="o">*</span><span class="n">p</span> <span class="o">==</span> <span class="sc">&#39;\r&#39;</span> <span class="o">||</span> <span class="o">*</span><span class="n">p</span> <span class="o">==</span> <span class="sc">&#39;\t&#39;</span><span class="p">)</span>
+        <span class="o">++</span><span class="n">p</span><span class="p">;</span>
+    <span class="k">else</span>
+        <span class="k">return</span> <span class="n">p</span><span class="p">;</span>
+<span class="c1">// ...</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+    mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
+        "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
+    </div>
+    <div id="content-comments">
+</div>
+
+</div>
+<div class="niu2-right-container col-md-2">
+    <div id="niu2-sidebar-meta" class="niu2-sidebar">
+        <div class="niu2-sidebar-label"><i class="icon-calendar"></i>Published:</div>
+        <div class="niu2-sidebar-value">2017-06-11 22:00</div>
+        <div class="niu2-sidebar-label"><i class="icon-open-folder"></i>Category:</div>
+        <div class="niu2-sidebar-value"><a href="./category/algorithm.html">Algorithm</a></div>
+        <div class="niu2-sidebar-label"><i class="icon-tag"></i>Tag:</div>
+ 
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="./tag/algorithm.html">Algorithm</a><sup>5</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="./tag/cpp.html">Cpp</a><sup>14</sup></div>
+    </div>
+
+    <div id="niu2-sidebar-toc" class="niu2-sidebar" data-status="closed">
+        <div class="niu2-sidebar-label">
+            <i id="niu2-sidebar-toc-ctrl" class="icon-open-tocs"></i>TOC
+        </div>
+        <ol id="niu2-sidebar-toc-list">
+            <li><a href="#content-heading">lean Tricks</a></li>
+            <li><a href='#cc270f'>lean tricks</a><ol><li><a href='#563d9e'>计算对齐</a></li><li><a href='#1aa6cf'>获得最接近且不小于当前数的二次幂</a></li><li><a href='#efe5d1'>三个数获得最小值或最大值</a></li><li><a href='#bbdc7c'>整数常量除法优化</a></li><li><a href='#a1a747'>utf8的parse优化</a></li><li><a href='#4bb27e'>空白字符的parse优化</a></li></ol></li>
+        </ol>
+    </div>
+</div>    </div>
+
+    <div class="niu2-footer">
+        <div id="body-footer" class="col-md-6 col-md-offset-2">
+<hr/>
+<p>
+    Powered by <a href="https://github.com/getpelican/pelican">Pelican</a>, 
+    <a href="https://github.com/mawenbao/niu-x2-sidebar">theme</a> built with <a href="http://getbootstrap.com">Bootstrap3</a>
+    by <a href="http://blog.atime.me">Ma Wenbao</a>, icons by 
+    <a href="http://fortawesome.github.io/Font-Awesome">Font Awesome</a>.
+</p>
+<p>
+    ©
+            2014-2017
+    <a class="niu2-footer-link" href=".">Huiliang Huang</a>
+</p>
+<p class="niu2-icons">
+</p>        </div>
+    </div>
+    
+    <div id="niu2-pygments" data-theme="github"></div>
+
+    <script type="text/javascript" src="./theme/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="./theme/js/niu2.min.js"></script>
+    <script type="text/javascript" src="./theme/js/bootstrap.min.js"></script>
+    <script type="text/javascript">onContentLoaded();</script>
+  </body>
+</html>

@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concurrent Queue - spirits away</title>
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.png">
+    <link rel="stylesheet" href="./theme/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="./theme/font-icons/style.min.css" type="text/css" />
+    <link rel="stylesheet" href="./theme/css/niu2.min.css" type="text/css" />
+
+    <link rel="canonical" href="./concurrent-queue.html" />
+    
+    <script type="text/javascript">window.onload=function(){};</script>
+    <!--[if lt IE 9]>
+        <script src="./theme/js/html5shiv.js"></script>
+        <script src="./theme/js/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body> 
+    <div id="body-header">
+<div class="navbar navbar-inverse navbar-fixed-top">
+<div class="col-md-12">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href=".">
+            <i class="icon-home"></i>spirits away
+        </a>
+    </div>
+    <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+        <ul class="nav navbar-nav">
+            <li><a href="/pages/about.html" title="about">
+                <i class="icon-anchor"></i>关于</a>
+            </li>
+            <li><a href="/archives.html" title="archives">
+                <i class="icon-archive"></i>存档</a>
+            </li>
+            <li><a href="/tags.html" title="tags">
+                <i class="icon-tag"></i>标签</a>
+            </li>
+        <!-- category dropdown list -->
+        <!--  self defined dropdown list -->
+        </ul>
+        
+        <!-- right nav bar -->
+        <ul class="nav navbar-nav navbar-right">
+        <!-- google custom search -->
+       </ul>
+    </nav>
+</div>
+</div>    </div>
+    
+    <div id="body-content">
+<div class="col-md-8 col-md-offset-2">
+    <h1 id="content-heading">Concurrent Queue</h1>
+</div>
+<div id="niu2-left-container" class="col-md-6 col-md-offset-2 with-right-border">
+    <div id="niu2-main-content">
+        <h1 id="6b5bed">Concurrent Queue</h1>
+<p>Herb Sutter在DDJ <code>pillars of concurrency</code>一文中抛出并行编程的三个简单论点，一是分离任务，使用更细粒度的锁或者无锁编程；二是尽量通过并行任务使用CPU资源，以提高系统吞吐量及扩展性；三是保证对共享资源访问的一致性。第三点已经被<code>atomic</code>、<code>mutex</code>、<code>lock</code>、<code>condition_variable</code>解决了，第一点和第二点则可以归结为如何对任务进行粒度划分并投递到任务的执行单元中去调度执行。任务划分依赖于各种不同业务的理解，例如网络和渲染，很难抽取出其共性。而任务的调度执行则是一种通用的结构，可以分为四个部分：</p>
+<ol>
+<li>任务的封装 在<code>c++11</code>里提供了三种最基本的任务封装形式<code>future, promise,packaged_task</code></li>
+<li>任务的结构 在<code>c++17</code>里补全了任务结构控制，主要是提供了<code>then, when_all, when_any</code>这三个用来关联多个<code>future</code>的函数</li>
+<li>任务的执行 任务执行者基本都是使用线程池，每个线程不断的尝试获取一个任务并执行，类似于一个while循环</li>
+<li>任务的调度 这部分负责了任务的投递和分发，他在多线程之间维持了一个任务容器集合，提供的接口主要包括接受新任务、取出一个任务和判断容器是否为空</li>
+</ol>
+<p>在整个并发任务系统中，在任务容器集合之上的任务调度结构是核心。现在使用的最广泛的任务容器是concurrent queue，下面我们来对concurrent queue来做一下分析。</p>
+<h2 id="8fd87e">naive concurrent queue</h2>
+<p>queue是一个维持先进先出（FIFO）队列的结构，在很多STL的实现之中采取的是多块连续内存的双向链表来维持其先进先出结构。为了在多线程中使用<code>std::queue</code>，最简单的方法就是使用锁来解决<code>data race</code>，同时修改原始提供的接口，使得这个数据结构不会被用错。</p>
+<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;queue&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;atomic&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;mutex&gt;</span><span class="cp"></span>
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="k">class</span> <span class="nc">concurrent_queue</span>
+<span class="p">{</span>
+<span class="k">private</span><span class="o">:</span>
+    <span class="k">mutable</span> <span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">mut</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">queue</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">data_queue</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">condition_variable</span> <span class="n">data_cond</span><span class="p">;</span>
+<span class="k">public</span><span class="o">:</span>
+    <span class="n">concurrent_queue</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="c1">// pass</span>
+    <span class="p">}</span>
+    <span class="kt">void</span> <span class="n">push</span><span class="p">(</span><span class="n">T</span> <span class="n">new_value</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lk</span><span class="p">(</span><span class="n">mut</span><span class="p">);</span>
+        <span class="n">data_queue</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">data</span><span class="p">));</span>
+        <span class="n">data_cond</span><span class="p">.</span><span class="n">notify_one</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="kt">void</span> <span class="n">wait_and_pop</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">unique_lock</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lk</span><span class="p">(</span><span class="n">mut</span><span class="p">);</span>
+        <span class="n">data_cond</span><span class="p">.</span><span class="n">wait</span><span class="p">(</span><span class="n">lk</span><span class="p">,</span> <span class="p">[</span><span class="k">this</span><span class="p">]{</span>
+            <span class="k">return</span> <span class="o">!</span><span class="n">data_queue</span><span class="p">.</span><span class="n">empty</span><span class="p">();</span>
+        <span class="p">})</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">data_queue</span><span class="p">.</span><span class="n">front</span><span class="p">());</span>
+        <span class="n">data_queue</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">wait_and_pop</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">unique_lock</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lk</span><span class="p">(</span><span class="n">mut</span><span class="p">);</span>
+        <span class="n">data_cond</span><span class="p">.</span><span class="n">wait</span><span class="p">(</span><span class="n">lk</span><span class="p">,</span> <span class="p">[</span><span class="k">this</span><span class="p">]{</span>
+            <span class="k">return</span> <span class="o">!</span><span class="n">data_queue</span><span class="p">.</span><span class="n">empty</span><span class="p">();</span>
+        <span class="p">})</span>
+        <span class="k">auto</span> <span class="n">res</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">data_queue</span><span class="p">.</span><span class="n">front</span><span class="p">()));</span>
+        <span class="n">data_queue</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
+        <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="kt">bool</span> <span class="n">try_pop</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lk</span><span class="p">(</span><span class="n">mut</span><span class="p">);</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">data_queue</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">data_queue</span><span class="p">.</span><span class="n">front</span><span class="p">());</span>
+        <span class="n">data_queue</span><span class="p">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">True</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">try_pop</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lk</span><span class="p">(</span><span class="n">mut</span><span class="p">);</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">data_queue</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">();</span>
+        <span class="p">}</span>
+        <span class="k">auto</span> <span class="n">res</span> <span class="o">=</span>  <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">data_queue</span><span class="p">.</span><span class="n">front</span><span class="p">()));</span>
+        <span class="n">data_queue</span><span class="p">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="kt">bool</span> <span class="n">empty</span><span class="p">()</span> <span class="k">const</span>
+    <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lk</span><span class="p">(</span><span class="n">mut</span><span class="p">);</span>
+        <span class="k">return</span> <span class="n">data_queue</span><span class="p">.</span><span class="n">empty</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>上述代码的主要考量如下：</p>
+<ol>
+<li>由于多线程的干扰，常规的查询<code>empty</code>之后再<code>pop</code>的处理流程是错误的，这两个操作必须封装在一起，所以这里提供了<code>try_pop</code>和<code>wait_and_pop</code>这两个接口来获取数据。</li>
+<li>为了避免在数据拷贝的时候出现异常导致的数据不一致，返回数据的时候采取两套方案，一个是调用者提供引用，一个是返回一个<code>shared_ptr</code>。这样就保证了如果在拷贝构造<code>front</code>的时候出了trace也能维持整个<code>queue</code>的结构完整。</li>
+</ol>
+<p>这个<code>concurrent_queue</code>并不是很高效，主要的<code>drawback</code>包括如下三个方面:</p>
+<ol>
+<li>每次访问接口的时候都需要调用锁，而且是同一个锁</li>
+<li>在尝试获得数据的时候失败会触发<code>yield</code>，从而导致线程切换</li>
+<li>维持了一个全局的先进先出序列，在多消费者的情况下这个强制唯一序是没有意义的，在单消费者的情况下也很少会有这种要求。</li>
+</ol>
+<p>对应的常见解决方案：</p>
+<ol>
+<li>使用无锁的方式去代替<code>mutex</code>，同时由于无锁最大的问题是内存分配，有些并发队列通过预先设置最大大小的方式来预分配内存，从而绕过了著名的<code>ABA</code>问题</li>
+<li>使用双链表结构去维持队列，而不是使用<code>queue</code>，这样我们就可以分离头节点和尾节点的访问；如果是固定大小的队列则可以采取<code>ring buffer</code>的形式来维持队列结构。</li>
+<li>当尝试获得数据失败的时候，先轮询一段时间，如果这段时间内还是没有数据，则调用<code>yield</code>，也就是对<code>condition_variable</code>封装了一层。</li>
+<li>每个生产者维护其投递队列，每个消费者根据对各个生产者任务队列的优先级去遍历获取任务。</li>
+</ol>
+<p>下面我们来看一下现在主流的几种<code>concurrent_queue</code>的实现，来分析一下他们对<code>concurrent_queue</code>的实现优化。</p>
+<h2 id="27c936">boost concurrent queue</h2>
+<p><code>boost  concurrent queue</code>通过模板参数的方式来支持固定大小的队列和不定大小的队列。</p>
+<p>如果是固定大小队列，则会使用一个带<code>dummy head</code>的<code>ring buffer</code>来存储内容，同时使用一个头节点索引和一个尾节点索引来标记队列的头尾位置。为了一次性的修改头尾节点索引，这里将队列大小的上限设置为了<span class="math">\(2^{16} - 2\)</span>  ，这样两个索引就可以合并为一个<code>int32</code> 来处理，修改的时候可以使用<code>compare_exchange_</code>来同时修改。如果在支持<code>int64</code>类型的<code>compare_exchange_</code>操作的平台，队列大小的上限可以放到<span class="math">\(2^{32} -2\)</span> ，同时两个索引会被压缩为一个<code>int64</code>来做同时修改。</p>
+<p>如果是不定大小的队列，则会使用链表的形式来维持队列结构, 代码见下。</p>
+<div class="codehilite"><pre><span></span> <span class="k">struct</span> <span class="n">BOOST_LOCKFREE_CACHELINE_ALIGNMENT</span> <span class="n">node</span>
+ <span class="p">{</span>
+   <span class="k">typedef</span> <span class="k">typename</span> <span class="n">detail</span><span class="o">::</span><span class="n">select_tagged_handle</span><span class="o">&lt;</span><span class="n">node</span><span class="p">,</span> <span class="n">node_based</span><span class="o">&gt;::</span><span class="n">tagged_handle_type</span> <span class="n">tagged_node_handle</span><span class="p">;</span>
+   <span class="k">typedef</span> <span class="k">typename</span> <span class="n">detail</span><span class="o">::</span><span class="n">select_tagged_handle</span><span class="o">&lt;</span><span class="n">node</span><span class="p">,</span> <span class="n">node_based</span><span class="o">&gt;::</span><span class="n">handle_type</span> <span class="n">handle_type</span><span class="p">;</span>
+
+   <span class="n">node</span><span class="p">(</span><span class="n">T</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="n">v</span><span class="p">,</span> <span class="n">handle_type</span> <span class="n">null_handle</span><span class="p">)</span><span class="o">:</span>
+   <span class="n">data</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="c1">//, next(tagged_node_handle(0, 0))</span>
+   <span class="p">{</span>
+     <span class="cm">/* increment tag to avoid ABA problem */</span>
+     <span class="n">tagged_node_handle</span> <span class="n">old_next</span> <span class="o">=</span> <span class="n">next</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+     <span class="n">tagged_node_handle</span> <span class="nf">new_next</span> <span class="p">(</span><span class="n">null_handle</span><span class="p">,</span> <span class="n">old_next</span><span class="p">.</span><span class="n">get_next_tag</span><span class="p">());</span>
+     <span class="n">next</span><span class="p">.</span><span class="n">store</span><span class="p">(</span><span class="n">new_next</span><span class="p">,</span> <span class="n">memory_order_release</span><span class="p">);</span>
+   <span class="p">}</span>
+
+   <span class="n">node</span> <span class="p">(</span><span class="n">handle_type</span> <span class="n">null_handle</span><span class="p">)</span><span class="o">:</span>
+   <span class="n">next</span><span class="p">(</span><span class="n">tagged_node_handle</span><span class="p">(</span><span class="n">null_handle</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+   <span class="p">{}</span>
+
+   <span class="n">node</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+   <span class="p">{}</span>
+
+   <span class="n">atomic</span><span class="o">&lt;</span><span class="n">tagged_node_handle</span><span class="o">&gt;</span> <span class="n">next</span><span class="p">;</span>
+   <span class="n">T</span> <span class="n">data</span><span class="p">;</span>
+ <span class="p">};</span>
+</pre></div>
+
+
+<p>这里比较有意思的就是第九行的注释：对指针的<code>tag</code>位置进行自增来避免<code>ABA</code>问题。这里的<code>next</code>指针是一个<code>tagged_pointer</code>，其分配位置是内存对齐的，对齐的大小由<code>BOOST_LOCKFREE_CACHELINE_BYTES</code>定义，在<code>WIN</code>平台下，这个宏定义如下：</p>
+<div class="codehilite"><pre><span></span><span class="cp">#define BOOST_LOCKFREE_CACHELINE_BYTES 64</span>
+<span class="cp">#ifdef _MSC_VER</span>
+<span class="cp">#define BOOST_LOCKFREE_CACHELINE_ALIGNMENT __declspec(align(BOOST_LOCKFREE_CACHELINE_BYTES))</span>
+</pre></div>
+
+
+<p>当这个指针是64字节对齐时，最底的6位是没有意义的，所以这6位我们可以用来存储额外的数据，这种指针就叫做<code>tagged_pointer</code>，在<code>llvm</code>里这个指针结构也很常见。</p>
+<p>在<code>boost lockfree queue</code>里，数据成员定义如下：</p>
+<div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="k">typename</span> <span class="n">detail</span><span class="o">::</span><span class="n">queue_signature</span><span class="o">::</span><span class="n">bind</span><span class="o">&lt;</span><span class="n">A0</span><span class="p">,</span> <span class="n">A1</span><span class="p">,</span> <span class="n">A2</span><span class="o">&gt;::</span><span class="n">type</span> <span class="n">bound_args</span><span class="p">;</span>
+<span class="k">static</span> <span class="k">const</span> <span class="kt">bool</span> <span class="n">has_capacity</span> <span class="o">=</span> <span class="n">detail</span><span class="o">::</span><span class="n">extract_capacity</span><span class="o">&lt;</span><span class="n">bound_args</span><span class="o">&gt;::</span><span class="n">has_capacity</span><span class="p">;</span>
+<span class="k">static</span> <span class="k">const</span> <span class="kt">size_t</span> <span class="n">capacity</span> <span class="o">=</span> <span class="n">detail</span><span class="o">::</span><span class="n">extract_capacity</span><span class="o">&lt;</span><span class="n">bound_args</span><span class="o">&gt;::</span><span class="n">capacity</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span> <span class="c1">// the queue uses one dummy node</span>
+<span class="k">static</span> <span class="k">const</span> <span class="kt">bool</span> <span class="n">fixed_sized</span> <span class="o">=</span> <span class="n">detail</span><span class="o">::</span><span class="n">extract_fixed_sized</span><span class="o">&lt;</span><span class="n">bound_args</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+<span class="k">static</span> <span class="k">const</span> <span class="kt">bool</span> <span class="n">node_based</span> <span class="o">=</span> <span class="o">!</span><span class="p">(</span><span class="n">has_capacity</span> <span class="o">||</span> <span class="n">fixed_sized</span><span class="p">);</span>
+<span class="k">static</span> <span class="k">const</span> <span class="kt">bool</span> <span class="n">compile_time_sized</span> <span class="o">=</span> <span class="n">has_capacity</span><span class="p">;</span>
+<span class="k">typedef</span> <span class="k">typename</span> <span class="n">detail</span><span class="o">::</span><span class="n">extract_allocator</span><span class="o">&lt;</span><span class="n">bound_args</span><span class="p">,</span> <span class="n">node</span><span class="o">&gt;::</span><span class="n">type</span> <span class="n">node_allocator</span><span class="p">;</span>
+<span class="k">typedef</span> <span class="k">typename</span> <span class="n">detail</span><span class="o">::</span><span class="n">select_freelist</span><span class="o">&lt;</span><span class="n">node</span><span class="p">,</span> <span class="n">node_allocator</span><span class="p">,</span> <span class="n">compile_time_sized</span><span class="p">,</span> <span class="n">fixed_sized</span><span class="p">,</span> <span class="n">capacity</span><span class="o">&gt;::</span><span class="n">type</span> <span class="n">pool_t</span><span class="p">;</span>
+<span class="k">typedef</span> <span class="k">typename</span> <span class="n">pool_t</span><span class="o">::</span><span class="n">tagged_node_handle</span> <span class="n">tagged_node_handle</span><span class="p">;</span>
+<span class="k">typedef</span> <span class="k">typename</span> <span class="n">detail</span><span class="o">::</span><span class="n">select_tagged_handle</span><span class="o">&lt;</span><span class="n">node</span><span class="p">,</span> <span class="n">node_based</span><span class="o">&gt;::</span><span class="n">handle_type</span> <span class="n">handle_type</span><span class="p">;</span>
+
+<span class="n">atomic</span><span class="o">&lt;</span><span class="n">tagged_node_handle</span><span class="o">&gt;</span> <span class="n">head_</span><span class="p">;</span>
+<span class="k">static</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">padding_size</span> <span class="o">=</span> <span class="n">BOOST_LOCKFREE_CACHELINE_BYTES</span> <span class="o">-</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">tagged_node_handle</span><span class="p">);</span>
+<span class="kt">char</span> <span class="n">padding1</span><span class="p">[</span><span class="n">padding_size</span><span class="p">];</span>
+<span class="n">atomic</span><span class="o">&lt;</span><span class="n">tagged_node_handle</span><span class="o">&gt;</span> <span class="n">tail_</span><span class="p">;</span>
+<span class="kt">char</span> <span class="n">padding2</span><span class="p">[</span><span class="n">padding_size</span><span class="p">];</span>
+<span class="n">pool_t</span> <span class="n">pool</span><span class="p">;</span> <span class="c1">//代表node的pool 可以当作内存分配器</span>
+</pre></div>
+
+
+<p>因为<code>atomic&lt;T*&gt;</code>内部只包含一个<code>T*</code>作为成员变量，所以<code>atomic&lt;T*&gt;</code>与<code>T*</code>的内存布局是一样的，所以这里的<code>padding_size</code>才会这样计算出来。这里的<code>padding</code>的意义在于让<code>poll</code>的开始地址是<code>BOOST_LOCKFREE_CACHELINE_BYTES</code>对齐的，同时这里分为了两个<code>padding</code>而不是一个<code>padding</code>主要是考虑到将<code>tail head</code>分离在两个<code>cache_line</code>上，避免不同线程之间的缓存竞争。</p>
+<p>现在我们来看这个<code>lockfree queue</code>提供的接口。</p>
+<p>首先查看<code>empty</code>。</p>
+<div class="codehilite"><pre><span></span><span class="cm">/** Check if the queue is empty</span>
+<span class="cm">*</span>
+<span class="cm">* \return true, if the queue is empty, false otherwise</span>
+<span class="cm">* \note The result is only accurate, if no other thread modifies the queue. Therefore it is rarely practical to use this</span>
+<span class="cm">*       value in program logic.</span>
+<span class="cm">* */</span><span class="w"></span>
+bool<span class="w"> </span>empty<span class="o">(</span>void<span class="o">)</span><span class="w"></span>
+<span class="err">{</span><span class="w"></span>
+<span class="kr">return</span><span class="w"> </span>pool<span class="o">.</span>get_handle<span class="o">(</span>head_<span class="o">.</span>load<span class="o">())</span><span class="w"> </span><span class="o">==</span><span class="w"> </span>pool<span class="o">.</span>get_handle<span class="o">(</span>tail_<span class="o">.</span>load<span class="o">())</span><span class="err">;</span><span class="w"></span>
+<span class="err">}</span><span class="w"></span>
+</pre></div>
+
+
+<p>注释里写的很清楚了，这个函数的返回值是不准确的，因为在没有锁的情况下无法同时获得<code>head tail</code>的准确值。</p>
+<p>现在来看<code>push</code>，这里分为了两个接口<code>push bounded_push</code>，区分在于如果内存池已经用完，第一个<code>push</code>在当前队列是大小固定的情况下会返回<code>false</code>，不固定的情况下会向操作系统尝试申请更多的内存并返回；而第二个<code>bounded_push</code>则直接返回<code>false</code>。</p>
+<div class="codehilite"><pre><span></span><span class="cm">/** Pushes object t to the queue.</span>
+<span class="cm">*</span>
+<span class="cm">* \post object will be pushed to the queue, if internal node can be allocated</span>
+<span class="cm">* \returns true, if the push operation is successful.</span>
+<span class="cm">*</span>
+<span class="cm">* \note Thread-safe. If internal memory pool is exhausted and the memory pool is not fixed-sized, a new node will be allocated</span>
+<span class="cm">*                    from the OS. This may not be lock-free.</span>
+<span class="cm">* */</span><span class="w"></span>
+bool<span class="w"> </span><span class="kr">push</span><span class="o">(</span>T<span class="w"> </span>const<span class="w"> </span><span class="o">&amp;</span><span class="w"> </span>t<span class="o">)</span><span class="w"></span>
+<span class="err">{</span><span class="w"></span>
+<span class="w">    </span><span class="kr">return</span><span class="w"> </span>do_push<span class="o">&lt;</span>false<span class="o">&gt;(</span>t<span class="o">)</span><span class="err">;</span><span class="w"></span>
+<span class="err">}</span><span class="w"></span>
+
+<span class="cm">/** Pushes object t to the queue.</span>
+<span class="cm">*</span>
+<span class="cm">* \post object will be pushed to the queue, if internal node can be allocated</span>
+<span class="cm">* \returns true, if the push operation is successful.</span>
+<span class="cm">*</span>
+<span class="cm">* \note Thread-safe and non-blocking. If internal memory pool is exhausted, operation will fail</span>
+<span class="cm">* \throws if memory allocator throws</span>
+<span class="cm">* */</span><span class="w"></span>
+bool<span class="w"> </span>bounded_push<span class="o">(</span>T<span class="w"> </span>const<span class="w"> </span><span class="o">&amp;</span><span class="w"> </span>t<span class="o">)</span><span class="w"></span>
+<span class="err">{</span><span class="w"></span>
+<span class="w">    </span><span class="kr">return</span><span class="w"> </span>do_push<span class="o">&lt;</span>true<span class="o">&gt;(</span>t<span class="o">)</span><span class="err">;</span><span class="w"></span>
+<span class="err">}</span><span class="w"></span>
+</pre></div>
+
+
+<p>这两个函数都调用了<code>do_push</code>，这个函数的定义如下：</p>
+<div class="codehilite"><pre><span></span>    <span class="k">template</span> <span class="o">&lt;</span><span class="kt">bool</span> <span class="n">Bounded</span><span class="o">&gt;</span>
+    <span class="kt">bool</span> <span class="n">do_push</span><span class="p">(</span><span class="n">T</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="n">t</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">using</span> <span class="n">detail</span><span class="o">::</span><span class="n">likely</span><span class="p">;</span>
+
+        <span class="n">node</span> <span class="o">*</span> <span class="n">n</span> <span class="o">=</span> <span class="n">pool</span><span class="p">.</span><span class="k">template</span> <span class="n">construct</span><span class="o">&lt;</span><span class="nb">true</span><span class="p">,</span> <span class="n">Bounded</span><span class="o">&gt;</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">pool</span><span class="p">.</span><span class="n">null_handle</span><span class="p">());</span>
+        <span class="n">handle_type</span> <span class="n">node_handle</span> <span class="o">=</span> <span class="n">pool</span><span class="p">.</span><span class="n">get_handle</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+
+        <span class="k">for</span> <span class="p">(;;)</span> <span class="p">{</span>
+            <span class="n">tagged_node_handle</span> <span class="n">tail</span> <span class="o">=</span> <span class="n">tail_</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+            <span class="n">node</span> <span class="o">*</span> <span class="n">tail_node</span> <span class="o">=</span> <span class="n">pool</span><span class="p">.</span><span class="n">get_pointer</span><span class="p">(</span><span class="n">tail</span><span class="p">);</span>
+            <span class="n">tagged_node_handle</span> <span class="n">next</span> <span class="o">=</span> <span class="n">tail_node</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+            <span class="n">node</span> <span class="o">*</span> <span class="n">next_ptr</span> <span class="o">=</span> <span class="n">pool</span><span class="p">.</span><span class="n">get_pointer</span><span class="p">(</span><span class="n">next</span><span class="p">);</span>
+
+            <span class="n">tagged_node_handle</span> <span class="n">tail2</span> <span class="o">=</span> <span class="n">tail_</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">likely</span><span class="p">(</span><span class="n">tail</span> <span class="o">==</span> <span class="n">tail2</span><span class="p">))</span> <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">next_ptr</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="n">tagged_node_handle</span> <span class="n">new_tail_next</span><span class="p">(</span><span class="n">node_handle</span><span class="p">,</span> <span class="n">next</span><span class="p">.</span><span class="n">get_next_tag</span><span class="p">());</span>
+                    <span class="k">if</span> <span class="p">(</span> <span class="n">tail_node</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">.</span><span class="n">compare_exchange_weak</span><span class="p">(</span><span class="n">next</span><span class="p">,</span> <span class="n">new_tail_next</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+                        <span class="n">tagged_node_handle</span> <span class="n">new_tail</span><span class="p">(</span><span class="n">node_handle</span><span class="p">,</span> <span class="n">tail</span><span class="p">.</span><span class="n">get_next_tag</span><span class="p">());</span>
+                        <span class="n">tail_</span><span class="p">.</span><span class="n">compare_exchange_strong</span><span class="p">(</span><span class="n">tail</span><span class="p">,</span> <span class="n">new_tail</span><span class="p">);</span>
+                        <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+                <span class="k">else</span> <span class="p">{</span>
+                    <span class="n">tagged_node_handle</span> <span class="n">new_tail</span><span class="p">(</span><span class="n">pool</span><span class="p">.</span><span class="n">get_handle</span><span class="p">(</span><span class="n">next_ptr</span><span class="p">),</span> <span class="n">tail</span><span class="p">.</span><span class="n">get_next_tag</span><span class="p">());</span>
+                    <span class="n">tail_</span><span class="p">.</span><span class="n">compare_exchange_strong</span><span class="p">(</span><span class="n">tail</span><span class="p">,</span> <span class="n">new_tail</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</pre></div>
+
+
+<p>这里比较难理解的一点就是<code>tail tail2</code>。一般来说最内层的<code>compare_exchange_weak</code>执行就可以保证正确的了，这里的外部两个判断就可以保证正确，可能有一些情况我没想过。。。。。。。同时28行所在的分支难道不应该使用<code>tail2</code>?</p>
+<p>对于<code>pop</code>则只有一个函数:</p>
+<div class="codehilite"><pre><span></span>    <span class="cm">/** Pops object from queue.</span>
+<span class="cm">     *</span>
+<span class="cm">     * \pre type U must be constructible by T and copyable, or T must be convertible to U</span>
+<span class="cm">     * \post if pop operation is successful, object will be copied to ret.</span>
+<span class="cm">     * \returns true, if the pop operation is successful, false if queue was empty.</span>
+<span class="cm">     *</span>
+<span class="cm">     * \note Thread-safe and non-blocking</span>
+<span class="cm">     * */</span>
+    <span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">U</span><span class="o">&gt;</span>
+    <span class="kt">bool</span> <span class="n">pop</span> <span class="p">(</span><span class="n">U</span> <span class="o">&amp;</span> <span class="n">ret</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">using</span> <span class="n">detail</span><span class="o">::</span><span class="n">likely</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(;;)</span> <span class="p">{</span>
+            <span class="n">tagged_node_handle</span> <span class="n">head</span> <span class="o">=</span> <span class="n">head_</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+            <span class="n">node</span> <span class="o">*</span> <span class="n">head_ptr</span> <span class="o">=</span> <span class="n">pool</span><span class="p">.</span><span class="n">get_pointer</span><span class="p">(</span><span class="n">head</span><span class="p">);</span>
+
+            <span class="n">tagged_node_handle</span> <span class="n">tail</span> <span class="o">=</span> <span class="n">tail_</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+            <span class="n">tagged_node_handle</span> <span class="n">next</span> <span class="o">=</span> <span class="n">head_ptr</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+            <span class="n">node</span> <span class="o">*</span> <span class="n">next_ptr</span> <span class="o">=</span> <span class="n">pool</span><span class="p">.</span><span class="n">get_pointer</span><span class="p">(</span><span class="n">next</span><span class="p">);</span>
+
+            <span class="n">tagged_node_handle</span> <span class="n">head2</span> <span class="o">=</span> <span class="n">head_</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">likely</span><span class="p">(</span><span class="n">head</span> <span class="o">==</span> <span class="n">head2</span><span class="p">))</span> <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">pool</span><span class="p">.</span><span class="n">get_handle</span><span class="p">(</span><span class="n">head</span><span class="p">)</span> <span class="o">==</span> <span class="n">pool</span><span class="p">.</span><span class="n">get_handle</span><span class="p">(</span><span class="n">tail</span><span class="p">))</span> <span class="p">{</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">next_ptr</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+                        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+
+                    <span class="n">tagged_node_handle</span> <span class="nf">new_tail</span><span class="p">(</span><span class="n">pool</span><span class="p">.</span><span class="n">get_handle</span><span class="p">(</span><span class="n">next</span><span class="p">),</span> <span class="n">tail</span><span class="p">.</span><span class="n">get_next_tag</span><span class="p">());</span>
+                    <span class="n">tail_</span><span class="p">.</span><span class="n">compare_exchange_strong</span><span class="p">(</span><span class="n">tail</span><span class="p">,</span> <span class="n">new_tail</span><span class="p">);</span>
+
+                <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">next_ptr</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+                        <span class="cm">/* this check is not part of the original algorithm as published by michael and scott</span>
+<span class="cm">                         *</span>
+<span class="cm">                         * however we reuse the tagged_ptr part for the freelist and clear the next part during node</span>
+<span class="cm">                         * allocation. we can observe a null-pointer here.</span>
+<span class="cm">                         * */</span>
+                        <span class="k">continue</span><span class="p">;</span>
+                    <span class="n">detail</span><span class="o">::</span><span class="n">copy_payload</span><span class="p">(</span><span class="n">next_ptr</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">,</span> <span class="n">ret</span><span class="p">);</span>
+
+                    <span class="n">tagged_node_handle</span> <span class="nf">new_head</span><span class="p">(</span><span class="n">pool</span><span class="p">.</span><span class="n">get_handle</span><span class="p">(</span><span class="n">next</span><span class="p">),</span> <span class="n">head</span><span class="p">.</span><span class="n">get_next_tag</span><span class="p">());</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">head_</span><span class="p">.</span><span class="n">compare_exchange_weak</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">new_head</span><span class="p">))</span> <span class="p">{</span>
+                        <span class="n">pool</span><span class="p">.</span><span class="k">template</span> <span class="n">destruct</span><span class="o">&lt;</span><span class="nb">true</span><span class="o">&gt;</span><span class="p">(</span><span class="n">head</span><span class="p">);</span>
+                        <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</pre></div>
+
+
+<p>这里还是有很多的判断，都是为了防止其他线程对数据的修改，具体的以后分析。这里比较有意思的一点就是42行的<code>.template</code>，这个叫做<a href="http://en.cppreference.com/w/cpp/language/dependent_name">template disambiguator</a>， 其作用就是通知编译器<code>destruct&lt;true&gt;</code>是一个模板，而不是<code>destruct &lt; true</code> 。</p>
+<p>总的来说， <code>boost lockfree queue</code>的注意点完全在<code>lock free</code>上，并没有采取每个生产者单独一个<code>queue</code>的方式来解决争用，虽然我们可以在<code>lockfree queue</code>的基础上做一个这样的东西。</p>
+<h2 id="cecc0c">intel tbb concurrent queue</h2>
+<p>其实这个的总体实现与boost类似。占坑，以后填。粗看起来，这个东西的实现很具有<code>STL</code>的风格。</p>
+<h2 id="01023c">moodycamel concurrent queue</h2>
+<p>这个<code>concurrent queue</code>的实现被很多项目使用过， 值得重点分析。这个实现的突出之处在于，每个生产者都维持自己的专属<code>queue</code>，而不同的消费者会以不同的顺序去访问各个生产者的<code>queue</code>，直到遇到一个不为空的<code>queue</code>。简而言之，他所实现的<code>MPMC(multiple producer multiple consumer)</code>的队列建立在了<code>SPMC</code>的多线程队列的基础上。这个<code>SPMC</code>的实现是<code>lockfree</code>的，同时还增加了<code>bulk</code>操作。下面来慢慢介绍这个的实现。</p>
+<h3 id="021ead">the Token</h3>
+<p>在当前的设计里，有一个跟其他<code>queue</code>很不同的地方就是<code>token</code>，分别是<code>consume token</code>和<code>produce token</code>。现在来分别看一下这两个<code>token</code>的代码。</p>
+<p>首先是<code>produce token</code>，这个类的构造函数需要提供一个<code>queue</code>，存储到内部的指针之中，同时这个<code>queue</code>也有一个字段来存储当前对象的指针。这个结构的意思差不多就是提供<code>queue</code>的一个<code>produce handler</code>，只有拿到这个<code>handler</code>才能进行<code>produce</code>操作。</p>
+<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">ProducerToken</span>
+<span class="p">{</span>
+    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Traits</span><span class="o">&gt;</span>
+    <span class="k">explicit</span> <span class="n">ProducerToken</span><span class="p">(</span><span class="n">ConcurrentQueue</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Traits</span><span class="o">&gt;&amp;</span> <span class="n">queue</span><span class="p">);</span>
+
+    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Traits</span><span class="o">&gt;</span>
+    <span class="k">explicit</span> <span class="n">ProducerToken</span><span class="p">(</span><span class="n">BlockingConcurrentQueue</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Traits</span><span class="o">&gt;&amp;</span> <span class="n">queue</span><span class="p">);</span>  
+    <span class="o">~</span><span class="n">ProducerToken</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">producer</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">producer</span><span class="o">-&gt;</span><span class="n">token</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+            <span class="n">producer</span><span class="o">-&gt;</span><span class="n">inactive</span><span class="p">.</span><span class="n">store</span><span class="p">(</span><span class="nb">true</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_release</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Disable copying and assignment</span>
+    <span class="n">ProducerToken</span><span class="p">(</span><span class="n">ProducerToken</span> <span class="k">const</span><span class="o">&amp;</span><span class="p">)</span> <span class="n">MOODYCAMEL_DELETE_FUNCTION</span><span class="p">;</span>
+    <span class="n">ProducerToken</span><span class="o">&amp;</span> <span class="k">operator</span><span class="o">=</span><span class="p">(</span><span class="n">ProducerToken</span> <span class="k">const</span><span class="o">&amp;</span><span class="p">)</span> <span class="n">MOODYCAMEL_DELETE_FUNCTION</span><span class="p">;</span>
+
+<span class="k">private</span><span class="o">:</span>
+    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Traits</span><span class="o">&gt;</span> <span class="k">friend</span> <span class="k">class</span> <span class="nc">ConcurrentQueue</span><span class="p">;</span>
+    <span class="k">friend</span> <span class="k">class</span> <span class="nc">ConcurrentQueueTests</span><span class="p">;</span>
+
+<span class="k">protected</span><span class="o">:</span>
+    <span class="n">details</span><span class="o">::</span><span class="n">ConcurrentQueueProducerTypelessBase</span><span class="o">*</span> <span class="n">producer</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+
+
+<p>而<code>consume token</code>则复杂一点，由于在<code>consume</code>的时候可能需要访问很多<code>queue</code>，所以内部存储了多个<code>queue</code>的指针。老实说内部的其他字段意义目前不明。</p>
+<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">ConsumerToken</span>
+<span class="p">{</span>
+    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Traits</span><span class="o">&gt;</span>
+    <span class="k">explicit</span> <span class="n">ConsumerToken</span><span class="p">(</span><span class="n">ConcurrentQueue</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Traits</span><span class="o">&gt;&amp;</span> <span class="n">q</span><span class="p">);</span>
+
+    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Traits</span><span class="o">&gt;</span>
+    <span class="k">explicit</span> <span class="n">ConsumerToken</span><span class="p">(</span><span class="n">BlockingConcurrentQueue</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Traits</span><span class="o">&gt;&amp;</span> <span class="n">q</span><span class="p">);</span>
+
+    <span class="n">ConsumerToken</span><span class="p">(</span><span class="n">ConsumerToken</span><span class="o">&amp;&amp;</span> <span class="n">other</span><span class="p">)</span> <span class="nl">MOODYCAMEL_NOEXCEPT</span>
+        <span class="p">:</span> <span class="n">initialOffset</span><span class="p">(</span><span class="n">other</span><span class="p">.</span><span class="n">initialOffset</span><span class="p">),</span> <span class="n">lastKnownGlobalOffset</span><span class="p">(</span><span class="n">other</span><span class="p">.</span><span class="n">lastKnownGlobalOffset</span><span class="p">),</span> <span class="n">itemsConsumedFromCurrent</span><span class="p">(</span><span class="n">other</span><span class="p">.</span><span class="n">itemsConsumedFromCurrent</span><span class="p">),</span> <span class="n">currentProducer</span><span class="p">(</span><span class="n">other</span><span class="p">.</span><span class="n">currentProducer</span><span class="p">),</span> <span class="n">desiredProducer</span><span class="p">(</span><span class="n">other</span><span class="p">.</span><span class="n">desiredProducer</span><span class="p">)</span>
+    <span class="p">{</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Disable copying and assignment</span>
+    <span class="n">ConsumerToken</span><span class="p">(</span><span class="n">ConsumerToken</span> <span class="k">const</span><span class="o">&amp;</span><span class="p">)</span> <span class="n">MOODYCAMEL_DELETE_FUNCTION</span><span class="p">;</span>
+    <span class="n">ConsumerToken</span><span class="o">&amp;</span> <span class="k">operator</span><span class="o">=</span><span class="p">(</span><span class="n">ConsumerToken</span> <span class="k">const</span><span class="o">&amp;</span><span class="p">)</span> <span class="n">MOODYCAMEL_DELETE_FUNCTION</span><span class="p">;</span>
+
+<span class="k">private</span><span class="o">:</span>
+    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Traits</span><span class="o">&gt;</span> <span class="k">friend</span> <span class="k">class</span> <span class="nc">ConcurrentQueue</span><span class="p">;</span>
+    <span class="k">friend</span> <span class="k">class</span> <span class="nc">ConcurrentQueueTests</span><span class="p">;</span>
+
+<span class="k">private</span><span class="o">:</span> <span class="c1">// but shared with ConcurrentQueue</span>
+    <span class="n">std</span><span class="o">::</span><span class="kt">uint32_t</span> <span class="n">initialOffset</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="kt">uint32_t</span> <span class="n">lastKnownGlobalOffset</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="kt">uint32_t</span> <span class="n">itemsConsumedFromCurrent</span><span class="p">;</span>
+    <span class="n">details</span><span class="o">::</span><span class="n">ConcurrentQueueProducerTypelessBase</span><span class="o">*</span> <span class="n">currentProducer</span><span class="p">;</span>
+    <span class="n">details</span><span class="o">::</span><span class="n">ConcurrentQueueProducerTypelessBase</span><span class="o">*</span> <span class="n">desiredProducer</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+
+
+<h3 id="96bf1b">Enqueue</h3>
+<p>现在来看<code>queue</code>的代码，首先吸引注意的就是析构函数:</p>
+<div class="codehilite"><pre><span></span><span class="c1">// Note: The queue should not be accessed concurrently while it&#39;s</span>
+    <span class="c1">// being deleted. It&#39;s up to the user to synchronize this.</span>
+    <span class="c1">// This method is not thread safe.</span>
+    <span class="o">~</span><span class="n">ConcurrentQueue</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="c1">// Destroy producers</span>
+        <span class="k">auto</span> <span class="n">ptr</span> <span class="o">=</span> <span class="n">producerListTail</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">ptr</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">auto</span> <span class="n">next</span> <span class="o">=</span> <span class="n">ptr</span><span class="o">-&gt;</span><span class="n">next_prod</span><span class="p">();</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">ptr</span><span class="o">-&gt;</span><span class="n">token</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">ptr</span><span class="o">-&gt;</span><span class="n">token</span><span class="o">-&gt;</span><span class="n">producer</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="n">destroy</span><span class="p">(</span><span class="n">ptr</span><span class="p">);</span>
+            <span class="n">ptr</span> <span class="o">=</span> <span class="n">next</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">// Destroy implicit producer hash tables</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">INITIAL_IMPLICIT_PRODUCER_HASH_SIZE</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">auto</span> <span class="n">hash</span> <span class="o">=</span> <span class="n">implicitProducerHash</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+            <span class="k">while</span> <span class="p">(</span><span class="n">hash</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">auto</span> <span class="n">prev</span> <span class="o">=</span> <span class="n">hash</span><span class="o">-&gt;</span><span class="n">prev</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">prev</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>      <span class="c1">// The last hash is part of this object and was not allocated dynamically</span>
+                    <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">!=</span> <span class="n">hash</span><span class="o">-&gt;</span><span class="n">capacity</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="n">hash</span><span class="o">-&gt;</span><span class="n">entries</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="o">~</span><span class="n">ImplicitProducerKVP</span><span class="p">();</span>
+                    <span class="p">}</span>
+                    <span class="n">hash</span><span class="o">-&gt;~</span><span class="n">ImplicitProducerHash</span><span class="p">();</span>
+                    <span class="p">(</span><span class="n">Traits</span><span class="o">::</span><span class="n">free</span><span class="p">)(</span><span class="n">hash</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="n">hash</span> <span class="o">=</span> <span class="n">prev</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="c1">// Destroy global free list</span>
+        <span class="k">auto</span> <span class="n">block</span> <span class="o">=</span> <span class="n">freeList</span><span class="p">.</span><span class="n">head_unsafe</span><span class="p">();</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">block</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">auto</span> <span class="n">next</span> <span class="o">=</span> <span class="n">block</span><span class="o">-&gt;</span><span class="n">freeListNext</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">block</span><span class="o">-&gt;</span><span class="n">dynamicallyAllocated</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">destroy</span><span class="p">(</span><span class="n">block</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="n">block</span> <span class="o">=</span> <span class="n">next</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">// Destroy initial free list</span>
+        <span class="n">destroy_array</span><span class="p">(</span><span class="n">initialBlockPool</span><span class="p">,</span> <span class="n">initialBlockPoolSize</span><span class="p">);</span>
+    <span class="p">}</span>
+</pre></div>
+
+
+<p>从这个析构函数里可以看出这个<code>queue</code>维持了主要的三个结构：</p>
+<ol>
+<li><code>producer list</code>， 通过一个单链表来串联，指针是<code>producerListTail</code>，每一个项都是一个生产者<code>queue</code></li>
+<li><code>implicit hash tables</code> ，这个也是一个单链表，指针是<code>implicitProducerhash</code>，每一个项都是一个没有<code>token</code>的生产者的一个<code>hash table</code>，但是具体做什么用的还不明，可能是记录当前隐式生产者与各个<code>produce queue</code>之间的亲和度吧。</li>
+<li><code>freeList</code>， 这个是用来保存所有动态分配的内存<code>pool</code>，是一个<code>block</code>的单链表，这些<code>block</code>有些是动态分配的，有些是静态预先分配的。静态预先分配的<code>block</code>的销毁在<code>destroy_array</code>里。</li>
+</ol>
+<p>然后第二重要的是<code>enqueue</code>函数，这个函数对于有没有<code>token</code>的操作者进行了区分:</p>
+<div class="codehilite"><pre><span></span><span class="c1">// Enqueues a single item (by copying it).</span>
+    <span class="c1">// Allocates memory if required. Only fails if memory allocation fails (or implicit</span>
+    <span class="c1">// production is disabled because Traits::INITIAL_IMPLICIT_PRODUCER_HASH_SIZE is 0,</span>
+    <span class="c1">// or Traits::MAX_SUBQUEUE_SIZE has been defined and would be surpassed).</span>
+    <span class="c1">// Thread-safe.</span>
+    <span class="kr">inline</span> <span class="kt">bool</span> <span class="nf">enqueue</span><span class="p">(</span><span class="n">T</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">item</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">INITIAL_IMPLICIT_PRODUCER_HASH_SIZE</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+        <span class="k">return</span> <span class="n">inner_enqueue</span><span class="o">&lt;</span><span class="n">CanAlloc</span><span class="o">&gt;</span><span class="p">(</span><span class="n">item</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Enqueues a single item (by copying it) using an explicit producer token.</span>
+    <span class="c1">// Allocates memory if required. Only fails if memory allocation fails (or</span>
+    <span class="c1">// Traits::MAX_SUBQUEUE_SIZE has been defined and would be surpassed).</span>
+    <span class="c1">// Thread-safe.</span>
+    <span class="kr">inline</span> <span class="kt">bool</span> <span class="nf">enqueue</span><span class="p">(</span><span class="n">producer_token_t</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">token</span><span class="p">,</span> <span class="n">T</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">item</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="n">inner_enqueue</span><span class="o">&lt;</span><span class="n">CanAlloc</span><span class="o">&gt;</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">item</span><span class="p">);</span>
+    <span class="p">}</span>
+</pre></div>
+
+
+<p>除了</p>
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
+
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+    mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
+        "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
+    </div>
+    <div id="content-comments">
+</div>
+
+</div>
+<div class="niu2-right-container col-md-2">
+    <div id="niu2-sidebar-meta" class="niu2-sidebar">
+        <div class="niu2-sidebar-label"><i class="icon-calendar"></i>Published:</div>
+        <div class="niu2-sidebar-value">2017-06-08 22:00</div>
+        <div class="niu2-sidebar-label"><i class="icon-open-folder"></i>Category:</div>
+        <div class="niu2-sidebar-value"><a href="./category/concurrency.html">Concurrency</a></div>
+        <div class="niu2-sidebar-label"><i class="icon-tag"></i>Tag:</div>
+ 
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="./tag/concurrency.html">Concurrency</a><sup>3</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="./tag/cpp.html">Cpp</a><sup>14</sup></div>
+    </div>
+
+    <div id="niu2-sidebar-toc" class="niu2-sidebar" data-status="closed">
+        <div class="niu2-sidebar-label">
+            <i id="niu2-sidebar-toc-ctrl" class="icon-open-tocs"></i>TOC
+        </div>
+        <ol id="niu2-sidebar-toc-list">
+            <li><a href="#content-heading">Concurrent Queue</a></li>
+            <li><a href='#6b5bed'>Concurrent Queue</a><ol><li><a href='#8fd87e'>naive concurrent queue</a></li><li><a href='#27c936'>boost concurrent queue</a></li><li><a href='#cecc0c'>intel tbb concurrent queue</a></li><li><a href='#01023c'>moodycamel concurrent queue</a><ol><li><a href='#021ead'>the Token</a></li><li><a href='#96bf1b'>Enqueue</a></li></ol></li></ol></li>
+        </ol>
+    </div>
+</div>    </div>
+
+    <div class="niu2-footer">
+        <div id="body-footer" class="col-md-6 col-md-offset-2">
+<hr/>
+<p>
+    Powered by <a href="https://github.com/getpelican/pelican">Pelican</a>, 
+    <a href="https://github.com/mawenbao/niu-x2-sidebar">theme</a> built with <a href="http://getbootstrap.com">Bootstrap3</a>
+    by <a href="http://blog.atime.me">Ma Wenbao</a>, icons by 
+    <a href="http://fortawesome.github.io/Font-Awesome">Font Awesome</a>.
+</p>
+<p>
+    ©
+            2014-2017
+    <a class="niu2-footer-link" href=".">Huiliang Huang</a>
+</p>
+<p class="niu2-icons">
+</p>        </div>
+    </div>
+    
+    <div id="niu2-pygments" data-theme="github"></div>
+
+    <script type="text/javascript" src="./theme/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="./theme/js/niu2.min.js"></script>
+    <script type="text/javascript" src="./theme/js/bootstrap.min.js"></script>
+    <script type="text/javascript">onContentLoaded();</script>
+  </body>
+</html>
