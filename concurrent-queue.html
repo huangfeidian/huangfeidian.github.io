@@ -305,7 +305,7 @@ bool<span class="w"> </span>bounded_push<span class="o">(</span>T<span class="w"
 </pre></div>
 
 
-<p>这里比较难理解的一点就是<code>tail tail2</code>。一般来说最内层的<code>compare_exchange_weak</code>执行就可以保证正确的了，这里的外部两个判断就可以保证正确，可能有一些情况我没想过。。。。。。。同时28行所在的分支难道不应该使用<code>tail2</code>?</p>
+<p>这里比较难理解的一点就是<code>tail tail2</code>，以及最后30行的<code>compare_exchange_strong</code>。这里在19行使用判断的意义是避免在内部做无用功，虽然不使用19行的判断， <code>tail</code>改变之后，20行所在分支的检测都会<code>fail</code>掉，对正确性没影响，对性能上来说提升很大。在一个完整的成功<code>push</code>流程中有两个<code>cas</code>操作，我们需要担心的是在两个<code>cas</code>操作之间线程被换出之后会出现何种结果，也就是在24行之前被换出。此时老的<code>tail</code>的<code>next</code>已经被修正为了新数据，而新<code>tail</code>却没有更新。在下一个线程进来的时候会发现<code>tail-&gt;next != 0</code>， 因此会进28号的分支，在此分支之内会尝试将<code>tail-&gt;next</code>更新为<code>tail</code>，这样就避免了数据更新到一半的尴尬局面。</p>
 <p>对于<code>pop</code>则只有一个函数:</p>
 <div class="codehilite"><pre><span></span>    <span class="cm">/** Pops object from queue.</span>
 <span class="cm">     *</span>
@@ -358,7 +358,8 @@ bool<span class="w"> </span>bounded_push<span class="o">(</span>T<span class="w"
 </pre></div>
 
 
-<p>这里还是有很多的判断，都是为了防止其他线程对数据的修改，具体的以后分析。这里比较有意思的一点就是42行的<code>.template</code>，这个叫做<a href="http://en.cppreference.com/w/cpp/language/dependent_name">template disambiguator</a>， 其作用就是通知编译器<code>destruct&lt;true&gt;</code>是一个模板，而不是<code>destruct &lt; true</code> 。</p>
+<p>这里就简单多了，成功的<code>pop</code>只需要一个<code>compare_exchange_weak</code>即可，所以就不需要担心数据更改到一半的问题，这里的28行处理的还是<code>tail</code>数据更新到一半的问题。</p>
+<p>这里比较有意思的一点就是42行的<code>.template</code>，这个叫做<a href="http://en.cppreference.com/w/cpp/language/dependent_name">template disambiguator</a>， 其作用就是通知编译器<code>destruct&lt;true&gt;</code>是一个模板，而不是<code>destruct &lt; true</code> 。</p>
 <p>总的来说， <code>boost lockfree queue</code>的注意点完全在<code>lock free</code>上，并没有采取每个生产者单独一个<code>queue</code>的方式来解决争用，虽然我们可以在<code>lockfree queue</code>的基础上做一个这样的东西。</p>
 <h2 id="cecc0c">intel tbb concurrent queue</h2>
 <p>其实这个的总体实现与boost类似。占坑，以后填。粗看起来，这个东西的实现很具有<code>STL</code>的风格。</p>
