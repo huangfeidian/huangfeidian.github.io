@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lockfree Hashtable - spirits away</title>
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.png">
+    <link rel="stylesheet" href="./theme/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="./theme/font-icons/style.min.css" type="text/css" />
+    <link rel="stylesheet" href="./theme/css/niu2.min.css" type="text/css" />
+
+    <link rel="canonical" href="./lockfree-hashtable.html" />
+    
+    <script type="text/javascript">window.onload=function(){};</script>
+    <!--[if lt IE 9]>
+        <script src="./theme/js/html5shiv.js"></script>
+        <script src="./theme/js/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body> 
+    <div id="body-header">
+<div class="navbar navbar-inverse navbar-fixed-top">
+<div class="col-md-12">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href=".">
+            <i class="icon-home"></i>spirits away
+        </a>
+    </div>
+    <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+        <ul class="nav navbar-nav">
+            <li><a href="/pages/about.html" title="about">
+                <i class="icon-anchor"></i>关于</a>
+            </li>
+            <li><a href="/archives.html" title="archives">
+                <i class="icon-archive"></i>存档</a>
+            </li>
+            <li><a href="/tags.html" title="tags">
+                <i class="icon-tag"></i>标签</a>
+            </li>
+        <!-- category dropdown list -->
+        <!--  self defined dropdown list -->
+        </ul>
+        
+        <!-- right nav bar -->
+        <ul class="nav navbar-nav navbar-right">
+        <!-- google custom search -->
+       </ul>
+    </nav>
+</div>
+</div>    </div>
+    
+    <div id="body-content">
+<div class="col-md-8 col-md-offset-2">
+    <h1 id="content-heading">Lockfree Hashtable</h1>
+</div>
+<div id="niu2-left-container" class="col-md-6 col-md-offset-2 with-right-border">
+    <div id="niu2-main-content">
+        <h1 id="45f18b">Lockfree Hashtable</h1>
+<p>对于让hashtable变成无锁，主要要解决如下几个问题：</p>
+<ol>
+<li>hash表的核心就是探查方法，开链法在插入节点的时候会引入动态内存分配的问题，这个是在无锁里面很棘手的问题，所以没有采取开链法，同时二次探查在无锁和缓存上面很不友好，所以使用的就是线性探查。因此我们首先要使得线性探查无锁化。</li>
+<li>hash表插入的时候可能会导致过载。在STL的实现中是发现map内部装载率大于一定值时将map扩容。由于扩容的时候会出现迭代器失效的问题，所以这种方法在无锁的时候压根不可行。所以很多实现是直接开一个新的当前表大小的干净副本，通过指针将所有副本链接起来。查询和插入的时候需要遍历所有的副本</li>
+</ol>
+<h2 id="d8891d">lockfree linear search</h2>
+<p>在preshing的<a href="http://preshing.com/20130529/a-lock-free-linear-search/">一篇文章</a>里面谈到了无锁线性扫描的实现，这里定义了一个基本的<code>Entry</code>:</p>
+<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">Entry</span>
+<span class="p">{</span>
+    <span class="n">mint_atomic32_t</span> <span class="n">key</span><span class="p">;</span>
+    <span class="n">mint_atomic32_t</span> <span class="n">value</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="n">Entry</span> <span class="o">*</span><span class="n">m_entries</span><span class="p">;</span>
+</pre></div>
+
+
+<p>在这个<code>Entry</code>里，我们规定如果<code>key</code>的值为0，则代表这个<code>entry</code>还没有被使用，所以插入的时候禁止传入为0的<code>key</code>。</p>
+<p>在此结构之下，定义的<code>setItem</code>操作如下：</p>
+<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="n">ArrayOfItems</span><span class="o">::</span><span class="n">SetItem</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">key</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">value</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">uint32_t</span> <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;;</span> <span class="n">idx</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="kt">uint32_t</span> <span class="n">prevKey</span> <span class="o">=</span> <span class="n">mint_compare_exchange_strong_32_relaxed</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m_entries</span><span class="p">[</span><span class="n">idx</span><span class="p">].</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">key</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">((</span><span class="n">prevKey</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">||</span> <span class="p">(</span><span class="n">prevKey</span> <span class="o">==</span> <span class="n">key</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="n">mint_store_32_relaxed</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m_entries</span><span class="p">[</span><span class="n">idx</span><span class="p">].</span><span class="n">value</span><span class="p">,</span> <span class="n">value</span><span class="p">);</span>
+            <span class="k">return</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>类似的<code>getItem</code>的操作如下：</p>
+<div class="codehilite"><pre><span></span><span class="kt">uint32_t</span> <span class="n">ArrayOfItems</span><span class="o">::</span><span class="n">GetItem</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">key</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">uint32_t</span> <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;;</span> <span class="n">idx</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="kt">uint32_t</span> <span class="n">probedKey</span> <span class="o">=</span> <span class="n">mint_load_32_relaxed</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m_entries</span><span class="p">[</span><span class="n">idx</span><span class="p">].</span><span class="n">key</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">probedKey</span> <span class="o">==</span> <span class="n">key</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">mint_load_32_relaxed</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m_entries</span><span class="p">[</span><span class="n">idx</span><span class="p">].</span><span class="n">value</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">probedKey</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>          
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>现在的疑问在于，这里的原子操作使用的都是<code>relaxed</code>语义，这个语义在<code>x86</code>上基本等于没有任何作用，如何在使得<code>SetItem</code>里的第8行能够被<code>GetItem</code>的第7行可见。事实上这压根做不到，因为一个线程在执行到<code>SetItem</code>的第8行之前被换出， 然后另外一个线程执行到了<code>GetItem</code>的第7行，这里读取的还是老的值。除了这种情况之外，还可能出现<code>SetItem</code>里的<code>CAS</code>操作并没有将数据更新的通知发放到其他的<code>core</code>上去，然而第8行的<code>store</code>操作已经被另外一个执行<code>GetItem</code>的线程可见的情况，此时<code>GetItem</code>会返回0。这两种情况都是合法的，因为在多线程中读取数据的时机是不确定的，因此读取老数据也是正常的。甚至可以说在没有通知机制的情况下，是不是最新根本没有意义。如果要实现<code>publish-listen</code>的机制，则需要在<code>SetItem</code>的时候将一个原子的<code>bool</code>变量设置为<code>True</code>，同时这个<code>Store</code>操作要使用<code>Release</code>语义，同时另外一个线程在<code>CAS</code>这个值的时候，要使用<code>Acquire</code>语义。</p>
+<div class="codehilite"><pre><span></span><span class="c1">// Shared variables</span>
+<span class="kt">char</span> <span class="n">message</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span>
+<span class="n">ArrayOfItems</span> <span class="n">collection</span><span class="p">;</span>
+
+<span class="kt">void</span> <span class="nf">PublishMessage</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="c1">// Write to shared memory non-atomically.</span>
+    <span class="n">strcpy</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="s">&quot;I pity the fool!&quot;</span><span class="p">);</span>
+
+    <span class="c1">// Release fence: The only way to safely pass non-atomic data between threads using Mintomic.</span>
+    <span class="n">mint_thread_fence_release</span><span class="p">();</span>
+
+    <span class="c1">// Set a flag to indicate to other threads that the message is ready.</span>
+    <span class="n">collection</span><span class="p">.</span><span class="n">SetItem</span><span class="p">(</span><span class="n">SHARED_FLAG_KEY</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>这样才能使得数据更改完并通知完之后，另外一方能够得到最新数据。因此，当前设计的无锁<code>hashtable</code>在多线程上唯一做的事情就是防止了多个线程对同一个<code>entry</code>同时做<code>SetItem</code>操作。</p>
+<p>preshing对<code>SetItem</code>有一个优化：减少不必要的<code>CAS</code>操作。在原来的实现中会遍历所有的元素去执行<code>CAS</code>操作，其实只有<code>key == 0 or key == my_key</code>的时候我们才需要去做<code>CAS</code>。所以这里的优化就是预先作一次<code>load</code>，发现可以去<code>set</code>的时候才去<code>CAS</code>。</p>
+<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="n">ArrayOfItems</span><span class="o">::</span><span class="n">SetItem</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">key</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">value</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">uint32_t</span> <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;;</span> <span class="n">idx</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="c1">// Load the key that was there.</span>
+        <span class="kt">uint32_t</span> <span class="n">probedKey</span> <span class="o">=</span> <span class="n">mint_load_32_relaxed</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m_entries</span><span class="p">[</span><span class="n">idx</span><span class="p">].</span><span class="n">key</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">probedKey</span> <span class="o">!=</span> <span class="n">key</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// The entry was either free, or contains another key.</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">probedKey</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="k">continue</span><span class="p">;</span>           <span class="c1">// Usually, it contains another key. Keep probing.</span>
+
+            <span class="c1">// The entry was free. Now let&#39;s try to take it using a CAS.</span>
+            <span class="kt">uint32_t</span> <span class="n">prevKey</span> <span class="o">=</span> <span class="n">mint_compare_exchange_strong_32_relaxed</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m_entries</span><span class="p">[</span><span class="n">idx</span><span class="p">].</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">key</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">prevKey</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">prevKey</span> <span class="o">!=</span> <span class="n">key</span><span class="p">))</span>
+                <span class="k">continue</span><span class="p">;</span>       <span class="c1">// Another thread just stole it from underneath us.</span>
+
+            <span class="c1">// Either we just added the key, or another thread did.</span>
+        <span class="p">}</span>
+
+        <span class="c1">// Store the value in this array entry.</span>
+        <span class="n">mint_store_32_relaxed</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m_entries</span><span class="p">[</span><span class="n">idx</span><span class="p">].</span><span class="n">value</span><span class="p">,</span> <span class="n">value</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h2 id="c4d969">naive lockfree hashtable</h2>
+<p>在上面的<code>lockfree linear scan</code>的基础上，做一个<code>lockfree hashtable</code>还是比较简单的。这里定义了三个函数<code>intergerHash, SetItem, GetItem</code>：</p>
+<div class="codehilite"><pre><span></span>inline static uint32_t integerHash(uint32_t h)
+{
+    h ^= h &gt;&gt; 16;
+    h *= 0x85ebca6b;
+    h ^= h &gt;&gt; 13;
+    h *= 0xc2b2ae35;
+    h ^= h &gt;&gt; 16;
+    return h;
+}
+</pre></div>
+
+
+<p>这个<code>hash</code>函数的来源是<a href="https://code.google.com/p/smhasher/wiki/MurmurHash3">MurmurHash3’s integer finalizer</a> ， 据说这样可以让每一位都起到差不多的作用。</p>
+<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="n">HashTable1</span><span class="o">::</span><span class="n">SetItem</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">key</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">value</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">uint32_t</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">integerHash</span><span class="p">(</span><span class="n">key</span><span class="p">);;</span> <span class="n">idx</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">idx</span> <span class="o">&amp;=</span> <span class="n">m_arraySize</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+
+        <span class="c1">// Load the key that was there.</span>
+        <span class="kt">uint32_t</span> <span class="n">probedKey</span> <span class="o">=</span> <span class="n">mint_load_32_relaxed</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m_entries</span><span class="p">[</span><span class="n">idx</span><span class="p">].</span><span class="n">key</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">probedKey</span> <span class="o">!=</span> <span class="n">key</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// The entry was either free, or contains another key.</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">probedKey</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="k">continue</span><span class="p">;</span>           <span class="c1">// Usually, it contains another key. Keep probing.</span>
+
+            <span class="c1">// The entry was free. Now let&#39;s try to take it using a CAS.</span>
+            <span class="kt">uint32_t</span> <span class="n">prevKey</span> <span class="o">=</span> <span class="n">mint_compare_exchange_strong_32_relaxed</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m_entries</span><span class="p">[</span><span class="n">idx</span><span class="p">].</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">key</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">prevKey</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">prevKey</span> <span class="o">!=</span> <span class="n">key</span><span class="p">))</span>
+                <span class="k">continue</span><span class="p">;</span>       <span class="c1">// Another thread just stole it from underneath us.</span>
+
+            <span class="c1">// Either we just added the key, or another thread did.</span>
+        <span class="p">}</span>
+
+        <span class="c1">// Store the value in this array entry.</span>
+        <span class="n">mint_store_32_relaxed</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m_entries</span><span class="p">[</span><span class="n">idx</span><span class="p">].</span><span class="n">value</span><span class="p">,</span> <span class="n">value</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>这里的<code>SetItem</code>正确工作有一个前提：整个<code>hashtable</code>不是满的，是满的一定会出错。</p>
+<p><code>GetItem</code>还是老样子：</p>
+<div class="codehilite"><pre><span></span><span class="kt">uint32_t</span> <span class="n">HashTable1</span><span class="o">::</span><span class="n">GetItem</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">key</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">uint32_t</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">integerHash</span><span class="p">(</span><span class="n">key</span><span class="p">);;</span> <span class="n">idx</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">idx</span> <span class="o">&amp;=</span> <span class="n">m_arraySize</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+
+        <span class="kt">uint32_t</span> <span class="n">probedKey</span> <span class="o">=</span> <span class="n">mint_load_32_relaxed</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m_entries</span><span class="p">[</span><span class="n">idx</span><span class="p">].</span><span class="n">key</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">probedKey</span> <span class="o">==</span> <span class="n">key</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">mint_load_32_relaxed</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m_entries</span><span class="p">[</span><span class="n">idx</span><span class="p">].</span><span class="n">value</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">probedKey</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>          
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>所谓的<code>publish</code>函数也是一样:</p>
+<div class="codehilite"><pre><span></span><span class="c1">// Shared variables</span>
+<span class="kt">char</span> <span class="n">message</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span>
+<span class="n">HashTable1</span> <span class="n">collection</span><span class="p">;</span>
+
+<span class="kt">void</span> <span class="nf">PublishMessage</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="c1">// Write to shared memory non-atomically.</span>
+    <span class="n">strcpy</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="s">&quot;I pity the fool!&quot;</span><span class="p">);</span>
+
+    <span class="c1">// Release fence: The only way to safely pass non-atomic data between threads using Mintomic.</span>
+    <span class="n">mint_thread_fence_release</span><span class="p">();</span>
+
+    <span class="c1">// Set a flag to indicate to other threads that the message is ready.</span>
+    <span class="n">collection</span><span class="p">.</span><span class="n">SetItem</span><span class="p">(</span><span class="n">SHARED_FLAG_KEY</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>至于<code>delete</code>操作，我们可以规定<code>value</code>是某个值的时候代表当前<code>entry</code>是被删除的，这样就可以用<code>SetItem(key, 0)</code>来模拟<code>delete</code>操作了。</p>
+<h2 id="852d90">what about full</h2>
+<p>上面的无锁<code>hashtable</code>有一个致命缺陷，他没有处理整个<code>hashtable</code>满了的情况。为了处理满的情况，我们需要设置最大探查数量为当前<code>hashtable</code>的容量, 同时维护多个独立的<code>hashtable</code>，用一个无锁的链表将所有的<code>hashtable</code>的指针串联起来。如果最大探查数量达到上限，且当前<code>hashtable</code>没有下一个<code>hashtable</code>的指针，且则先建立一个新的<code>hashtable</code>，并挂载到无锁链表上，回到了有下一个<code>hashtable</code>的情况，然后对下一个<code>hashtable</code>做递归遍历。</p>
+<p>这样做的确解决了扩容的问题，但是会出现性能下降的问题。后面过来的<code>key</code>在查询的时候会变得越来越慢，因为经常需要查询多层的<code>hashtable</code>。为了避免这个问题，出现了一种新的设计：每次添加一层<code>hashtable</code>的时候，都将容量扩大一倍，然后将上一个<code>hashtable</code>的内容拷贝到新的<code>hashtable</code>里。这个新的<code>hashtable</code>也叫做<code>main_hashtable</code>，由于我们无法在无锁的情况下把整个<code>hashtable</code>拷贝过去，所以采用<code>lazy</code>的方式，这个方式的步骤如下:</p>
+<ol>
+<li>维持一个<code>hashtable</code>的无锁链表，链表的头节点就叫做<code>main_hashtable</code>，所有的<code>hashtable</code>通过一个<code>next</code>指针相连；</li>
+<li>插入的时候如果发现当前的<code>main_hashtable</code>的装载因子（这个装载因子考虑了所有的<code>key</code>）已经大于0.5，则新建一个<code>hashtable</code>，然后插入到新的<code>hashtable</code>里；</li>
+<li>扩容的时候设置一个标志位，表明当前正在扩容，避免多个线程同时扩容，浪费资源，扩容期间所有等待扩容的线程都忙等待，扩容完成之后清除正在扩容的标记；</li>
+<li>新建立的<code>hashtable</code>是空的，大小为当前<code>main_hashtable</code>的两倍，每次新加入一个<code>hashtable</code>的时候都插入到头部，使之成为新的<code>main_hashtable</code>；</li>
+<li>查询的时候，根据这些<code>next</code>指针一直查询，直到最后一个<code>hashtable</code>；</li>
+<li>如果查询返回结果的时候发现返回结果的那个<code>hashtable</code>并不是<code>main_hashtable</code>，则把当前的<code>key value</code>对插入到<code>main_hashtable</code>里，这就是核心的<code>lazy copy</code>的过程</li>
+</ol>
+<p>这个<code>lazy</code>的过程代码如下：</p>
+<div class="codehilite"><pre><span></span><span class="k">auto</span> <span class="n">id</span> <span class="o">=</span> <span class="n">details</span><span class="o">::</span><span class="n">thread_id</span><span class="p">();</span>
+        <span class="k">auto</span> <span class="n">hashedId</span> <span class="o">=</span> <span class="n">details</span><span class="o">::</span><span class="n">hash_thread_id</span><span class="p">(</span><span class="n">id</span><span class="p">);</span>
+
+        <span class="k">auto</span> <span class="n">mainHash</span> <span class="o">=</span> <span class="n">implicitProducerHash</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+        <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="n">hash</span> <span class="o">=</span> <span class="n">mainHash</span><span class="p">;</span> <span class="n">hash</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">;</span> <span class="n">hash</span> <span class="o">=</span> <span class="n">hash</span><span class="o">-&gt;</span><span class="n">prev</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// Look for the id in this hash</span>
+            <span class="k">auto</span> <span class="n">index</span> <span class="o">=</span> <span class="n">hashedId</span><span class="p">;</span>
+            <span class="k">while</span> <span class="p">(</span><span class="nb">true</span><span class="p">)</span> <span class="p">{</span>      <span class="c1">// Not an infinite loop because at least one slot is free in the hash table</span>
+                <span class="n">index</span> <span class="o">&amp;=</span> <span class="n">hash</span><span class="o">-&gt;</span><span class="n">capacity</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+
+                <span class="k">auto</span> <span class="n">probedKey</span> <span class="o">=</span> <span class="n">hash</span><span class="o">-&gt;</span><span class="n">entries</span><span class="p">[</span><span class="n">index</span><span class="p">].</span><span class="n">key</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">probedKey</span> <span class="o">==</span> <span class="n">id</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="c1">// Found it! If we had to search several hashes deep, though, we should lazily add it</span>
+                    <span class="c1">// to the current main hash table to avoid the extended search next time.</span>
+                    <span class="c1">// Note there&#39;s guaranteed to be room in the current hash table since every subsequent</span>
+                    <span class="c1">// table implicitly reserves space for all previous tables (there&#39;s only one</span>
+                    <span class="c1">// implicitProducerHashCount).</span>
+                    <span class="k">auto</span> <span class="n">value</span> <span class="o">=</span> <span class="n">hash</span><span class="o">-&gt;</span><span class="n">entries</span><span class="p">[</span><span class="n">index</span><span class="p">].</span><span class="n">value</span><span class="p">;</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">hash</span> <span class="o">!=</span> <span class="n">mainHash</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="n">index</span> <span class="o">=</span> <span class="n">hashedId</span><span class="p">;</span>
+                        <span class="k">while</span> <span class="p">(</span><span class="nb">true</span><span class="p">)</span> <span class="p">{</span>
+                            <span class="n">index</span> <span class="o">&amp;=</span> <span class="n">mainHash</span><span class="o">-&gt;</span><span class="n">capacity</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+                            <span class="n">probedKey</span> <span class="o">=</span> <span class="n">mainHash</span><span class="o">-&gt;</span><span class="n">entries</span><span class="p">[</span><span class="n">index</span><span class="p">].</span><span class="n">key</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+                            <span class="k">auto</span> <span class="n">empty</span> <span class="o">=</span> <span class="n">details</span><span class="o">::</span><span class="n">invalid_thread_id</span><span class="p">;</span>
+<span class="cp">#ifdef MOODYCAMEL_CPP11_THREAD_LOCAL_SUPPORTED</span>
+                            <span class="k">auto</span> <span class="n">reusable</span> <span class="o">=</span> <span class="n">details</span><span class="o">::</span><span class="n">invalid_thread_id2</span><span class="p">;</span>
+                            <span class="k">if</span> <span class="p">((</span><span class="n">probedKey</span> <span class="o">==</span> <span class="n">empty</span>    <span class="o">&amp;&amp;</span> <span class="n">mainHash</span><span class="o">-&gt;</span><span class="n">entries</span><span class="p">[</span><span class="n">index</span><span class="p">].</span><span class="n">key</span><span class="p">.</span><span class="n">compare_exchange_strong</span><span class="p">(</span><span class="n">empty</span><span class="p">,</span>    <span class="n">id</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">))</span> <span class="o">||</span>
+                                <span class="p">(</span><span class="n">probedKey</span> <span class="o">==</span> <span class="n">reusable</span> <span class="o">&amp;&amp;</span> <span class="n">mainHash</span><span class="o">-&gt;</span><span class="n">entries</span><span class="p">[</span><span class="n">index</span><span class="p">].</span><span class="n">key</span><span class="p">.</span><span class="n">compare_exchange_strong</span><span class="p">(</span><span class="n">reusable</span><span class="p">,</span> <span class="n">id</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">)))</span> <span class="p">{</span>
+<span class="cp">#else</span>
+                            <span class="k">if</span> <span class="p">((</span><span class="n">probedKey</span> <span class="o">==</span> <span class="n">empty</span>    <span class="o">&amp;&amp;</span> <span class="n">mainHash</span><span class="o">-&gt;</span><span class="n">entries</span><span class="p">[</span><span class="n">index</span><span class="p">].</span><span class="n">key</span><span class="p">.</span><span class="n">compare_exchange_strong</span><span class="p">(</span><span class="n">empty</span><span class="p">,</span>    <span class="n">id</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">)))</span> <span class="p">{</span>
+<span class="cp">#endif</span>
+                                <span class="n">mainHash</span><span class="o">-&gt;</span><span class="n">entries</span><span class="p">[</span><span class="n">index</span><span class="p">].</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="p">;</span>
+                                <span class="k">break</span><span class="p">;</span>
+                            <span class="p">}</span>
+                            <span class="o">++</span><span class="n">index</span><span class="p">;</span>
+                        <span class="p">}</span>
+                    <span class="p">}</span>
+
+                    <span class="k">return</span> <span class="n">value</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">probedKey</span> <span class="o">==</span> <span class="n">details</span><span class="o">::</span><span class="n">invalid_thread_id</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">break</span><span class="p">;</span>      <span class="c1">// Not in this hash table</span>
+                <span class="p">}</span>
+                <span class="o">++</span><span class="n">index</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</pre></div>
+
+
+<p>现在的核心则转移到了扩容的过程，扩容涉及到了动态内存分配和初始内容的填充，是比较耗的操作，所以要避免多个线程在争抢扩容的控制权。在moodycamel的设计里，是这样处理扩容的。</p>
+<div class="codehilite"><pre><span></span><span class="c1">// Insert!</span>
+            <span class="k">auto</span> <span class="n">newCount</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">implicitProducerHashCount</span><span class="p">.</span><span class="n">fetch_add</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+            <span class="k">while</span> <span class="p">(</span><span class="nb">true</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">newCount</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="n">mainHash</span><span class="o">-&gt;</span><span class="n">capacity</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">implicitProducerHashResizeInProgress</span><span class="p">.</span><span class="n">test_and_set</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="c1">// We&#39;ve acquired the resize lock, try to allocate a bigger hash table.</span>
+                    <span class="c1">// Note the acquire fence synchronizes with the release fence at the end of this block, and hence when</span>
+                    <span class="c1">// we reload implicitProducerHash it must be the most recent version (it only gets changed within this</span>
+                    <span class="c1">// locked block).</span>
+                    <span class="n">mainHash</span> <span class="o">=</span> <span class="n">implicitProducerHash</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">newCount</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="n">mainHash</span><span class="o">-&gt;</span><span class="n">capacity</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">))</span>
+                    <span class="p">{</span>
+                        <span class="k">auto</span> <span class="n">newCapacity</span> <span class="o">=</span> <span class="n">mainHash</span><span class="o">-&gt;</span><span class="n">capacity</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span><span class="p">;</span>
+                        <span class="k">while</span> <span class="p">(</span><span class="n">newCount</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="n">newCapacity</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">))</span>
+                        <span class="p">{</span>
+                            <span class="n">newCapacity</span> <span class="o">&lt;&lt;=</span> <span class="mi">1</span><span class="p">;</span>
+                        <span class="p">}</span>
+                        <span class="k">auto</span> <span class="n">raw</span> <span class="o">=</span> <span class="n">static_cast</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">*&gt;</span><span class="p">((</span><span class="n">Traits</span><span class="o">::</span><span class="n">malloc</span><span class="p">)(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">ImplicitProducerHash</span><span class="p">)</span> <span class="o">+</span> <span class="n">std</span><span class="o">::</span><span class="n">alignment_of</span><span class="o">&lt;</span><span class="n">ImplicitProducerKVP</span><span class="o">&gt;::</span><span class="n">value</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">ImplicitProducerKVP</span><span class="p">)</span> <span class="o">*</span> <span class="n">newCapacity</span><span class="p">));</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="n">raw</span> <span class="o">==</span> <span class="n">nullptr</span><span class="p">)</span>
+                        <span class="p">{</span>
+                            <span class="c1">// Allocation failed</span>
+                            <span class="n">implicitProducerHashCount</span><span class="p">.</span><span class="n">fetch_add</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+                            <span class="n">implicitProducerHashResizeInProgress</span><span class="p">.</span><span class="n">clear</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+                            <span class="k">return</span> <span class="n">nullptr</span><span class="p">;</span>
+                        <span class="p">}</span>
+
+                        <span class="k">auto</span> <span class="n">newHash</span> <span class="o">=</span> <span class="n">new</span> <span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="n">ImplicitProducerHash</span><span class="p">;</span>
+                        <span class="n">newHash</span><span class="o">-&gt;</span><span class="n">capacity</span> <span class="o">=</span> <span class="n">newCapacity</span><span class="p">;</span>
+                        <span class="n">newHash</span><span class="o">-&gt;</span><span class="n">entries</span> <span class="o">=</span> <span class="n">reinterpret_cast</span><span class="o">&lt;</span><span class="n">ImplicitProducerKVP</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">details</span><span class="o">::</span><span class="n">align_for</span><span class="o">&lt;</span><span class="n">ImplicitProducerKVP</span><span class="o">&gt;</span><span class="p">(</span><span class="n">raw</span> <span class="o">+</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">ImplicitProducerHash</span><span class="p">)));</span>
+                        <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">!=</span> <span class="n">newCapacity</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+                        <span class="p">{</span>
+                            <span class="n">new</span> <span class="p">(</span><span class="n">newHash</span><span class="o">-&gt;</span><span class="n">entries</span> <span class="o">+</span> <span class="n">i</span><span class="p">)</span> <span class="n">ImplicitProducerKVP</span><span class="p">;</span>
+                            <span class="n">newHash</span><span class="o">-&gt;</span><span class="n">entries</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">key</span><span class="p">.</span><span class="n">store</span><span class="p">(</span><span class="n">details</span><span class="o">::</span><span class="n">invalid_thread_id</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+                        <span class="p">}</span>
+                        <span class="n">newHash</span><span class="o">-&gt;</span><span class="n">prev</span> <span class="o">=</span> <span class="n">mainHash</span><span class="p">;</span>
+                        <span class="n">implicitProducerHash</span><span class="p">.</span><span class="n">store</span><span class="p">(</span><span class="n">newHash</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_release</span><span class="p">);</span>
+                        <span class="n">implicitProducerHashResizeInProgress</span><span class="p">.</span><span class="n">clear</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_release</span><span class="p">);</span>
+                        <span class="n">mainHash</span> <span class="o">=</span> <span class="n">newHash</span><span class="p">;</span>
+                    <span class="p">}</span>
+                    <span class="k">else</span>
+                    <span class="p">{</span>
+                        <span class="n">implicitProducerHashResizeInProgress</span><span class="p">.</span><span class="n">clear</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_release</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+
+                <span class="c1">// If it&#39;s &lt; three-quarters full, add to the old one anyway so that we don&#39;t have to wait for the next table</span>
+                <span class="c1">// to finish being allocated by another thread (and if we just finished allocating above, the condition will</span>
+                <span class="c1">// always be true)</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">newCount</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">mainHash</span><span class="o">-&gt;</span><span class="n">capacity</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">mainHash</span><span class="o">-&gt;</span><span class="n">capacity</span> <span class="o">&gt;&gt;</span> <span class="mi">2</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="kt">bool</span> <span class="n">recycled</span><span class="p">;</span>
+                    <span class="k">auto</span> <span class="n">producer</span> <span class="o">=</span> <span class="n">static_cast</span><span class="o">&lt;</span><span class="n">ImplicitProducer</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">recycle_or_create_producer</span><span class="p">(</span><span class="nb">false</span><span class="p">,</span> <span class="n">recycled</span><span class="p">));</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">producer</span> <span class="o">==</span> <span class="n">nullptr</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">implicitProducerHashCount</span><span class="p">.</span><span class="n">fetch_add</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+                        <span class="k">return</span> <span class="n">nullptr</span><span class="p">;</span>
+                    <span class="p">}</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">recycled</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">implicitProducerHashCount</span><span class="p">.</span><span class="n">fetch_add</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+                    <span class="p">}</span>
+
+<span class="cp">#ifdef MOODYCAMEL_CPP11_THREAD_LOCAL_SUPPORTED</span>
+                    <span class="n">producer</span><span class="o">-&gt;</span><span class="n">threadExitListener</span><span class="p">.</span><span class="n">callback</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">ConcurrentQueue</span><span class="o">::</span><span class="n">implicit_producer_thread_exited_callback</span><span class="p">;</span>
+                    <span class="n">producer</span><span class="o">-&gt;</span><span class="n">threadExitListener</span><span class="p">.</span><span class="n">userData</span> <span class="o">=</span> <span class="n">producer</span><span class="p">;</span>
+                    <span class="n">details</span><span class="o">::</span><span class="n">ThreadExitNotifier</span><span class="o">::</span><span class="n">subscribe</span><span class="p">(</span><span class="o">&amp;</span><span class="n">producer</span><span class="o">-&gt;</span><span class="n">threadExitListener</span><span class="p">);</span>
+<span class="cp">#endif</span>
+
+                    <span class="k">auto</span> <span class="n">index</span> <span class="o">=</span> <span class="n">hashedId</span><span class="p">;</span>
+                    <span class="k">while</span> <span class="p">(</span><span class="nb">true</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">index</span> <span class="o">&amp;=</span> <span class="n">mainHash</span><span class="o">-&gt;</span><span class="n">capacity</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+                        <span class="k">auto</span> <span class="n">probedKey</span> <span class="o">=</span> <span class="n">mainHash</span><span class="o">-&gt;</span><span class="n">entries</span><span class="p">[</span><span class="n">index</span><span class="p">].</span><span class="n">key</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+
+                        <span class="k">auto</span> <span class="n">empty</span> <span class="o">=</span> <span class="n">details</span><span class="o">::</span><span class="n">invalid_thread_id</span><span class="p">;</span>
+<span class="cp">#ifdef MOODYCAMEL_CPP11_THREAD_LOCAL_SUPPORTED</span>
+                        <span class="k">auto</span> <span class="n">reusable</span> <span class="o">=</span> <span class="n">details</span><span class="o">::</span><span class="n">invalid_thread_id2</span><span class="p">;</span>
+                        <span class="k">if</span> <span class="p">((</span><span class="n">probedKey</span> <span class="o">==</span> <span class="n">empty</span>    <span class="o">&amp;&amp;</span> <span class="n">mainHash</span><span class="o">-&gt;</span><span class="n">entries</span><span class="p">[</span><span class="n">index</span><span class="p">].</span><span class="n">key</span><span class="p">.</span><span class="n">compare_exchange_strong</span><span class="p">(</span><span class="n">empty</span><span class="p">,</span> <span class="n">id</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">))</span> <span class="o">||</span>
+                            <span class="p">(</span><span class="n">probedKey</span> <span class="o">==</span> <span class="n">reusable</span> <span class="o">&amp;&amp;</span> <span class="n">mainHash</span><span class="o">-&gt;</span><span class="n">entries</span><span class="p">[</span><span class="n">index</span><span class="p">].</span><span class="n">key</span><span class="p">.</span><span class="n">compare_exchange_strong</span><span class="p">(</span><span class="n">reusable</span><span class="p">,</span> <span class="n">id</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">)))</span>
+                        <span class="p">{</span>
+<span class="cp">#else</span>
+                        <span class="k">if</span> <span class="p">((</span><span class="n">probedKey</span> <span class="o">==</span> <span class="n">empty</span>    <span class="o">&amp;&amp;</span> <span class="n">mainHash</span><span class="o">-&gt;</span><span class="n">entries</span><span class="p">[</span><span class="n">index</span><span class="p">].</span><span class="n">key</span><span class="p">.</span><span class="n">compare_exchange_strong</span><span class="p">(</span><span class="n">empty</span><span class="p">,</span> <span class="n">id</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">)))</span>
+                        <span class="p">{</span>
+<span class="cp">#endif</span>
+                            <span class="n">mainHash</span><span class="o">-&gt;</span><span class="n">entries</span><span class="p">[</span><span class="n">index</span><span class="p">].</span><span class="n">value</span> <span class="o">=</span> <span class="n">producer</span><span class="p">;</span>
+                            <span class="k">break</span><span class="p">;</span>
+                        <span class="p">}</span>
+                        <span class="o">++</span><span class="n">index</span><span class="p">;</span>
+                    <span class="p">}</span>
+                    <span class="k">return</span> <span class="n">producer</span><span class="p">;</span>
+                <span class="p">}</span>
+
+                <span class="c1">// Hmm, the old hash is quite full and somebody else is busy allocating a new one.</span>
+                <span class="c1">// We need to wait for the allocating thread to finish (if it succeeds, we add, if not,</span>
+                <span class="c1">// we try to allocate ourselves).</span>
+                <span class="n">mainHash</span> <span class="o">=</span> <span class="n">implicitProducerHash</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+            <span class="p">}</span>
+</pre></div>
+
+
+<p>上面的第五行就是抢夺控制权的过程，进入扩容的条件就是当前装载因子已经大于0.5，且扩容标志位没有设置。</p>
+<div class="codehilite"><pre><span></span><span class="n">newCount</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="n">mainHash</span><span class="o">-&gt;</span><span class="n">capacity</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">implicitProducerHashResizeInProgress</span><span class="p">.</span><span class="n">test_and_set</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">)</span>
+</pre></div>
+
+
+<p>扩容的时候设置一个标志位，相当于一个锁，扩容完成之后清空标志位。但是由于线程换出的存在，这个标志位可能导致其他线程永远抢不到控制权，进入无限死循环。所以这里又对没有抢夺到扩容控制权的线程，还有另外的一个判断，如果装载因子小于0.75，则直接尝试插入，不用管。</p>
+<div class="codehilite"><pre><span></span>newCount &lt; (mainHash-&gt;capacity &gt;&gt; 1) + (mainHash-&gt;capacity &gt;&gt; 2)
+</pre></div>
+
+
+<p>这个分支里还做了一些事情，就是当真正的获得了一个<code>implicit producer</code>之后，注册一个线程退出的<code>callback</code>，这个<code>callback</code>会把当前<code>producer</code>销毁，并在<code>hashtable</code>里删除对应的<code>key</code>。</p>
+<p>最后剩下的一种情况就是：拿不到扩容所有权，且当前装载因子已经上了0.75，此时除了死循环没有办法，约等于死锁。这种情况很罕见，但是仍然可以构造出来。不知原作者如何处理这个情况。</p>
+    </div>
+    <div id="content-comments">
+</div>
+
+</div>
+<div class="niu2-right-container col-md-2">
+    <div id="niu2-sidebar-meta" class="niu2-sidebar">
+        <div class="niu2-sidebar-label"><i class="icon-calendar"></i>Published:</div>
+        <div class="niu2-sidebar-value">2017-06-26 00:50</div>
+        <div class="niu2-sidebar-label"><i class="icon-open-folder"></i>Category:</div>
+        <div class="niu2-sidebar-value"><a href="./category/concurrency.html">Concurrency</a></div>
+        <div class="niu2-sidebar-label"><i class="icon-tag"></i>Tag:</div>
+ 
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="./tag/concurrency.html">Concurrency</a><sup>4</sup></div>
+            <div class="niu2-sidebar-inter-value niu2-sidebar-tag"><a href="./tag/cpp.html">Cpp</a><sup>15</sup></div>
+    </div>
+
+    <div id="niu2-sidebar-toc" class="niu2-sidebar" data-status="closed">
+        <div class="niu2-sidebar-label">
+            <i id="niu2-sidebar-toc-ctrl" class="icon-open-tocs"></i>TOC
+        </div>
+        <ol id="niu2-sidebar-toc-list">
+            <li><a href="#content-heading">Lockfree Hashtable</a></li>
+            <li><a href='#45f18b'>Lockfree Hashtable</a><ol><li><a href='#d8891d'>lockfree linear search</a></li><li><a href='#c4d969'>naive lockfree hashtable</a></li><li><a href='#852d90'>what about full</a></li></ol></li>
+        </ol>
+    </div>
+</div>    </div>
+
+    <div class="niu2-footer">
+        <div id="body-footer" class="col-md-6 col-md-offset-2">
+<hr/>
+<p>
+    Powered by <a href="https://github.com/getpelican/pelican">Pelican</a>, 
+    <a href="https://github.com/mawenbao/niu-x2-sidebar">theme</a> built with <a href="http://getbootstrap.com">Bootstrap3</a>
+    by <a href="http://blog.atime.me">Ma Wenbao</a>, icons by 
+    <a href="http://fortawesome.github.io/Font-Awesome">Font Awesome</a>.
+</p>
+<p>
+    ©
+            2014-2017
+    <a class="niu2-footer-link" href=".">Huiliang Huang</a>
+</p>
+<p class="niu2-icons">
+</p>        </div>
+    </div>
+    
+    <div id="niu2-pygments" data-theme="github"></div>
+
+    <script type="text/javascript" src="./theme/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="./theme/js/niu2.min.js"></script>
+    <script type="text/javascript" src="./theme/js/bootstrap.min.js"></script>
+    <script type="text/javascript">onContentLoaded();</script>
+  </body>
+</html>
