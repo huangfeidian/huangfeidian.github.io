@@ -160,8 +160,371 @@
 <li>当尝试获得数据失败的时候，先轮询一段时间，如果这段时间内还是没有数据，则调用<code>yield</code>，也就是对<code>condition_variable</code>封装了一层。</li>
 <li>每个生产者维护其投递队列，每个消费者根据对各个生产者任务队列的优先级去遍历获取任务。</li>
 </ol>
+<p>事实上，在这是一个并发<code>queue</code>的时候，首先要明确如下几个问题：</p>
+<ol>
+<li>
+<p>这个<code>queue</code>的生产者和消费者各有多少个，常见的有单生产者单消费者(SPSC)、单生产者多消费者(SPMC)、多生产者单消费者(MPSC)和多生产者多消费者(MPMC)</p>
+</li>
+<li>
+<p>这个queue的最大元素大小是否确定，如果可以确定最大大小，则动态内存分配就可以避免，直接采取环形队列当作容器即可；如果无法确定最大大小，则只能通过动态内存分配的形式去处理，这里的难度加大了很多，因为要处理多线程的内存分配。</p>
+</li>
+</ol>
 <p>下面我们来看一下现在主流的几种<code>concurrent_queue</code>的实现，来分析一下他们对<code>concurrent_queue</code>的实现优化。</p>
-<h2 id="27c936">boost concurrent queue</h2>
+<h2 id="d10ffe">intel spsc concurrent queue</h2>
+<p><a href="https://software.intel.com/en-us/articles/single-producer-single-consumer-queue">intel官方网站</a>上提供了一个<code>SPSC queue</code>，但是这个<code>queue</code>没有限制最大元素大小，如果临时内存不够的话会调用<code>new</code>，可能会触发锁。</p>
+<div class="codehilite"><pre><span></span><span class="c1">// load with &#39;consume&#39; (data-dependent) memory ordering</span>
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">T</span> <span class="n">load_consume</span><span class="p">(</span><span class="n">T</span> <span class="k">const</span><span class="o">*</span> <span class="n">addr</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// hardware fence is implicit on x86</span>
+  <span class="n">T</span> <span class="n">v</span> <span class="o">=</span> <span class="o">*</span><span class="k">const_cast</span><span class="o">&lt;</span><span class="n">T</span> <span class="k">const</span> <span class="k">volatile</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">addr</span><span class="p">);</span>
+  <span class="n">__memory_barrier</span><span class="p">();</span> <span class="c1">// compiler fence</span>
+  <span class="k">return</span> <span class="n">v</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// store with &#39;release&#39; memory ordering</span>
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">store_release</span><span class="p">(</span><span class="n">T</span><span class="o">*</span> <span class="n">addr</span><span class="p">,</span> <span class="n">T</span> <span class="n">v</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// hardware fence is implicit on x86</span>
+  <span class="n">__memory_barrier</span><span class="p">();</span> <span class="c1">// compiler fence</span>
+  <span class="o">*</span><span class="k">const_cast</span><span class="o">&lt;</span><span class="n">T</span> <span class="k">volatile</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// cache line size on modern x86 processors (in bytes)</span>
+<span class="kt">size_t</span> <span class="k">const</span> <span class="n">cache_line_size</span> <span class="o">=</span> <span class="mi">64</span><span class="p">;</span>
+
+<span class="c1">// single-producer/single-consumer queue</span>
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="k">class</span> <span class="nc">spsc_queue</span>
+<span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+  <span class="n">spsc_queue</span><span class="p">()</span>
+  <span class="p">{</span>
+      <span class="n">node</span><span class="o">*</span> <span class="n">n</span> <span class="o">=</span> <span class="k">new</span> <span class="n">node</span><span class="p">;</span>
+      <span class="n">n</span><span class="o">-&gt;</span><span class="n">next_</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="n">tail_</span> <span class="o">=</span> <span class="n">head_</span> <span class="o">=</span> <span class="n">first_</span><span class="o">=</span> <span class="n">tail_copy_</span> <span class="o">=</span> <span class="n">n</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="o">~</span><span class="n">spsc_queue</span><span class="p">()</span>
+  <span class="p">{</span>
+      <span class="n">node</span><span class="o">*</span> <span class="n">n</span> <span class="o">=</span> <span class="n">first_</span><span class="p">;</span>
+      <span class="k">do</span>
+      <span class="p">{</span>
+          <span class="n">node</span><span class="o">*</span> <span class="n">next</span> <span class="o">=</span> <span class="n">n</span><span class="o">-&gt;</span><span class="n">next_</span><span class="p">;</span>
+          <span class="k">delete</span> <span class="n">n</span><span class="p">;</span>
+          <span class="n">n</span> <span class="o">=</span> <span class="n">next</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">while</span> <span class="p">(</span><span class="n">n</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="kt">void</span> <span class="n">enqueue</span><span class="p">(</span><span class="n">T</span> <span class="n">v</span><span class="p">)</span>
+  <span class="p">{</span>
+      <span class="n">node</span><span class="o">*</span> <span class="n">n</span> <span class="o">=</span> <span class="n">alloc_node</span><span class="p">();</span>
+      <span class="n">n</span><span class="o">-&gt;</span><span class="n">next_</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="n">n</span><span class="o">-&gt;</span><span class="n">value_</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span>
+      <span class="n">store_release</span><span class="p">(</span><span class="o">&amp;</span><span class="n">head_</span><span class="o">-&gt;</span><span class="n">next_</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+      <span class="n">head_</span> <span class="o">=</span> <span class="n">n</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="c1">// returns &#39;false&#39; if queue is empty</span>
+  <span class="kt">bool</span> <span class="n">dequeue</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">v</span><span class="p">)</span>
+  <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">load_consume</span><span class="p">(</span><span class="o">&amp;</span><span class="n">tail_</span><span class="o">-&gt;</span><span class="n">next_</span><span class="p">))</span>
+      <span class="p">{</span>
+          <span class="n">v</span> <span class="o">=</span> <span class="n">tail_</span><span class="o">-&gt;</span><span class="n">next_</span><span class="o">-&gt;</span><span class="n">value_</span><span class="p">;</span>
+          <span class="n">store_release</span><span class="p">(</span><span class="o">&amp;</span><span class="n">tail_</span><span class="p">,</span> <span class="n">tail_</span><span class="o">-&gt;</span><span class="n">next_</span><span class="p">);</span>
+          <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">else</span>
+      <span class="p">{</span>
+          <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+      <span class="p">}</span>
+  <span class="p">}</span>
+
+<span class="k">private</span><span class="o">:</span>
+  <span class="c1">// internal node structure</span>
+  <span class="k">struct</span> <span class="n">node</span>
+  <span class="p">{</span>
+      <span class="n">node</span><span class="o">*</span> <span class="n">next_</span><span class="p">;</span>
+      <span class="n">T</span> <span class="n">value_</span><span class="p">;</span>
+  <span class="p">};</span>
+
+  <span class="c1">// consumer part</span>
+  <span class="c1">// accessed mainly by consumer, infrequently be producer</span>
+  <span class="n">node</span><span class="o">*</span> <span class="n">tail_</span><span class="p">;</span> <span class="c1">// tail of the queue</span>
+
+  <span class="c1">// delimiter between consumer part and producer part,</span>
+  <span class="c1">// so that they situated on different cache lines</span>
+  <span class="kt">char</span> <span class="n">cache_line_pad_</span> <span class="p">[</span><span class="n">cache_line_size</span><span class="p">];</span>
+
+  <span class="c1">// producer part</span>
+  <span class="c1">// accessed only by producer</span>
+  <span class="n">node</span><span class="o">*</span> <span class="n">head_</span><span class="p">;</span> <span class="c1">// head of the queue</span>
+  <span class="n">node</span><span class="o">*</span> <span class="n">first_</span><span class="p">;</span> <span class="c1">// last unused node (tail of node cache)</span>
+  <span class="n">node</span><span class="o">*</span> <span class="n">tail_copy_</span><span class="p">;</span> <span class="c1">// helper (points somewhere between first_ and tail_)</span>
+
+  <span class="n">node</span><span class="o">*</span> <span class="nf">alloc_node</span><span class="p">()</span>
+  <span class="p">{</span>
+      <span class="c1">// first tries to allocate node from internal node cache,</span>
+      <span class="c1">// if attempt fails, allocates node via ::operator new()</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="n">first_</span> <span class="o">!=</span> <span class="n">tail_copy_</span><span class="p">)</span>
+      <span class="p">{</span>
+          <span class="n">node</span><span class="o">*</span> <span class="n">n</span> <span class="o">=</span> <span class="n">first_</span><span class="p">;</span>
+          <span class="n">first_</span> <span class="o">=</span> <span class="n">first_</span><span class="o">-&gt;</span><span class="n">next_</span><span class="p">;</span>
+          <span class="k">return</span> <span class="n">n</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="n">tail_copy_</span> <span class="o">=</span> <span class="n">load_consume</span><span class="p">(</span><span class="o">&amp;</span><span class="n">tail_</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">first_</span> <span class="o">!=</span> <span class="n">tail_copy_</span><span class="p">)</span>
+      <span class="p">{</span>
+          <span class="n">node</span><span class="o">*</span> <span class="n">n</span> <span class="o">=</span> <span class="n">first_</span><span class="p">;</span>
+          <span class="n">first_</span> <span class="o">=</span> <span class="n">first_</span><span class="o">-&gt;</span><span class="n">next_</span><span class="p">;</span>
+          <span class="k">return</span> <span class="n">n</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="n">node</span><span class="o">*</span> <span class="n">n</span> <span class="o">=</span> <span class="k">new</span> <span class="n">node</span><span class="p">;</span>
+      <span class="k">return</span> <span class="n">n</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="n">spsc_queue</span><span class="p">(</span><span class="n">spsc_queue</span> <span class="k">const</span><span class="o">&amp;</span><span class="p">);</span>
+  <span class="n">spsc_queue</span><span class="o">&amp;</span> <span class="k">operator</span> <span class="o">=</span> <span class="p">(</span><span class="n">spsc_queue</span> <span class="k">const</span><span class="o">&amp;</span><span class="p">);</span>
+<span class="p">};</span>
+
+<span class="c1">// usage example</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">spsc_queue</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">q</span><span class="p">;</span>
+  <span class="n">q</span><span class="p">.</span><span class="n">enqueue</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+  <span class="n">q</span><span class="p">.</span><span class="n">enqueue</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+  <span class="kt">int</span> <span class="n">v</span><span class="p">;</span>
+  <span class="kt">bool</span> <span class="n">b</span> <span class="o">=</span> <span class="n">q</span><span class="p">.</span><span class="n">dequeue</span><span class="p">(</span><span class="n">v</span><span class="p">);</span>
+  <span class="n">b</span> <span class="o">=</span> <span class="n">q</span><span class="p">.</span><span class="n">dequeue</span><span class="p">(</span><span class="n">v</span><span class="p">);</span>
+  <span class="n">q</span><span class="p">.</span><span class="n">enqueue</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span>
+  <span class="n">q</span><span class="p">.</span><span class="n">enqueue</span><span class="p">(</span><span class="mi">4</span><span class="p">);</span>
+  <span class="n">b</span> <span class="o">=</span> <span class="n">q</span><span class="p">.</span><span class="n">dequeue</span><span class="p">(</span><span class="n">v</span><span class="p">);</span>
+  <span class="n">b</span> <span class="o">=</span> <span class="n">q</span><span class="p">.</span><span class="n">dequeue</span><span class="p">(</span><span class="n">v</span><span class="p">);</span>
+  <span class="n">b</span> <span class="o">=</span> <span class="n">q</span><span class="p">.</span><span class="n">dequeue</span><span class="p">(</span><span class="n">v</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>这个代码的实现很简单粗暴，核心是一个单链表，对于单链表的任何操作都是<code>wait_free</code>的，这个链表有四个指针：</p>
+<ol>
+<li><code>tail</code>指针，指向下一个应该<code>dequeue</code>的位置</li>
+<li><code>head</code>指针，指向最新的一个<code>enqueue</code>的位置</li>
+<li><code>first_</code>指针，指向第一个可以回收<code>node</code>的位置</li>
+<li><code>tail_copy</code>指针，指向一个安全的可以回收的<code>node</code>的<code>next</code>位置，他不一定指向<code>tail</code>。</li>
+</ol>
+<p>在这个链表里，指针之间有如下关系：<span class="math">\(first \le tail\_copy \le tail \le head\)</span> 。这里做的核心优化就是按需去更新<code>tail_copy</code>，没必要每次更新<code>tail</code>的时候都把<code>tail_copy</code>更新一遍，只有发现<code>first == tail_copy</code>的时候才去更新一下。每个操作都没有使用到<code>CAS</code>，因此都是<code>wait_free</code>的，当然那一行调用了<code>new</code>的除外。</p>
+<p>这里为了避免<code>False Sharing</code>使用了<code>padding</code>。由于读线程只需要更改<code>tail</code>，所以只需要在<code>tail</code>之后加个<code>padding</code>即可。</p>
+<h2 id="86a472">facebook spsc concurrent queue</h2>
+<p>facebook 提供了固定大小的<code>SPSC queue</code>，代码在<code>folly</code>的<code>ProducerConsumerQueue</code>里。</p>
+<div class="codehilite"><pre><span></span><span class="cm">/*</span>
+<span class="cm"> * Copyright 2017 Facebook, Inc.</span>
+<span class="cm"> *</span>
+<span class="cm"> * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="cm"> * you may not use this file except in compliance with the License.</span>
+<span class="cm"> * You may obtain a copy of the License at</span>
+<span class="cm"> *</span>
+<span class="cm"> *   http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="cm"> *</span>
+<span class="cm"> * Unless required by applicable law or agreed to in writing, software</span>
+<span class="cm"> * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="cm"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="cm"> * See the License for the specific language governing permissions and</span>
+<span class="cm"> * limitations under the License.</span>
+<span class="cm"> */</span>
+
+<span class="c1">// @author Bo Hu (bhu@fb.com)</span>
+<span class="c1">// @author Jordan DeLong (delong.j@fb.com)</span>
+
+<span class="cp">#pragma once</span>
+
+<span class="cp">#include</span> <span class="cpf">&lt;atomic&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;cassert&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;cstdlib&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;memory&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdexcept&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;type_traits&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;utility&gt;</span><span class="cp"></span>
+
+<span class="cp">#include</span> <span class="cpf">&lt;folly/concurrency/CacheLocality.h&gt;</span><span class="cp"></span>
+
+<span class="k">namespace</span> <span class="n">folly</span> <span class="p">{</span>
+
+<span class="cm">/*</span>
+<span class="cm"> * ProducerConsumerQueue is a one producer and one consumer queue</span>
+<span class="cm"> * without locks.</span>
+<span class="cm"> */</span>
+<span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
+<span class="k">struct</span> <span class="n">ProducerConsumerQueue</span> <span class="p">{</span>
+  <span class="k">typedef</span> <span class="n">T</span> <span class="n">value_type</span><span class="p">;</span>
+
+  <span class="n">ProducerConsumerQueue</span><span class="p">(</span><span class="k">const</span> <span class="n">ProducerConsumerQueue</span><span class="o">&amp;</span><span class="p">)</span> <span class="o">=</span> <span class="k">delete</span><span class="p">;</span>
+  <span class="n">ProducerConsumerQueue</span><span class="o">&amp;</span> <span class="k">operator</span> <span class="o">=</span> <span class="p">(</span><span class="k">const</span> <span class="n">ProducerConsumerQueue</span><span class="o">&amp;</span><span class="p">)</span> <span class="o">=</span> <span class="k">delete</span><span class="p">;</span>
+
+  <span class="c1">// size must be &gt;= 2.</span>
+  <span class="c1">//</span>
+  <span class="c1">// Also, note that the number of usable slots in the queue at any</span>
+  <span class="c1">// given time is actually (size-1), so if you start with an empty queue,</span>
+  <span class="c1">// isFull() will return true after size-1 insertions.</span>
+  <span class="k">explicit</span> <span class="nf">ProducerConsumerQueue</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">size</span><span class="p">)</span>
+    <span class="o">:</span> <span class="n">size_</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+    <span class="p">,</span> <span class="n">records_</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">T</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="o">*</span> <span class="n">size</span><span class="p">)))</span>
+    <span class="p">,</span> <span class="n">readIndex_</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="p">,</span> <span class="n">writeIndex_</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">size</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">records_</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">throw</span> <span class="n">std</span><span class="o">::</span><span class="n">bad_alloc</span><span class="p">();</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="o">~</span><span class="n">ProducerConsumerQueue</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// We need to destruct anything that may still exist in our queue.</span>
+    <span class="c1">// (No real synchronization needed at destructor time: only one</span>
+    <span class="c1">// thread can be doing this.)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">std</span><span class="o">::</span><span class="n">is_trivially_destructible</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kt">size_t</span> <span class="n">readIndex</span> <span class="o">=</span> <span class="n">readIndex_</span><span class="p">;</span>
+      <span class="kt">size_t</span> <span class="n">endIndex</span> <span class="o">=</span> <span class="n">writeIndex_</span><span class="p">;</span>
+      <span class="k">while</span> <span class="p">(</span><span class="n">readIndex</span> <span class="o">!=</span> <span class="n">endIndex</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">records_</span><span class="p">[</span><span class="n">readIndex</span><span class="p">].</span><span class="o">~</span><span class="n">T</span><span class="p">();</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">++</span><span class="n">readIndex</span> <span class="o">==</span> <span class="n">size_</span><span class="p">)</span> <span class="p">{</span>
+          <span class="n">readIndex</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="n">std</span><span class="o">::</span><span class="n">free</span><span class="p">(</span><span class="n">records_</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="err">...</span><span class="nc">Args</span><span class="o">&gt;</span>
+  <span class="kt">bool</span> <span class="n">write</span><span class="p">(</span><span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">recordArgs</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">auto</span> <span class="k">const</span> <span class="n">currentWrite</span> <span class="o">=</span> <span class="n">writeIndex_</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+    <span class="k">auto</span> <span class="n">nextRecord</span> <span class="o">=</span> <span class="n">currentWrite</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">nextRecord</span> <span class="o">==</span> <span class="n">size_</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">nextRecord</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">nextRecord</span> <span class="o">!=</span> <span class="n">readIndex_</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">))</span> <span class="p">{</span>
+      <span class="k">new</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">records_</span><span class="p">[</span><span class="n">currentWrite</span><span class="p">])</span> <span class="n">T</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">Args</span><span class="o">&gt;</span><span class="p">(</span><span class="n">recordArgs</span><span class="p">)...);</span>
+      <span class="n">writeIndex_</span><span class="p">.</span><span class="n">store</span><span class="p">(</span><span class="n">nextRecord</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_release</span><span class="p">);</span>
+      <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c1">// queue is full</span>
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="c1">// move (or copy) the value at the front of the queue to given variable</span>
+  <span class="kt">bool</span> <span class="n">read</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">record</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">auto</span> <span class="k">const</span> <span class="n">currentRead</span> <span class="o">=</span> <span class="n">readIndex_</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">currentRead</span> <span class="o">==</span> <span class="n">writeIndex_</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">))</span> <span class="p">{</span>
+      <span class="c1">// queue is empty</span>
+      <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">auto</span> <span class="n">nextRecord</span> <span class="o">=</span> <span class="n">currentRead</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">nextRecord</span> <span class="o">==</span> <span class="n">size_</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">nextRecord</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">record</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">records_</span><span class="p">[</span><span class="n">currentRead</span><span class="p">]);</span>
+    <span class="n">records_</span><span class="p">[</span><span class="n">currentRead</span><span class="p">].</span><span class="o">~</span><span class="n">T</span><span class="p">();</span>
+    <span class="n">readIndex_</span><span class="p">.</span><span class="n">store</span><span class="p">(</span><span class="n">nextRecord</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_release</span><span class="p">);</span>
+    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="c1">// pointer to the value at the front of the queue (for use in-place) or</span>
+  <span class="c1">// nullptr if empty.</span>
+  <span class="n">T</span><span class="o">*</span> <span class="n">frontPtr</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">auto</span> <span class="k">const</span> <span class="n">currentRead</span> <span class="o">=</span> <span class="n">readIndex_</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">currentRead</span> <span class="o">==</span> <span class="n">writeIndex_</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">))</span> <span class="p">{</span>
+      <span class="c1">// queue is empty</span>
+      <span class="k">return</span> <span class="k">nullptr</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="o">&amp;</span><span class="n">records_</span><span class="p">[</span><span class="n">currentRead</span><span class="p">];</span>
+  <span class="p">}</span>
+
+  <span class="c1">// queue must not be empty</span>
+  <span class="kt">void</span> <span class="n">popFront</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">auto</span> <span class="k">const</span> <span class="n">currentRead</span> <span class="o">=</span> <span class="n">readIndex_</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">currentRead</span> <span class="o">!=</span> <span class="n">writeIndex_</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">));</span>
+
+    <span class="k">auto</span> <span class="n">nextRecord</span> <span class="o">=</span> <span class="n">currentRead</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">nextRecord</span> <span class="o">==</span> <span class="n">size_</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">nextRecord</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">records_</span><span class="p">[</span><span class="n">currentRead</span><span class="p">].</span><span class="o">~</span><span class="n">T</span><span class="p">();</span>
+    <span class="n">readIndex_</span><span class="p">.</span><span class="n">store</span><span class="p">(</span><span class="n">nextRecord</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_release</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="kt">bool</span> <span class="n">isEmpty</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">readIndex_</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">)</span> <span class="o">==</span>
+        <span class="n">writeIndex_</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="kt">bool</span> <span class="n">isFull</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span>
+    <span class="k">auto</span> <span class="n">nextRecord</span> <span class="o">=</span> <span class="n">writeIndex_</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">nextRecord</span> <span class="o">==</span> <span class="n">size_</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">nextRecord</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">nextRecord</span> <span class="o">!=</span> <span class="n">readIndex_</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">))</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="c1">// queue is full</span>
+    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="c1">// * If called by consumer, then true size may be more (because producer may</span>
+  <span class="c1">//   be adding items concurrently).</span>
+  <span class="c1">// * If called by producer, then true size may be less (because consumer may</span>
+  <span class="c1">//   be removing items concurrently).</span>
+  <span class="c1">// * It is undefined to call this from any other thread.</span>
+  <span class="kt">size_t</span> <span class="n">sizeGuess</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">ret</span> <span class="o">=</span> <span class="n">writeIndex_</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">)</span> <span class="o">-</span>
+        <span class="n">readIndex_</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">ret</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">ret</span> <span class="o">+=</span> <span class="n">size_</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+  <span class="p">}</span>
+
+<span class="k">private</span><span class="o">:</span>
+ <span class="kt">char</span> <span class="n">pad0_</span><span class="p">[</span><span class="n">CacheLocality</span><span class="o">::</span><span class="n">kFalseSharingRange</span><span class="p">];</span>
+ <span class="k">const</span> <span class="kt">uint32_t</span> <span class="n">size_</span><span class="p">;</span>
+ <span class="n">T</span><span class="o">*</span> <span class="k">const</span> <span class="n">records_</span><span class="p">;</span>
+
+ <span class="n">FOLLY_ALIGN_TO_AVOID_FALSE_SHARING</span> <span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">unsigned</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">readIndex_</span><span class="p">;</span>
+ <span class="n">FOLLY_ALIGN_TO_AVOID_FALSE_SHARING</span> <span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">unsigned</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">writeIndex_</span><span class="p">;</span>
+
+ <span class="kt">char</span> <span class="n">pad1_</span><span class="p">[</span><span class="n">CacheLocality</span><span class="o">::</span><span class="n">kFalseSharingRange</span> <span class="o">-</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">writeIndex_</span><span class="p">)];</span>
+<span class="p">};</span>
+
+<span class="p">}</span>
+</pre></div>
+
+
+<p>这里就是使用环形队列来作为容器，双指针来作为头尾，读线程读取<code>readIndex</code>直接采用<code>relaxed</code>，写线程读取<code>writeIndex</code>的时候也是采取<code>relaxed</code>，因为这两个变量只会在对应的线程内修改，可以认为是对应线程的私有变量，如果要读取另外一个线程的变量则需要采取<code>acquire</code>，当然前提是修改的时候使用了<code>release</code>。为了避免<code>False Sharing</code>这里也使用了<code>padding</code>，只不过是用宏做的。</p>
+<p>其实这里也可以做一点优化，就像前面<code>intel</code>的延迟处理<code>tail_copy</code>一样，首次读取另外一个线程变量的时候先用<code>relaxed</code>，如果发现不能操作了，则再使用<code>acquire</code>。</p>
+<p>总的来说，这个无锁<code>spsc queue</code>也是<code>wait_free</code>的。</p>
+<h2 id="7f087f">moodycamel spsc concurrent queue</h2>
+<p>moody camel 在上面的基础上做了一些改进：在支持无大小限制的情况下，将动态内存分配的需求降得很低，同时支持了容量的动态增长。其容器结构是两层的<code>queue of queue</code>，第一层是循环链表，第二层是循环队列。第一层循环链表的控制基本等价于<code>intel</code>的<code>spsc</code>里的代码，而第二层的循环队列的控制基本等价于<code>folly</code>的代码。当<code>enqueue</code>的时候，发现没有空闲内存的时候会调用<code>malloc</code>，不过这种动态内存分配比起<code>intel</code>的每个新<code>node</code>都分配来说简单多了，总的来说还是比较符合<code>wait_free</code>的。这个的代码我就不分析了，直接贴作者的解释吧。</p>
+<div class="codehilite"><pre><span></span># Enqueue
+If room in tail block, add to tail
+Else check next block
+    If next block is not the head block, enqueue on next block
+    Else create a new block and enqueue there
+    Advance tail to the block we just enqueued to
+
+# Dequeue
+Remember where the tail block is
+If the front block has an element in it, dequeue it
+Else
+    If front block was the tail block when we entered the function, return false
+    Else advance to next block and dequeue the item there
+</pre></div>
+
+
+<h2 id="9a6f11">boost mpmc concurrent queue</h2>
 <p><code>boost  concurrent queue</code>通过模板参数的方式来支持固定大小的队列和不定大小的队列。</p>
 <p>如果是固定大小队列，则会使用一个带<code>dummy head</code>的<code>ring buffer</code>来存储内容，同时使用一个头节点索引和一个尾节点索引来标记队列的头尾位置。为了一次性的修改头尾节点索引，这里将队列大小的上限设置为了<span class="math">\(2^{16} - 2\)</span>  ，这样两个索引就可以合并为一个<code>int32</code> 来处理，修改的时候可以使用<code>compare_exchange_</code>来同时修改。如果在支持<code>int64</code>类型的<code>compare_exchange_</code>操作的平台，队列大小的上限可以放到<span class="math">\(2^{32} -2\)</span> ，同时两个索引会被压缩为一个<code>int64</code>来做同时修改。</p>
 <p>如果是不定大小的队列，则会使用链表的形式来维持队列结构, 代码见下。</p>
@@ -365,6 +728,11 @@ bool<span class="w"> </span>bounded_push<span class="o">(</span>T<span class="w"
 <p>其实这个的总体实现与boost类似。占坑，以后填。粗看起来，这个东西的实现很具有<code>STL</code>的风格。</p>
 <h2 id="01023c">moodycamel concurrent queue</h2>
 <p>这个<code>concurrent queue</code>的实现被很多项目使用过， 值得重点分析。这个实现的突出之处在于，每个生产者都维持自己的专属<code>queue</code>，而不同的消费者会以不同的顺序去访问各个生产者的<code>queue</code>，直到遇到一个不为空的<code>queue</code>。简而言之，他所实现的<code>MPMC(multiple producer multiple consumer)</code>的队列建立在了<code>SPMC</code>的多线程队列的基础上。这个<code>SPMC</code>的实现是<code>lockfree</code>的，同时还增加了<code>bulk</code>操作。下面来慢慢介绍这个的实现。</p>
+<h3 id="bdd81e">highlevel design</h3>
+<p>The less threads fight over the same data, the better. So, instead ofusing a single data structure that linearizes all operations, a set of sub-queuesis used instead -- one for each producer thread. This means that different threadscan enqueue items completely in parallel, independently of each other.</p>
+<p>Of course, this also makes dequeueing slightly more complicated: Now we have to checkevery sub-queue for items when dequeuing. Interestingly, it turns out that the orderthat elements are pulled from the sub-queues really doesn't matter. All elements froma given producer thread will necessarily still be seen in that sameorder relative to each other when dequeued (since the sub-queue preserves that order), albeit with elementsfrom other sub-queues possibly interleaved. Interleaving elementsis OK because even in a traditional single-queue model, the order that elementsget put in from from different producer threads is non-deterministic anyway (becausethere's a race condition between the different producers). [Edit: This is only true if theproducers are independent, which isn't necessarily the case. See the comments.] The only downside to thisapproach is that if the queue is empty, every single sub-queue has to be checked inorder to determine this (also, by the time one sub-queue is checked, a previously emptyone could have become non-empty -- but in practice this doesn't cause problems). However,in the non-empty case, there is much less contention overall because sub-queues can be"paired up" with consumers. This reduces data sharing to the near-optimallevel (where every consumer is matched with exactly one producer), without losing theability to handle the general case. This pairing is done using a heuristic that takes intoaccount the last sub-queue a producer successfully pulled from (essentially, it givesconsumers an affinity). Of course, in order to do this pairing, some state has to bemaintained between calls to dequeue -- this is done using consumer-specific"tokens" that the user is in charge of allocating. Note that tokens are completely optional --the queue merely reverts to searching every sub-queue for an element without one, which iscorrect, just slightly slower when many threads are involved.</p>
+<p>So, that's the high-level design. What about the core algorithm used within each sub-queue?Well, instead of beingbased on a linked-list of nodes (which implies constantly allocating and freeing or re-usingelements, and typically relies on a compare-and-swap loop which can be slow under heavy contention),I based my queue on an array model. Instead of linking individual elements, I have a "block" of several elements.The logical head and tail indices of the queue are represented using atomically-incremented integers.Between these logical indices and the blocks lies a scheme for mapping each index to its block and sub-index within that block.An enqueue operation simply increments the tail (remember that there's only one producer thread for eachsub-queue). A dequeue operation increments the head if it sees that the head is less than the tail, andthen it checks to see if it accidentally incremented the head past the tail (this can happen undercontention -- there's multiple consumer threads per sub-queue). If it did over-increment the head,a correction counter is incremented (making the queue eventually consistent), and if not, it goesahead and increments another integer which gives it the actual final logical index. The increment ofthis final index always yields a valid index in the actual queue, regardless of what other threadsare doing or have done; this works because the final index is only ever incremented when there'sguaranteed to be at least one element to dequeue (which was checked when the first index was incremented).</p>
+<p>So there you have it. An enqueue operation is done with a single atomic increment, and a dequeue isdone with two atomic increments in the fast-path, and one extra otherwise. (Of course, this is discounting allthe block allocation/re-use/referencing counting/block mapping goop, which, while important, is notvery interesting -- in any case, most of those costs are amortized over an entire block's worthof elements.) The really interesting part of this design is that it allows extremely efficient bulkoperations -- in terms of atomic instructions (which tend to be a bottleneck), enqueueing X itemsin a block has exactly the same amount of overhead as enqueueing a single item (ditto for dequeueing),provided they're in the same block.That's where the real performance gains come in :-)</p>
 <h3 id="021ead">the Token</h3>
 <p>在当前的设计里，有一个跟其他<code>queue</code>很不同的地方就是<code>token</code>，分别是<code>consume token</code>和<code>produce token</code>。现在来分别看一下这两个<code>token</code>的代码。</p>
 <p>首先是<code>produce token</code>，这个类的构造函数需要提供一个<code>queue</code>，存储到内部的指针之中，同时这个<code>queue</code>也有一个字段来存储当前对象的指针。这个结构的意思差不多就是提供<code>queue</code>的一个<code>produce handler</code>，只有拿到这个<code>handler</code>才能进行<code>produce</code>操作。</p>
@@ -429,7 +797,7 @@ bool<span class="w"> </span>bounded_push<span class="o">(</span>T<span class="w"
 </pre></div>
 
 
-<h3 id="96bf1b">Enqueue</h3>
+<h3 id="722ad2">Queue</h3>
 <p>现在来看<code>queue</code>的代码，首先吸引注意的就是析构函数:</p>
 <div class="codehilite"><pre><span></span><span class="c1">// Note: The queue should not be accessed concurrently while it&#39;s</span>
     <span class="c1">// being deleted. It&#39;s up to the user to synchronize this.</span>
@@ -481,7 +849,7 @@ bool<span class="w"> </span>bounded_push<span class="o">(</span>T<span class="w"
 
 <p>从这个析构函数里可以看出这个<code>queue</code>维持了主要的三个结构：</p>
 <ol>
-<li><code>producer list</code>， 通过一个单链表来串联，指针是<code>producerListTail</code>，每一个项都是一个生产者<code>queue</code></li>
+<li><code>producer list</code>， 通过一个环状单链表来串联，指针是<code>producerListTail</code>，每一个项都是一个生产者<code>queue</code></li>
 <li><code>implicit hash tables</code> ，这个也是一个单链表，指针是<code>implicitProducerhash</code>，每一个项都是一个没有<code>token</code>的生产者的一个<code>hash table</code>，但是具体做什么用的还不明，可能是记录当前隐式生产者与各个<code>produce queue</code>之间的亲和度吧。</li>
 <li><code>freeList</code>， 这个是用来保存所有动态分配的内存<code>pool</code>，是一个<code>block</code>的单链表，这些<code>block</code>有些是动态分配的，有些是静态预先分配的。静态预先分配的<code>block</code>的销毁在<code>destroy_array</code>里。</li>
 </ol>
@@ -508,7 +876,230 @@ bool<span class="w"> </span>bounded_push<span class="o">(</span>T<span class="w"
 </pre></div>
 
 
-<p>除了</p>
+<p>这里又分别进入了两个不同的分支，分别是<code>explicit producer</code>和<code>implicit producer</code>：</p>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="n">AllocationMode</span> <span class="n">canAlloc</span><span class="p">,</span> <span class="k">typename</span> <span class="n">U</span><span class="o">&gt;</span>
+        <span class="kr">inline</span> <span class="kt">bool</span> <span class="n">inner_enqueue</span><span class="p">(</span><span class="n">producer_token_t</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">token</span><span class="p">,</span> <span class="n">U</span><span class="o">&amp;&amp;</span> <span class="n">element</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">ExplicitProducer</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">token</span><span class="p">.</span><span class="n">producer</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">ConcurrentQueue</span><span class="o">::</span><span class="n">ExplicitProducer</span><span class="o">::</span><span class="k">template</span> <span class="n">enqueue</span><span class="o">&lt;</span><span class="n">canAlloc</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">U</span><span class="o">&gt;</span><span class="p">(</span><span class="n">element</span><span class="p">));</span>
+        <span class="p">}</span>
+
+        <span class="k">template</span><span class="o">&lt;</span><span class="n">AllocationMode</span> <span class="n">canAlloc</span><span class="p">,</span> <span class="k">typename</span> <span class="n">U</span><span class="o">&gt;</span>
+        <span class="kr">inline</span> <span class="kt">bool</span> <span class="n">inner_enqueue</span><span class="p">(</span><span class="n">U</span><span class="o">&amp;&amp;</span> <span class="n">element</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">auto</span> <span class="n">producer</span> <span class="o">=</span> <span class="n">get_or_add_implicit_producer</span><span class="p">();</span>
+            <span class="k">return</span> <span class="n">producer</span> <span class="o">==</span> <span class="k">nullptr</span> <span class="o">?</span> <span class="nb">false</span> <span class="o">:</span> <span class="n">producer</span><span class="o">-&gt;</span><span class="n">ConcurrentQueue</span><span class="o">::</span><span class="n">ImplicitProducer</span><span class="o">::</span><span class="k">template</span> <span class="n">enqueue</span><span class="o">&lt;</span><span class="n">canAlloc</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">U</span><span class="o">&gt;</span><span class="p">(</span><span class="n">element</span><span class="p">));</span>
+        <span class="p">}</span>
+</pre></div>
+
+
+<p>这里的<code>get_or_add_implicit_producer</code>内部是一个无锁<code>hash_table</code>，<code>key</code>是当前线程的<code>id</code>，<code>value</code>是这个线程对应的<code>implicit producer</code>。由于我们保证了不同线程操控的<code>key</code>是不同的，所以在实现这个无锁<code>hashtable</code>的时候可以省一些力气，具体原理见<a href="http://spiritsaway.info/lockfree-hashtable.html"><code>lockfree hashtable</code>这篇文章</a>。</p>
+<p>对于<code>explicit producer</code>和<code>implicit producer</code>来说，操纵的都是一个<code>per thread queue</code>。所以在解释这两个<code>enqueue</code>的代码之前，首先说一下<code>per thread queue</code>是怎么实现的。这个<code>per thread queue</code>是两层结构：第一层是一个<code>list</code>，第二层是<code>ringbuffer</code>，<code>list</code>里的指针就是<code>ringbuffer</code>。<code>queue</code>内维持如下信息：</p>
+<ol>
+<li><code>tailBlock</code> 指向当前最后的一个<code>Block</code>，这里的<code>Block</code>其实就是<code>ringbuffer</code>。</li>
+<li><code>blockIndex</code> 指向当前第一个<code>Block</code>。</li>
+<li><code>tailIndex</code> 在最后一个<code>Block</code>里的<code>ringbuffer</code>的<code>tail</code>指针.</li>
+<li><code>headIndex</code> 在第一个<code>Block</code>里的<code>ringbuffer</code>的<code>head</code>指针。</li>
+</ol>
+<p>根据这些信息，大概就可以猜到<code>enqueue</code>和<code>dequeue</code>的实现了。</p>
+<ol>
+<li><code>enqueue</code>在最后一个<code>Block</code>不满的情况下，只需要在<code>tailIndex</code>指向的内存区域<code>placement new</code>一个对象， 然后将<code>tailIndex</code>加一即可</li>
+<li><code>dequeue</code>在第一个<code>Block</code>不为空的情况下，<code>move</code>当前<code>headIndex</code>指向的对象，然后对<code>headIndex</code>加一</li>
+</ol>
+<p>所以，现在剩下的问题主要有如下几个：</p>
+<ol>
+<li>如何判断一个<code>Block</code>全空或者全满</li>
+<li>如何在<code>enqueue</code>的时候处理当前<code>Block</code>为满的情况</li>
+<li>如何在<code>dequeue</code>的时候处理当前<code>Block</code>为空的情况</li>
+</ol>
+<h3 id="e1e4c8">Block</h3>
+<p>这里的<code>Block</code>就是一个<code>RingBuffer</code>，他主要的接口就是伪装成为一个<code>vector</code>，同时提供查询当前<code>Block</code>是否为空。为了支持这个检查是否为空的操作，这个<code>Block</code>提供了如下的数据支持：</p>
+<div class="codehilite"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span> <span class="n">elementsCompletelyDequeued</span><span class="p">;</span>
+<span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span> <span class="n">emptyFlags</span><span class="p">[</span><span class="n">BLOCK_SIZE</span> <span class="o">&lt;=</span> <span class="n">EXPLICIT_BLOCK_EMPTY_COUNTER_THRESHOLD</span> <span class="o">?</span> <span class="nl">BLOCK_SIZE</span> <span class="p">:</span> <span class="mi">1</span><span class="p">];</span>
+</pre></div>
+
+
+<ol>
+<li>elementsCompletelyDequeued 记录当前已经<code>dequeue</code>的次数，这个字段只有在<code>BLOCK_SIZE &gt; EXPLICIT_BLOCK_EMPTY_COUNTER_THRESHOLD</code>的时候启用，</li>
+<li><code>empty_flags</code>，当<code>Block</code>里的元素大小小于一定值的时候记录每个单元素的是否为空，否则记录整体的<code>Block</code>是否为空</li>
+</ol>
+<p>这个阈值的设定主要是为了性能考虑吧。数量太大了之后遍历<code>empty_flags</code>很不方便。这里跟<code>empty</code>的接口有两个：</p>
+<div class="codehilite"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="n">InnerQueueContext</span> <span class="n">context</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="kt">bool</span> <span class="n">is_empty</span><span class="p">()</span> <span class="k">const</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">context</span> <span class="o">==</span> <span class="n">explicit_context</span> <span class="o">&amp;&amp;</span> <span class="n">BLOCK_SIZE</span> <span class="o">&lt;=</span> <span class="n">EXPLICIT_BLOCK_EMPTY_COUNTER_THRESHOLD</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="c1">// Check flags</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">BLOCK_SIZE</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">emptyFlags</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="c1">// Aha, empty; make sure we have all other memory effects that happened before the empty flags were set</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">atomic_thread_fence</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+        <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span>
+    <span class="p">{</span>
+        <span class="c1">// Check counter</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">elementsCompletelyDequeued</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">)</span> <span class="o">==</span> <span class="n">BLOCK_SIZE</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">std</span><span class="o">::</span><span class="n">atomic_thread_fence</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_acquire</span><span class="p">);</span>
+            <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="n">assert</span><span class="p">(</span><span class="n">elementsCompletelyDequeued</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">BLOCK_SIZE</span><span class="p">);</span>
+        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Returns true if the block is now empty (does not apply in explicit context)</span>
+<span class="k">template</span><span class="o">&lt;</span><span class="n">InnerQueueContext</span> <span class="n">context</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="kt">bool</span> <span class="n">set_empty</span><span class="p">(</span><span class="n">index_t</span> <span class="n">i</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">context</span> <span class="o">==</span> <span class="n">explicit_context</span> <span class="o">&amp;&amp;</span> <span class="n">BLOCK_SIZE</span> <span class="o">&lt;=</span> <span class="n">EXPLICIT_BLOCK_EMPTY_COUNTER_THRESHOLD</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="c1">// Set flag</span>
+        <span class="n">assert</span><span class="p">(</span><span class="o">!</span><span class="n">emptyFlags</span><span class="p">[</span><span class="n">BLOCK_SIZE</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">i</span> <span class="o">&amp;</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">index_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">BLOCK_SIZE</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))].</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">));</span>
+        <span class="n">emptyFlags</span><span class="p">[</span><span class="n">BLOCK_SIZE</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">i</span> <span class="o">&amp;</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">index_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">BLOCK_SIZE</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))].</span><span class="n">store</span><span class="p">(</span><span class="nb">true</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_release</span><span class="p">);</span>
+        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span>
+    <span class="p">{</span>
+        <span class="c1">// Increment counter</span>
+        <span class="k">auto</span> <span class="n">prevVal</span> <span class="o">=</span> <span class="n">elementsCompletelyDequeued</span><span class="p">.</span><span class="n">fetch_add</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_release</span><span class="p">);</span>
+        <span class="n">assert</span><span class="p">(</span><span class="n">prevVal</span> <span class="o">&lt;</span> <span class="n">BLOCK_SIZE</span><span class="p">);</span>
+        <span class="k">return</span> <span class="n">prevVal</span> <span class="o">==</span> <span class="n">BLOCK_SIZE</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>这里的<code>set_empty</code>接口就是给<code>dequeue</code>使用的，奇怪的是没有<code>set_used</code>接口给<code>enqueue</code>使用。</p>
+<h3 id="bc9aca">Block Full</h3>
+<div class="codehilite"><pre><span></span><span class="kr">inline</span> <span class="kt">bool</span> <span class="nf">enqueue</span><span class="p">(</span><span class="n">U</span><span class="o">&amp;&amp;</span> <span class="n">element</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">index_t</span> <span class="n">currentTailIndex</span> <span class="o">=</span> <span class="k">this</span><span class="o">-&gt;</span><span class="n">tailIndex</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+    <span class="n">index_t</span> <span class="n">newTailIndex</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">currentTailIndex</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">currentTailIndex</span> <span class="o">&amp;</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">index_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">BLOCK_SIZE</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="c1">// We reached the end of a block, start a new one</span>
+        <span class="k">auto</span> <span class="n">startBlock</span> <span class="o">=</span> <span class="k">this</span><span class="o">-&gt;</span><span class="n">tailBlock</span><span class="p">;</span>
+        <span class="k">auto</span> <span class="n">originalBlockIndexSlotsUsed</span> <span class="o">=</span> <span class="n">pr_blockIndexSlotsUsed</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">tailBlock</span> <span class="o">!=</span> <span class="k">nullptr</span> <span class="o">&amp;&amp;</span> <span class="k">this</span><span class="o">-&gt;</span><span class="n">tailBlock</span><span class="o">-&gt;</span><span class="n">next</span><span class="o">-&gt;</span><span class="n">ConcurrentQueue</span><span class="o">::</span><span class="n">Block</span><span class="o">::</span><span class="k">template</span> <span class="n">is_empty</span><span class="o">&lt;</span><span class="n">explicit_context</span><span class="o">&gt;</span><span class="p">())</span>
+        <span class="p">{</span>
+            <span class="c1">// We can re-use the block ahead of us, it&#39;s empty!                 </span>
+            <span class="k">this</span><span class="o">-&gt;</span><span class="n">tailBlock</span> <span class="o">=</span> <span class="k">this</span><span class="o">-&gt;</span><span class="n">tailBlock</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+            <span class="k">this</span><span class="o">-&gt;</span><span class="n">tailBlock</span><span class="o">-&gt;</span><span class="n">ConcurrentQueue</span><span class="o">::</span><span class="n">Block</span><span class="o">::</span><span class="k">template</span> <span class="n">reset_empty</span><span class="o">&lt;</span><span class="n">explicit_context</span><span class="o">&gt;</span><span class="p">();</span>
+
+            <span class="c1">// We&#39;ll put the block on the block index (guaranteed to be room since we&#39;re conceptually removing the</span>
+            <span class="c1">// last block from it first -- except instead of removing then adding, we can just overwrite).</span>
+            <span class="c1">// Note that there must be a valid block index here, since even if allocation failed in the ctor,</span>
+            <span class="c1">// it would have been re-attempted when adding the first block to the queue; since there is such</span>
+            <span class="c1">// a block, a block index must have been successfully allocated.</span>
+        <span class="p">}</span>
+        <span class="k">else</span>
+        <span class="p">{</span>
+            <span class="c1">// Whatever head value we see here is &gt;= the last value we saw here (relatively),</span>
+            <span class="c1">// and &lt;= its current value. Since we have the most recent tail, the head must be</span>
+            <span class="c1">// &lt;= to it.</span>
+            <span class="k">auto</span> <span class="n">head</span> <span class="o">=</span> <span class="k">this</span><span class="o">-&gt;</span><span class="n">headIndex</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">);</span>
+            <span class="n">assert</span><span class="p">(</span><span class="o">!</span><span class="n">details</span><span class="o">::</span><span class="n">circular_less_than</span><span class="o">&lt;</span><span class="n">index_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">currentTailIndex</span><span class="p">,</span> <span class="n">head</span><span class="p">));</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">details</span><span class="o">::</span><span class="n">circular_less_than</span><span class="o">&lt;</span><span class="n">index_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">currentTailIndex</span> <span class="o">+</span> <span class="n">BLOCK_SIZE</span><span class="p">)</span>
+                <span class="o">||</span> <span class="p">(</span><span class="n">MAX_SUBQUEUE_SIZE</span> <span class="o">!=</span> <span class="n">details</span><span class="o">::</span><span class="n">const_numeric_max</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;::</span><span class="n">value</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">MAX_SUBQUEUE_SIZE</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">MAX_SUBQUEUE_SIZE</span> <span class="o">-</span> <span class="n">BLOCK_SIZE</span> <span class="o">&lt;</span> <span class="n">currentTailIndex</span> <span class="o">-</span> <span class="n">head</span><span class="p">)))</span>
+            <span class="p">{</span>
+                <span class="c1">// We can&#39;t enqueue in another block because there&#39;s not enough leeway -- the</span>
+                <span class="c1">// tail could surpass the head by the time the block fills up! (Or we&#39;ll exceed</span>
+                <span class="c1">// the size limit, if the second part of the condition was true.)</span>
+                <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="c1">// We&#39;re going to need a new block; check that the block index has room</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">pr_blockIndexRaw</span> <span class="o">==</span> <span class="k">nullptr</span> <span class="o">||</span> <span class="n">pr_blockIndexSlotsUsed</span> <span class="o">==</span> <span class="n">pr_blockIndexSize</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="c1">// Hmm, the circular block index is already full -- we&#39;ll need</span>
+                <span class="c1">// to allocate a new index. Note pr_blockIndexRaw can only be nullptr if</span>
+                <span class="c1">// the initial allocation failed in the constructor.</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="n">allocMode</span> <span class="o">==</span> <span class="n">CannotAlloc</span> <span class="o">||</span> <span class="o">!</span><span class="n">new_block_index</span><span class="p">(</span><span class="n">pr_blockIndexSlotsUsed</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+            <span class="c1">// Insert a new block in the circular linked list</span>
+            <span class="k">auto</span> <span class="n">newBlock</span> <span class="o">=</span> <span class="k">this</span><span class="o">-&gt;</span><span class="n">parent</span><span class="o">-&gt;</span><span class="n">ConcurrentQueue</span><span class="o">::</span><span class="k">template</span> <span class="n">requisition_block</span><span class="o">&lt;</span><span class="n">allocMode</span><span class="o">&gt;</span><span class="p">();</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">newBlock</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+            <span class="p">}</span>
+<span class="cp">#if MCDBGQ_TRACKMEM</span>
+            <span class="n">newBlock</span><span class="o">-&gt;</span><span class="n">owner</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+<span class="cp">#endif</span>
+            <span class="n">newBlock</span><span class="o">-&gt;</span><span class="n">ConcurrentQueue</span><span class="o">::</span><span class="n">Block</span><span class="o">::</span><span class="k">template</span> <span class="n">reset_empty</span><span class="o">&lt;</span><span class="n">explicit_context</span><span class="o">&gt;</span><span class="p">();</span>
+            <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">tailBlock</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">newBlock</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">newBlock</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">else</span>
+            <span class="p">{</span>
+                <span class="n">newBlock</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="k">this</span><span class="o">-&gt;</span><span class="n">tailBlock</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+                <span class="k">this</span><span class="o">-&gt;</span><span class="n">tailBlock</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">newBlock</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">this</span><span class="o">-&gt;</span><span class="n">tailBlock</span> <span class="o">=</span> <span class="n">newBlock</span><span class="p">;</span>
+            <span class="o">++</span><span class="n">pr_blockIndexSlotsUsed</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">MOODYCAMEL_NOEXCEPT_CTOR</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="k">new</span> <span class="p">(</span><span class="k">nullptr</span><span class="p">)</span> <span class="n">T</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">U</span><span class="o">&gt;</span><span class="p">(</span><span class="n">element</span><span class="p">))))</span>
+        <span class="p">{</span>
+            <span class="c1">// The constructor may throw. We want the element not to appear in the queue in</span>
+            <span class="c1">// that case (without corrupting the queue):</span>
+            <span class="n">MOODYCAMEL_TRY</span><span class="p">{</span>
+                <span class="k">new</span> <span class="p">((</span><span class="o">*</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">tailBlock</span><span class="p">)[</span><span class="n">currentTailIndex</span><span class="p">])</span> <span class="n">T</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">U</span><span class="o">&gt;</span><span class="p">(</span><span class="n">element</span><span class="p">));</span>
+            <span class="p">}</span>
+                <span class="n">MOODYCAMEL_CATCH</span><span class="p">(...)</span>
+            <span class="p">{</span>
+                <span class="c1">// Revert change to the current block, but leave the new block available</span>
+                <span class="c1">// for next time</span>
+                <span class="n">pr_blockIndexSlotsUsed</span> <span class="o">=</span> <span class="n">originalBlockIndexSlotsUsed</span><span class="p">;</span>
+                <span class="k">this</span><span class="o">-&gt;</span><span class="n">tailBlock</span> <span class="o">=</span> <span class="n">startBlock</span> <span class="o">==</span> <span class="k">nullptr</span> <span class="o">?</span> <span class="k">this</span><span class="o">-&gt;</span><span class="nl">tailBlock</span> <span class="p">:</span> <span class="n">startBlock</span><span class="p">;</span>
+                <span class="n">MOODYCAMEL_RETHROW</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">else</span>
+        <span class="p">{</span>
+            <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">startBlock</span><span class="p">;</span>
+            <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">originalBlockIndexSlotsUsed</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">// Add block to block index</span>
+        <span class="k">auto</span><span class="o">&amp;</span> <span class="n">entry</span> <span class="o">=</span> <span class="n">blockIndex</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">entries</span><span class="p">[</span><span class="n">pr_blockIndexFront</span><span class="p">];</span>
+        <span class="n">entry</span><span class="p">.</span><span class="n">base</span> <span class="o">=</span> <span class="n">currentTailIndex</span><span class="p">;</span>
+        <span class="n">entry</span><span class="p">.</span><span class="n">block</span> <span class="o">=</span> <span class="k">this</span><span class="o">-&gt;</span><span class="n">tailBlock</span><span class="p">;</span>
+        <span class="n">blockIndex</span><span class="p">.</span><span class="n">load</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">memory_order_relaxed</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">front</span><span class="p">.</span><span class="n">store</span><span class="p">(</span><span class="n">pr_blockIndexFront</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_release</span><span class="p">);</span>
+        <span class="n">pr_blockIndexFront</span> <span class="o">=</span> <span class="p">(</span><span class="n">pr_blockIndexFront</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">pr_blockIndexSize</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">MOODYCAMEL_NOEXCEPT_CTOR</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="k">new</span> <span class="p">(</span><span class="k">nullptr</span><span class="p">)</span> <span class="n">T</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">U</span><span class="o">&gt;</span><span class="p">(</span><span class="n">element</span><span class="p">))))</span>
+        <span class="p">{</span>
+            <span class="k">this</span><span class="o">-&gt;</span><span class="n">tailIndex</span><span class="p">.</span><span class="n">store</span><span class="p">(</span><span class="n">newTailIndex</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_release</span><span class="p">);</span>
+            <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Enqueue</span>
+    <span class="k">new</span> <span class="p">((</span><span class="o">*</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">tailBlock</span><span class="p">)[</span><span class="n">currentTailIndex</span><span class="p">])</span> <span class="n">T</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">U</span><span class="o">&gt;</span><span class="p">(</span><span class="n">element</span><span class="p">));</span>
+
+    <span class="k">this</span><span class="o">-&gt;</span><span class="n">tailIndex</span><span class="p">.</span><span class="n">store</span><span class="p">(</span><span class="n">newTailIndex</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">memory_order_release</span><span class="p">);</span>
+    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>处理满的时候，有多种情况：</p>
+<ol>
+<li>最简单的情况就是，当前<code>Block</code>的下一个<code>Block</code>刚好是全空的，直接设置一下<code>tailBlock</code>即可。</li>
+<li>否则尝试去内存区分配一个新的<code>Block</code>，如果分配失败，则返回<code>False</code>，这里看上去具体逻辑很复杂，可以暂时不考虑。</li>
+</ol>
 <script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
     var align = "center",
         indent = "0em",
@@ -587,7 +1178,7 @@ bool<span class="w"> </span>bounded_push<span class="o">(</span>T<span class="w"
         </div>
         <ol id="niu2-sidebar-toc-list">
             <li><a href="#content-heading">Concurrent Queue</a></li>
-            <li><a href='#6b5bed'>Concurrent Queue</a><ol><li><a href='#8fd87e'>naive concurrent queue</a></li><li><a href='#27c936'>boost concurrent queue</a></li><li><a href='#cecc0c'>intel tbb concurrent queue</a></li><li><a href='#01023c'>moodycamel concurrent queue</a><ol><li><a href='#021ead'>the Token</a></li><li><a href='#96bf1b'>Enqueue</a></li></ol></li></ol></li>
+            <li><a href='#6b5bed'>Concurrent Queue</a><ol><li><a href='#8fd87e'>naive concurrent queue</a></li><li><a href='#d10ffe'>intel spsc concurrent queue</a></li><li><a href='#86a472'>facebook spsc concurrent queue</a></li><li><a href='#7f087f'>moodycamel spsc concurrent queue</a></li><li><a href='#9a6f11'>boost mpmc concurrent queue</a></li><li><a href='#cecc0c'>intel tbb concurrent queue</a></li><li><a href='#01023c'>moodycamel concurrent queue</a><ol><li><a href='#bdd81e'>highlevel design</a></li><li><a href='#021ead'>the Token</a></li><li><a href='#722ad2'>Queue</a></li><li><a href='#e1e4c8'>Block</a></li><li><a href='#bc9aca'>Block Full</a></li></ol></li></ol></li>
         </ol>
     </div>
 </div>    </div>
